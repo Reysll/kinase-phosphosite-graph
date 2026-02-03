@@ -1,0 +1,78 @@
+Goal so far:
+Construct a clean heterogeneous graph from the human Kinase_Substrate_Dataset with correct phosphosite modeling.
+
+Implemented features:
+Modular Python package structure (src/)
+Graph construction from kinase–substrate data
+
+Three node types:
+kinase
+protein
+site
+
+Two edge types:
+protein → site (has_site)
+kinase → site (phosphorylates)
+
+Robust normalization of:
+protein names
+phosphosite strings (Ser/Thr/Tyr → S/T/Y)
+
+Strict phosphosite naming rule:
+sites are uniquely identified as PROTEIN-S###
+
+Sanity checks to validate biological assumptions
+Outputs written as compressed CSV for scalability
+
+Validated assumptions (from sanity checks):
+~10,000 unique phosphosite nodes
+~1,800 site labels shared across multiple proteins (expected)
+No duplicate phosphosites within the same protein
+
+######################################################################################
+(Tentative) Next steps
+
+From here, each step adds biological information without breaking what I’ve built.
+
+Step 1: Add PTMsigDB (site–site pathway edges)
+
+Why next:
+
+Operates at the site level
+Does not introduce new nodes
+Enriches functional context
+
+What it adds:
+Edge type: site_same_pathway
+Connects phosphosites participating in the same signaling pathway
+
+Implementation style:
+New file: src/builders/ptmsigdb.py
+One extra call in main.py
+No changes to existing logic
+
+Step 2: Add MSigDB (protein–protein pathway edges)
+
+Why:
+
+Adds protein-level pathway context
+Complements site-level pathways
+
+Adds:
+Edge type: protein_same_pathway
+
+Step 3: Add protein–protein interactions (PPI)
+
+Using:
+
+high_confidence_score(in).csv
+gene_protein(in).csv for Ensembl → gene mapping
+
+Adds:
+Edge type: protein_interacts_with_protein
+
+Step 4 (optional, advanced): PTMcode2 co-evolution edges
+
+Adds:
+Site–site co-evolution relationships across proteins
+Strong signal for functional coupling
