@@ -7,67 +7,143 @@ import pandas as pd
 from src.builders.kinase_substrate import build_kinase_substrate_graph
 from src.builders.ppase_substrate import build_ppase_substrate_graph
 from src.builders.ptmsigdb import build_ptmsigdb_edges
+from src.builders.msigdb import build_msigdb_edges
+from src.builders.ppi import build_ppi_edges
+from src.builders.ptmcode2 import build_ptmcode2_edges
+
 from src.sanity_checks import check_site_collisions
-from src.config import KINASE_SUBSTRATE_FILE, PPASE_FILE, PTMSIGDB_FILE, OUTPUT_DIR
+
+from src.config import (
+    KINASE_SUBSTRATE_FILE,
+    PPASE_FILE,
+    PTMSIGDB_FILE,
+    MSIGDB_FILE,
+    PPI_FILE,
+    GENE_PROTEIN_MAP,
+    PTMCODE_FILE,
+    OUTPUT_DIR,
+)
 
 
-def merge_nodes(nodes_a: pd.DataFrame, nodes_b: pd.DataFrame) -> pd.DataFrame:
-    """
-    Merge node tables and resolve node_type collisions.
-
-    Rule:
-    - If a node_id appears with multiple node_type values,
-      coerce node_type to 'enzyme'.
-    """
-    merged = pd.concat([nodes_a, nodes_b], ignore_index=True)
-
-    type_counts = merged.groupby("node_id")["node_type"].nunique()
-    collided_ids = set(type_counts[type_counts > 1].index)
-
-    if collided_ids:
-        print(f"WARNING: node_type collisions detected: {len(collided_ids):,} node_ids")
-        print("Example node_type collisions:", list(sorted(collided_ids))[:10])
-        merged.loc[merged["node_id"].isin(collided_ids), "node_type"] = "enzyme"
-
-    return merged.drop_duplicates(subset=["node_id"], keep="first")
-
-
-
-
-def merge_edges(edges_a: pd.DataFrame, edges_b: pd.DataFrame) -> pd.DataFrame:
+def _merge_nodes(nodes_a: pd.DataFrame, nodes_b: pd.DataFrame) -> pd.DataFrame:
     return (
-        pd.concat([edges_a, edges_b], ignore_index=True)
-        .drop_duplicates(subset=["source", "target", "relation"])
+        pd.concat([nodes_a, nodes_b], ignore_index=True)
+        .drop_duplicates(subset=["node_id", "node_type"])
+        .reset_index(drop=True)
     )
 
 
+def _merge_edges(edges_a: pd.DataFrame, edges_b: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merge edges and deduplicate.
+
+    Important rule for edges that carry a confidence_score (PPI):
+      - If multiple rows share the same (source, target, relation),
+        we keep the row with the MAX confidence_score.
+      - This preserves the strongest evidence for that interaction.
+    """
+    merged = pd.concat([edges_a, edges_b], ignore_index=True)
+
+    for col in ["source", "target", "relation"]:
+        if col not in merged.columns:
+            raise ValueError(f"Edges missing required column: {col}")
+
+    triple = ["source", "target", "relation"]
+
+    if "confidence_score" in merged.columns:
+        # Keep the row with max confidence_score for each triple
+        # (edges without confidence_score will have NaN; we treat those as -1)
+        tmp = merged.copy()
+        tmp["_conf_tmp"] = tmp["confidence_score"].fillna(-1)
+
+        idx = tmp.groupby(triple)["_conf_tmp"].idxmax()
+        merged = merged.loc[idx].drop(columns=["_conf_tmp"], errors="ignore").reset_index(drop=True)
+    else:
+        merged = merged.drop_duplicates(subset=triple).reset_index(drop=True)
+
+    return merged
+
+
 def main() -> None:
-    # 1) Base: kinase-substrate graph
-    nodes_df, edges_df = build_kinase_substrate_graph(KINASE_SUBSTRATE_FILE)
+    print("=== Building base graph from Kinase_Substrate_Dataset ===")
+    k_nodes, k_edges = build_kinase_substrate_graph(KINASE_SUBSTRATE_FILE)
+    print(f"Kinase_Substrate produced: nodes={len(k_nodes):,} edges={len(k_edges):,}\n")
 
-    # 2) Add: PPase substrate graph
-    pp_nodes, pp_edges = build_ppase_substrate_graph(PPASE_FILE)
+    print("=== Building base graph from PPase_protSubtrates ===")
+    p_nodes, p_edges = build_ppase_substrate_graph(PPASE_FILE)
+    print(f"PPase produced: nodes={len(p_nodes):,} edges={len(p_edges):,}\n")
 
-    nodes_df = merge_nodes(nodes_df, pp_nodes)
-    edges_df = merge_edges(edges_df, pp_edges)
+    print("=== Merging base graphs (Kinase + PPase) ===")
+    nodes_df = _merge_nodes(k_nodes, p_nodes)
+    edges_df = _merge_edges(k_edges, p_edges)
+    print(f"Base nodes total (unique node_id+type): {len(nodes_df):,}")
+    print(f"Base edges total (unique triples):       {len(edges_df):,}\n")
 
-    # 3) Sanity checks on merged graph
+    # Sanity checks
     check_site_collisions(nodes_df)
+    print()
 
-    # 4) PTMsigDB site-site edges only for existing sites
+    # PTMsigDB site-site edges (only for existing sites)
+    print("=== Adding PTMsigDB site-site pathway edges (restricted to existing sites) ===")
     site_ids = set(nodes_df.loc[nodes_df["node_type"] == "site", "node_id"])
     ptm_edges = build_ptmsigdb_edges(PTMSIGDB_FILE, site_ids)
-    print(f"PTMsigDB edges added: {len(ptm_edges):,}")
-    edges_df = merge_edges(edges_df, ptm_edges)
+    before = len(edges_df)
+    edges_df = _merge_edges(edges_df, ptm_edges)
+    print(f"PTMsigDB produced edges:                {len(ptm_edges):,}")
+    print(f"New PTMsigDB edges added after merge:   {len(edges_df) - before:,}")
+    print(f"Total edges now (unique triples):       {len(edges_df):,}\n")
 
-    # 5) Write outputs
+    # MsigDB protein-protein edges (only for existing proteins)
+    print("=== Adding MsigDB protein-protein pathway edges (restricted to existing proteins) ===")
+    protein_ids = set(nodes_df.loc[nodes_df["node_type"] == "protein", "node_id"])
+    msig_edges = build_msigdb_edges(MSIGDB_FILE, protein_ids)
+    before = len(edges_df)
+    edges_df = _merge_edges(edges_df, msig_edges)
+    print(f"MsigDB produced edges:                  {len(msig_edges):,}")
+    print(f"New MsigDB edges added after merge:     {len(edges_df) - before:,}")
+    print(f"Total edges now (unique triples):       {len(edges_df):,}\n")
+
+    # High confidence PPI (Ensembl -> gene -> PROTEIN:gene)
+    print("=== Adding PPI edges (high_confidence_score) via Ensembl -> gene mapping ===")
+    protein_ids = set(nodes_df.loc[nodes_df["node_type"] == "protein", "node_id"])
+    ppi_edges = build_ppi_edges(
+        PPI_FILE,
+        GENE_PROTEIN_MAP,
+        existing_protein_ids=protein_ids,
+        min_confidence_score=0,
+    )
+    before = len(edges_df)
+    edges_df = _merge_edges(edges_df, ppi_edges)
+    print(f"PPI produced edges:                     {len(ppi_edges):,}")
+    print(f"New PPI edges added after merge:        {len(edges_df) - before:,}")
+    print(f"Total edges now (unique triples):       {len(edges_df):,}\n")
+
+    # PTMcode2 site-site coevolution edges (only for existing sites)
+    print("=== Adding PTMcode2 site-site coevolution edges (restricted to existing sites) ===")
+    site_ids = set(nodes_df.loc[nodes_df["node_type"] == "site", "node_id"])
+    ptmcode_edges = build_ptmcode2_edges(
+        PTMCODE_FILE,
+        GENE_PROTEIN_MAP,
+        existing_site_ids=site_ids,
+    )
+    before = len(edges_df)
+    edges_df = _merge_edges(edges_df, ptmcode_edges)
+    print(f"PTMcode2 produced edges:                {len(ptmcode_edges):,}")
+    print(f"New PTMcode2 edges added after merge:   {len(edges_df) - before:,}")
+    print(f"Total edges now (unique triples):       {len(edges_df):,}\n")
+
+    # Write outputs
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    nodes_df.to_csv(os.path.join(OUTPUT_DIR, "nodes.csv.gz"), index=False, compression="gzip")
-    edges_df.to_csv(os.path.join(OUTPUT_DIR, "edges.csv.gz"), index=False, compression="gzip")
+
+    nodes_out = os.path.join(OUTPUT_DIR, "nodes.csv.gz")
+    edges_out = os.path.join(OUTPUT_DIR, "edges.csv.gz")
+
+    nodes_df.to_csv(nodes_out, index=False, compression="gzip")
+    edges_df.to_csv(edges_out, index=False, compression="gzip")
 
     print("Wrote outputs:")
-    print(" ", os.path.join(OUTPUT_DIR, "nodes.csv.gz"))
-    print(" ", os.path.join(OUTPUT_DIR, "edges.csv.gz"))
+    print(f"  {nodes_out}")
+    print(f"  {edges_out}")
     print("✅ Done.")
 
 

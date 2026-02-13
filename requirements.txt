@@ -3,3 +3,4 @@ numpy
 networkx
 tqdm
 xlrd==2.0.1
+openpyxl

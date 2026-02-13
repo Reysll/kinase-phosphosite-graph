@@ -1,66 +1,138 @@
 # src/builders/kinase_substrate.py
-from typing import Dict, List, Set, Tuple
+from __future__ import annotations
+
+import re
+from typing import List, Tuple
 
 import pandas as pd
 
-from src.normalize import normalize_protein, normalize_site, make_site_id
 from src.io_utils import read_table
+from src.normalize import normalize_protein, normalize_site
+from src.ids import kinase_id, protein_id, site_id
 
 
+_SITE_PATTERN = re.compile(r"(SER|THR|TYR|S|T|Y)[\s\-]*([0-9]+)", re.IGNORECASE)
 
-def build_kinase_substrate_graph(
-    path: str,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+
+def _has_exactly_one_site_token(site_raw: str) -> bool:
+    if not site_raw or not isinstance(site_raw, str):
+        return False
+    matches = _SITE_PATTERN.findall(site_raw)
+    return len(matches) == 1
+
+
+def build_kinase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Build nodes and edges from the Kinase_Substrate_Dataset.
+    Build graph from Kinase_Substrate_Dataset.
 
-    Returns:
-        nodes_df: node_id, node_type
-        edges_df: source, target, relation
+    Spec:
+      - Column A: kinase name
+      - Column D: kinase organism
+      - Column H: substrate (protein)
+      - Column I: substrate organism
+      - Column J: site on substrate
+
+    Filter:
+      - Keep only rows where D and I are both human
+
+    Nodes:
+      - KINASE:<kinase>   node_type="kinase"
+      - PROTEIN:<substrate> node_type="protein"
+      - SITE:<substrate>-<S298> node_type="site"
+
+    Edges:
+      - PROTEIN:<substrate> -> SITE:<substrate>-<site>  relation="has_site"
+      - KINASE:<kinase> -> SITE:<substrate>-<site>      relation="phosphorylates"
+
+    Drops rows where multiple sites are reported in column J.
     """
-
     df = read_table(path)
 
-    # Column indices based on dataset description
-    kinase_col = df.columns[0]     # A
-    kinase_org_col = df.columns[3] # D
-    substrate_col = df.columns[7]  # H
-    substrate_org_col = df.columns[8]  # I
-    site_col = df.columns[9]       # J
+    # Excel-style columns (1-indexed): A=0, D=3, H=7, I=8, J=9 (0-based)
+    kinase_col = 0
+    kinase_org_col = 3
+    substrate_col = 7
+    substrate_org_col = 8
+    site_col = 9
 
-    # Filter human–human
-    human = (
-        df[kinase_org_col].str.lower().str.contains("human")
-        & df[substrate_org_col].str.lower().str.contains("human")
-    )
-    df = df[human]
-
-    nodes: Dict[str, str] = {}
+    nodes: List[Tuple[str, str]] = []
     edges: List[Tuple[str, str, str]] = []
 
-    for _, row in df.iterrows():
-        kinase = normalize_protein(row[kinase_col])
-        protein = normalize_protein(row[substrate_col])
+    rows_seen = 0
+    rows_kept = 0
+    rows_dropped_nonhuman = 0
+    rows_dropped_missing_values = 0
+    rows_dropped_multi_site = 0
+    rows_dropped_parse = 0
 
-        site = normalize_site(row[site_col])
-        if site is None:
+    for _, row in df.iterrows():
+        rows_seen += 1
+
+        try:
+            kinase_raw = row.iloc[kinase_col]
+            kinase_org_raw = row.iloc[kinase_org_col]
+            substrate_raw = row.iloc[substrate_col]
+            substrate_org_raw = row.iloc[substrate_org_col]
+            site_raw = row.iloc[site_col]
+        except IndexError:
+            rows_dropped_missing_values += 1
             continue
 
-        site_id = make_site_id(protein, site)
+        if (
+            pd.isna(kinase_raw)
+            or pd.isna(kinase_org_raw)
+            or pd.isna(substrate_raw)
+            or pd.isna(substrate_org_raw)
+            or pd.isna(site_raw)
+        ):
+            rows_dropped_missing_values += 1
+            continue
 
-        nodes[kinase] = "kinase"
-        nodes[protein] = "protein"
-        nodes[site_id] = "site"
+        kinase_org = str(kinase_org_raw).strip().lower()
+        substrate_org = str(substrate_org_raw).strip().lower()
 
-        edges.append((protein, site_id, "has_site"))
-        edges.append((kinase, site_id, "phosphorylates"))
+        # Human-human filter from spec
+        if "human" not in kinase_org or "human" not in substrate_org:
+            rows_dropped_nonhuman += 1
+            continue
 
-    nodes_df = pd.DataFrame(
-        [{"node_id": k, "node_type": v} for k, v in nodes.items()]
-    )
+        site_str = str(site_raw).strip()
+        if not _has_exactly_one_site_token(site_str):
+            rows_dropped_multi_site += 1
+            continue
 
-    edges_df = pd.DataFrame(
-        edges, columns=["source", "target", "relation"]
-    )
+        kinase_name = normalize_protein(str(kinase_raw))
+        substrate_name = normalize_protein(str(substrate_raw))
+        site_label = normalize_site(site_str)
+
+        if not kinase_name or not substrate_name or site_label is None:
+            rows_dropped_parse += 1
+            continue
+
+        k_node = kinase_id(kinase_name)
+        p_node = protein_id(substrate_name)
+        s_node = site_id(substrate_name, site_label)
+
+        # Nodes
+        nodes.append((k_node, "kinase"))
+        nodes.append((p_node, "protein"))
+        nodes.append((s_node, "site"))
+
+        # Edges
+        edges.append((p_node, s_node, "has_site"))
+        edges.append((k_node, s_node, "phosphorylates"))
+
+        rows_kept += 1
+
+    nodes_df = pd.DataFrame(nodes, columns=["node_id", "node_type"]).drop_duplicates()
+    edges_df = pd.DataFrame(edges, columns=["source", "target", "relation"]).drop_duplicates()
+
+    print("Kinase_Substrate parsing stats:")
+    print(f"  rows_seen={rows_seen:,}")
+    print(f"  rows_kept={rows_kept:,}")
+    print(f"  rows_dropped_nonhuman={rows_dropped_nonhuman:,}")
+    print(f"  rows_dropped_missing_values={rows_dropped_missing_values:,}")
+    print(f"  rows_dropped_multi_site={rows_dropped_multi_site:,}")
+    print(f"  rows_dropped_parse={rows_dropped_parse:,}")
 
     return nodes_df, edges_df

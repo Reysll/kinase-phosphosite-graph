@@ -7,16 +7,29 @@ import pandas as pd
 
 def read_table(path: str) -> pd.DataFrame:
     """
-    Read a table from CSV/TSV or Excel (xls/xlsx).
+    Read a table from disk with sensible defaults based on file extension.
+
+    Supported:
+      - .csv  -> comma separated
+      - .tsv  -> tab separated
+      - .txt  -> tab separated (common in bio)
+      - .xlsx/.xls -> Excel
+      - fallback -> try csv, then tsv
     """
     ext = os.path.splitext(path)[1].lower()
 
-    if ext in {".xls", ".xlsx"}:
-        # Default: first sheet
+    if ext in [".xlsx", ".xls"]:
         return pd.read_excel(path)
 
-    # Try TSV then CSV for text files
-    try:
-        return pd.read_csv(path, sep="\t")
-    except Exception:
+    if ext == ".csv":
+        # CSV should be comma by default
         return pd.read_csv(path)
+
+    if ext in [".tsv", ".txt"]:
+        return pd.read_csv(path, sep="\t")
+
+    # fallback: try csv then tsv
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.read_csv(path, sep="\t")

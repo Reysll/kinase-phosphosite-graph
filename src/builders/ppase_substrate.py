@@ -7,18 +7,14 @@ from typing import List, Tuple
 import pandas as pd
 
 from src.io_utils import read_table
-from src.normalize import normalize_protein, normalize_site, make_site_id
+from src.normalize import normalize_protein, normalize_site
+from src.ids import phosphatase_id, protein_id, site_id
 
 
-# Regex to detect site tokens (Ser/Thr/Tyr or S/T/Y + number)
 _SITE_PATTERN = re.compile(r"(SER|THR|TYR|S|T|Y)[\s\-]*([0-9]+)", re.IGNORECASE)
 
 
 def _has_exactly_one_site_token(site_raw: str) -> bool:
-    """
-    Keep only rows where exactly one site is reported.
-    Rows with multiple sites are dropped intentionally.
-    """
     if not site_raw or not isinstance(site_raw, str):
         return False
     matches = _SITE_PATTERN.findall(site_raw)
@@ -27,34 +23,31 @@ def _has_exactly_one_site_token(site_raw: str) -> bool:
 
 def build_ppase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Build nodes and edges from PPase_protSubtrates_201903.xls.
-
-    Columns (1-indexed from spec):
-      - B: phosphatase
-      - D: substrate
-      - E: site (Ser/Thr/Tyr naming)
+    PPase_protSubstrate spec:
+      - Column B: phosphatase
+      - Column D: substrate
+      - Column E: site
 
     Nodes:
-      - phosphatase (node_type = 'phosphatase')
-      - protein (node_type = 'protein')
-      - site (node_type = 'site', id = PROTEIN-S88)
+      - PHOSPHATASE:<ppase>  node_type="phosphatase"
+      - PROTEIN:<substrate>  node_type="protein"
+      - SITE:<substrate>-<S88> node_type="site"
 
     Edges:
-      - protein -> site : 'has_site'
-      - phosphatase -> site : 'dephosphorylates'
-    """
+      - PROTEIN:<substrate> -> SITE:<substrate>-<site>  relation="has_site"
+      - PHOSPHATASE:<ppase> -> SITE:<substrate>-<site> relation="dephosphorylates"
 
+    Drops multi-site rows in column E.
+    """
     df = read_table(path)
 
-    # Column indices (0-based)
-    phosph_col = 1   # B
+    phosph_col = 1     # B
     substrate_col = 3  # D
-    site_col = 4    # E
+    site_col = 4       # E
 
     nodes: List[Tuple[str, str]] = []
     edges: List[Tuple[str, str, str]] = []
 
-    # Counters for transparency
     rows_seen = 0
     rows_kept = 0
     rows_dropped_multi_site = 0
@@ -77,44 +70,38 @@ def build_ppase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
             rows_dropped_missing_values += 1
             continue
 
-        phosph_str = str(phosph_raw).strip()
-        sub_str = str(sub_raw).strip()
         site_str = str(site_raw).strip()
-
-        # Drop rows with multiple sites
         if not _has_exactly_one_site_token(site_str):
             rows_dropped_multi_site += 1
             continue
 
-        phosph = normalize_protein(phosph_str)
-        substrate = normalize_protein(sub_str)
-        site_norm = normalize_site(site_str)
+        ppase_name = normalize_protein(str(phosph_raw))
+        substrate_name = normalize_protein(str(sub_raw))
+        site_label = normalize_site(site_str)
 
-        if not phosph or not substrate:
+        if not ppase_name or not substrate_name:
             rows_dropped_protein_parse += 1
             continue
-
-        if site_norm is None:
+        if site_label is None:
             rows_dropped_site_parse += 1
             continue
 
-        site_id = make_site_id(substrate, site_norm)
+        pp_node = phosphatase_id(ppase_name)
+        p_node = protein_id(substrate_name)
+        s_node = site_id(substrate_name, site_label)
 
-        # Nodes
-        nodes.append((phosph, "phosphatase"))
-        nodes.append((substrate, "protein"))
-        nodes.append((site_id, "site"))
+        nodes.append((pp_node, "phosphatase"))
+        nodes.append((p_node, "protein"))
+        nodes.append((s_node, "site"))
 
-        # Edges
-        edges.append((substrate, site_id, "has_site"))
-        edges.append((phosph, site_id, "dephosphorylates"))
+        edges.append((p_node, s_node, "has_site"))
+        edges.append((pp_node, s_node, "dephosphorylates"))
 
         rows_kept += 1
 
     nodes_df = pd.DataFrame(nodes, columns=["node_id", "node_type"]).drop_duplicates()
     edges_df = pd.DataFrame(edges, columns=["source", "target", "relation"]).drop_duplicates()
 
-    # Final stats print
     print("PPase parsing stats:")
     print(f"  rows_seen={rows_seen:,}")
     print(f"  rows_kept={rows_kept:,}")
