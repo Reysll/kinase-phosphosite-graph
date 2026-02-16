@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.io_utils import read_table
 from src.normalize import normalize_protein, normalize_site
-from src.ids import kinase_id, protein_id, site_id
+from src.ids import protein_id, site_id
 
 
 _SITE_PATTERN = re.compile(r"(SER|THR|TYR|S|T|Y)[\s\-]*([0-9]+)", re.IGNORECASE)
@@ -23,32 +23,19 @@ def _has_exactly_one_site_token(site_raw: str) -> bool:
 
 def build_kinase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Build graph from Kinase_Substrate_Dataset.
-
-    Spec:
-      - Column A: kinase name
-      - Column D: kinase organism
-      - Column H: substrate (protein)
-      - Column I: substrate organism
-      - Column J: site on substrate
-
-    Filter:
-      - Keep only rows where D and I are both human
+    Unified protein-level design.
 
     Nodes:
-      - KINASE:<kinase>   node_type="kinase"
-      - PROTEIN:<substrate> node_type="protein"
-      - SITE:<substrate>-<S298> node_type="site"
+      - PROTEIN:<kinase>
+      - PROTEIN:<substrate>
+      - SITE:<substrate>-<site>
 
     Edges:
-      - PROTEIN:<substrate> -> SITE:<substrate>-<site>  relation="has_site"
-      - KINASE:<kinase> -> SITE:<substrate>-<site>      relation="phosphorylates"
-
-    Drops rows where multiple sites are reported in column J.
+      - PROTEIN:<substrate> -> SITE   relation="has_site"
+      - PROTEIN:<kinase>    -> SITE   relation="phosphorylates"
     """
     df = read_table(path)
 
-    # Excel-style columns (1-indexed): A=0, D=3, H=7, I=8, J=9 (0-based)
     kinase_col = 0
     kinase_org_col = 3
     substrate_col = 7
@@ -91,7 +78,6 @@ def build_kinase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]
         kinase_org = str(kinase_org_raw).strip().lower()
         substrate_org = str(substrate_org_raw).strip().lower()
 
-        # Human-human filter from spec
         if "human" not in kinase_org or "human" not in substrate_org:
             rows_dropped_nonhuman += 1
             continue
@@ -109,16 +95,14 @@ def build_kinase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]
             rows_dropped_parse += 1
             continue
 
-        k_node = kinase_id(kinase_name)
+        k_node = protein_id(kinase_name)
         p_node = protein_id(substrate_name)
         s_node = site_id(substrate_name, site_label)
 
-        # Nodes
-        nodes.append((k_node, "kinase"))
+        nodes.append((k_node, "protein"))
         nodes.append((p_node, "protein"))
         nodes.append((s_node, "site"))
 
-        # Edges
         edges.append((p_node, s_node, "has_site"))
         edges.append((k_node, s_node, "phosphorylates"))
 

@@ -8,7 +8,7 @@ import pandas as pd
 
 from src.io_utils import read_table
 from src.normalize import normalize_protein, normalize_site
-from src.ids import phosphatase_id, protein_id, site_id
+from src.ids import protein_id, site_id
 
 
 _SITE_PATTERN = re.compile(r"(SER|THR|TYR|S|T|Y)[\s\-]*([0-9]+)", re.IGNORECASE)
@@ -23,27 +23,22 @@ def _has_exactly_one_site_token(site_raw: str) -> bool:
 
 def build_ppase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    PPase_protSubstrate spec:
-      - Column B: phosphatase
-      - Column D: substrate
-      - Column E: site
+    Unified protein-level design.
 
     Nodes:
-      - PHOSPHATASE:<ppase>  node_type="phosphatase"
-      - PROTEIN:<substrate>  node_type="protein"
-      - SITE:<substrate>-<S88> node_type="site"
+      - PROTEIN:<phosphatase>
+      - PROTEIN:<substrate>
+      - SITE:<substrate>-<site>
 
     Edges:
-      - PROTEIN:<substrate> -> SITE:<substrate>-<site>  relation="has_site"
-      - PHOSPHATASE:<ppase> -> SITE:<substrate>-<site> relation="dephosphorylates"
-
-    Drops multi-site rows in column E.
+      - PROTEIN:<substrate>    -> SITE   relation="has_site"
+      - PROTEIN:<phosphatase>  -> SITE   relation="dephosphorylates"
     """
     df = read_table(path)
 
-    phosph_col = 1     # B
-    substrate_col = 3  # D
-    site_col = 4       # E
+    phosph_col = 1
+    substrate_col = 3
+    site_col = 4
 
     nodes: List[Tuple[str, str]] = []
     edges: List[Tuple[str, str, str]] = []
@@ -86,11 +81,11 @@ def build_ppase_substrate_graph(path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
             rows_dropped_site_parse += 1
             continue
 
-        pp_node = phosphatase_id(ppase_name)
+        pp_node = protein_id(ppase_name)
         p_node = protein_id(substrate_name)
         s_node = site_id(substrate_name, site_label)
 
-        nodes.append((pp_node, "phosphatase"))
+        nodes.append((pp_node, "protein"))
         nodes.append((p_node, "protein"))
         nodes.append((s_node, "site"))
 

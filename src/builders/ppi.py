@@ -14,22 +14,20 @@ def _build_ensp_to_gene_map(map_path: str) -> Tuple[Dict[str, str], Dict[str, in
     """
     Build a mapping: Ensembl protein id -> gene symbol.
 
-    Expected columns in gene_protein(in).csv:
+    Expected columns in gene_protein.csv:
       protein1, protein2, gene1, gene2
 
     We will map:
       protein1 -> gene1
       protein2 -> gene2
 
-    If an Ensembl id appears with multiple gene symbols, we keep the most frequent.
+    If an Ensembl id appears with multiple gene symbols, keep the most frequent.
     """
     df = read_table(map_path)
 
-    # Try to support both header and no-header cases
     expected_cols = {"protein1", "protein2", "gene1", "gene2"}
     if not expected_cols.issubset(set(df.columns)):
-        # fallback to positional
-        df = df.iloc[:, :4]
+        df = df.iloc[:, :4].copy()
         df.columns = ["protein1", "protein2", "gene1", "gene2"]
 
     pairs: List[Tuple[str, str]] = []
@@ -44,7 +42,6 @@ def _build_ensp_to_gene_map(map_path: str) -> Tuple[Dict[str, str], Dict[str, in
         if p2 and g2 and p2 != "nan" and g2 != "nan":
             pairs.append((p2, g2))
 
-    # Count most frequent gene per Ensembl id
     counts: Dict[str, Counter] = {}
     for ensp, gene in pairs:
         counts.setdefault(ensp, Counter())[gene] += 1
@@ -52,7 +49,6 @@ def _build_ensp_to_gene_map(map_path: str) -> Tuple[Dict[str, str], Dict[str, in
     ensp_to_gene: Dict[str, str] = {}
     collisions = 0
     for ensp, ctr in counts.items():
-        # choose most common gene
         gene, _ = ctr.most_common(1)[0]
         ensp_to_gene[ensp] = gene
         if len(ctr) > 1:
@@ -66,6 +62,49 @@ def _build_ensp_to_gene_map(map_path: str) -> Tuple[Dict[str, str], Dict[str, in
     return ensp_to_gene, stats
 
 
+def _read_ppi_three_cols(ppi_path: str) -> pd.DataFrame:
+    """
+    Read PPI file and guarantee columns:
+      protein1, protein2, confidence_score
+
+    Uses fast default engine first (works for your comma-separated file),
+    then falls back to tab if it accidentally parses as 1 column.
+    """
+    df = read_table(ppi_path)
+
+    # If correct header exists, select it
+    expected = {"protein1", "protein2", "confidence_score"}
+    if expected.issubset(set(df.columns)):
+        return df[["protein1", "protein2", "confidence_score"]].copy()
+
+    # If it parsed as 1 big column, try reading explicitly as CSV then TSV
+    if df.shape[1] == 1:
+        try:
+            df2 = pd.read_csv(ppi_path, sep=",", compression="infer")
+            if df2.shape[1] >= 3:
+                df = df2
+        except Exception:
+            pass
+
+    if df.shape[1] == 1:
+        try:
+            df2 = pd.read_csv(ppi_path, sep="\t", compression="infer")
+            if df2.shape[1] >= 3:
+                df = df2
+        except Exception:
+            pass
+
+    # Final fallback: take first 3 columns and rename
+    if df.shape[1] < 3:
+        raise ValueError(
+            f"PPI file has <3 columns after parsing. cols={df.shape[1]} columns={list(df.columns)[:10]}"
+        )
+
+    df = df.iloc[:, :3].copy()
+    df.columns = ["protein1", "protein2", "confidence_score"]
+    return df
+
+
 def build_ppi_edges(
     ppi_path: str,
     gene_map_path: str,
@@ -73,9 +112,9 @@ def build_ppi_edges(
     min_confidence_score: int = 0,
 ) -> pd.DataFrame:
     """
-    Build protein-protein edges from high_confidence_score(in).csv.
+    Build protein-protein edges from high_confidence_score.csv (or ppi_min*.csv.gz).
 
-    Expected columns in high_confidence_score(in).csv:
+    Expected columns:
       protein1, protein2, confidence_score
 
     Returns edges_df with columns:
@@ -83,13 +122,10 @@ def build_ppi_edges(
     """
     ensp_to_gene, map_stats = _build_ensp_to_gene_map(gene_map_path)
 
-    ppi_df = read_table(ppi_path)
+    ppi_df = _read_ppi_three_cols(ppi_path)
 
-    expected_cols = {"protein1", "protein2", "confidence_score"}
-    if not expected_cols.issubset(set(ppi_df.columns)):
-        # fallback to positional
-        ppi_df = ppi_df.iloc[:, :3]
-        ppi_df.columns = ["protein1", "protein2", "confidence_score"]
+    # Ensure numeric score
+    ppi_df["confidence_score"] = pd.to_numeric(ppi_df["confidence_score"], errors="coerce").fillna(0).astype(int)
 
     rows_seen = 0
     rows_dropped_score = 0
@@ -104,11 +140,7 @@ def build_ppi_edges(
 
         p1 = str(row["protein1"]).strip()
         p2 = str(row["protein2"]).strip()
-
-        try:
-            score = int(row["confidence_score"])
-        except Exception:
-            continue
+        score = int(row["confidence_score"])
 
         if score < min_confidence_score:
             rows_dropped_score += 1
@@ -127,14 +159,14 @@ def build_ppi_edges(
             rows_dropped_not_in_graph += 1
             continue
 
-        # undirected edge: canonicalize order so duplicates collapse
+        # undirected: canonicalize
         a, b = (n1, n2) if n1 <= n2 else (n2, n1)
 
         edges.append((a, b, "ppi_high_confidence", score))
         edges_added_raw += 1
 
     edges_df = pd.DataFrame(edges, columns=["source", "target", "relation", "confidence_score"])
-    edges_df = edges_df.drop_duplicates(subset=["source", "target", "relation"])
+    edges_df = edges_df.drop_duplicates(subset=["source", "target", "relation"]).reset_index(drop=True)
 
     print("PPI parsing stats:")
     print(f"  lines_seen={rows_seen:,}")
