@@ -8,6 +8,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 PROCESSED_DIR = os.path.join(DATA_DIR, "processed")
+
+
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "outputs")
 
 # Input files (keep all paths consistent)
