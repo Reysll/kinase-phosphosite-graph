@@ -1,4 +1,3 @@
-# src/main.py
 from __future__ import annotations
 
 import os
@@ -12,8 +11,6 @@ from src.builders.ppi import build_ppi_edges
 from src.builders.ptmcode2 import build_ptmcode2_edges
 
 from src.preprocess import preprocess_kinase_substrate, preprocess_ppi, preprocess_ptmcode2
-
-
 from src.sanity_checks import check_site_collisions
 
 from src.config import (
@@ -62,6 +59,44 @@ def _merge_edges(edges_a: pd.DataFrame, edges_b: pd.DataFrame) -> pd.DataFrame:
     return merged
 
 
+def _add_protein_metadata(
+    nodes_df: pd.DataFrame,
+    kinase_protein_ids: set[str],
+    phosphatase_protein_ids: set[str],
+) -> pd.DataFrame:
+    """
+    Add protein-role metadata to nodes.
+
+    Output columns added:
+      - protein_role: kinase, phosphatase, both, protein, N/A
+      - is_kinase: 0/1
+      - is_phosphatase: 0/1
+    """
+    out = nodes_df.copy()
+
+    out["is_kinase"] = 0
+    out["is_phosphatase"] = 0
+    out["protein_role"] = "site"
+
+    protein_mask = out["node_type"] == "protein"
+    protein_ids = out.loc[protein_mask, "node_id"]
+
+    out.loc[protein_mask, "is_kinase"] = protein_ids.isin(kinase_protein_ids).astype(int).values
+    out.loc[protein_mask, "is_phosphatase"] = protein_ids.isin(phosphatase_protein_ids).astype(int).values
+
+    both_mask = protein_mask & (out["is_kinase"] == 1) & (out["is_phosphatase"] == 1)
+    kinase_mask = protein_mask & (out["is_kinase"] == 1) & (out["is_phosphatase"] == 0)
+    phosphatase_mask = protein_mask & (out["is_kinase"] == 0) & (out["is_phosphatase"] == 1)
+    protein_only_mask = protein_mask & (out["is_kinase"] == 0) & (out["is_phosphatase"] == 0)
+
+    out.loc[both_mask, "protein_role"] = "both"
+    out.loc[kinase_mask, "protein_role"] = "kinase"
+    out.loc[phosphatase_mask, "protein_role"] = "phosphatase"
+    out.loc[protein_only_mask, "protein_role"] = "protein"
+
+    return out
+
+
 def main() -> None:
     # 1) Kinase-substrate (cached filtered file)
     processed_kinase_file = preprocess_kinase_substrate()
@@ -70,17 +105,36 @@ def main() -> None:
     k_nodes, k_edges = build_kinase_substrate_graph(processed_kinase_file)
     print(f"Kinase_Substrate produced: nodes={len(k_nodes):,} edges={len(k_edges):,}\n")
 
+    kinase_protein_ids = set(
+        k_edges.loc[k_edges["relation"] == "phosphorylates", "source"]
+    )
+
     # 2) PPase
     print("=== Building base graph from PPase_protSubtrates ===")
     p_nodes, p_edges = build_ppase_substrate_graph(PPASE_FILE)
     print(f"PPase produced: nodes={len(p_nodes):,} edges={len(p_edges):,}\n")
 
+    phosphatase_protein_ids = set(
+        p_edges.loc[p_edges["relation"] == "dephosphorylates", "source"]
+    )
+
     # Merge base graphs
     print("=== Merging base graphs (Kinase + PPase) ===")
     nodes_df = _merge_nodes(k_nodes, p_nodes)
     edges_df = _merge_edges(k_edges, p_edges)
+
+    nodes_df = _add_protein_metadata(
+        nodes_df,
+        kinase_protein_ids=kinase_protein_ids,
+        phosphatase_protein_ids=phosphatase_protein_ids,
+    )
+
     print(f"Base nodes total (unique node_id+type): {len(nodes_df):,}")
     print(f"Base edges total (unique triples):       {len(edges_df):,}\n")
+
+    print("Protein role summary:")
+    print(nodes_df["protein_role"].value_counts(dropna=False))
+    print()
 
     # Sanity checks
     check_site_collisions(nodes_df)
