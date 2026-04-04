@@ -35,14 +35,12 @@ def _merge_edges(base_edges: pd.DataFrame, new_edges: pd.DataFrame) -> pd.DataFr
     Your project rule: deduplicate on (source, target, relation).
     base_edges may optionally have weight/n_common; we preserve extra columns.
     """
-    # Ensure core columns exist
     for col in ["source", "target", "relation"]:
         if col not in base_edges.columns:
             raise ValueError(f"base_edges missing required column: {col}")
         if col not in new_edges.columns:
             raise ValueError(f"new_edges missing required column: {col}")
 
-    # Align columns
     for col in base_edges.columns:
         if col not in new_edges.columns:
             new_edges[col] = np.nan
@@ -52,6 +50,51 @@ def _merge_edges(base_edges: pd.DataFrame, new_edges: pd.DataFrame) -> pd.DataFr
 
     out = pd.concat([base_edges, new_edges], ignore_index=True)
     out = out.drop_duplicates(subset=["source", "target", "relation"])
+    return out
+
+
+def _ensure_node_metadata(nodes_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure all node rows have metadata columns:
+
+      - is_kinase
+      - is_phosphatase
+      - protein_role
+
+    Rules:
+      - Existing values from the generic graph are preserved when present.
+      - New protein nodes default to:
+          is_kinase = 0
+          is_phosphatase = 0
+          protein_role = "protein"
+      - New site nodes default to:
+          is_kinase = 0
+          is_phosphatase = 0
+          protein_role = "site"
+    """
+    out = nodes_df.copy()
+
+    if "is_kinase" not in out.columns:
+        out["is_kinase"] = np.nan
+    if "is_phosphatase" not in out.columns:
+        out["is_phosphatase"] = np.nan
+    if "protein_role" not in out.columns:
+        out["protein_role"] = np.nan
+
+    protein_mask = out["node_type"] == "protein"
+    site_mask = out["node_type"] == "site"
+
+    out.loc[protein_mask & out["is_kinase"].isna(), "is_kinase"] = 0
+    out.loc[protein_mask & out["is_phosphatase"].isna(), "is_phosphatase"] = 0
+    out.loc[site_mask & out["is_kinase"].isna(), "is_kinase"] = 0
+    out.loc[site_mask & out["is_phosphatase"].isna(), "is_phosphatase"] = 0
+
+    out.loc[protein_mask & out["protein_role"].isna(), "protein_role"] = "protein"
+    out.loc[site_mask & out["protein_role"].isna(), "protein_role"] = "site"
+
+    out["is_kinase"] = out["is_kinase"].astype(int)
+    out["is_phosphatase"] = out["is_phosphatase"].astype(int)
+
     return out
 
 
@@ -101,7 +144,6 @@ def _build_liver_additions(
       - structural has_site edges for those phosphosites
     Filtering rule: keep rows identified in >= min_identified across ALL samples (control+sample).
     """
-    # ProteinExpression
     if "Gene Symbol" not in protein_df.columns:
         raise ValueError("ProteinExpression sheet missing required column: 'Gene Symbol'")
 
@@ -123,7 +165,6 @@ def _build_liver_additions(
 
     protein_nodes = [(protein_id(g), "protein") for g in prot_genes]
 
-    # Phosphorylation
     if "Gene Symbol" not in phospho_df.columns:
         raise ValueError("Phosphorylation sheet missing required column: 'Gene Symbol'")
     if "Modifications in Master Proteins" not in phospho_df.columns:
@@ -146,7 +187,7 @@ def _build_liver_additions(
             continue
         site_label = _extract_single_site_label(row["Modifications in Master Proteins"])
         if site_label is None:
-            continue  # skip multi-site or unparseable
+            continue
 
         p = protein_id(gene)
         s = site_id(gene, site_label)
@@ -197,12 +238,10 @@ def _corr_edges_from_matrix(
         r_row = vals[i, :].copy()
         r_row[i] = np.nan
 
-        # Candidates that are not NaN and pass threshold
         candidates = np.where(~np.isnan(r_row) & (np.abs(r_row) >= abs_threshold))[0]
         if candidates.size == 0:
             continue
 
-        # Sort candidates by abs correlation descending and take top_k
         order = candidates[np.argsort(-np.abs(r_row[candidates]))]
         if top_k is not None and top_k > 0:
             order = order[:top_k]
@@ -221,7 +260,6 @@ def _corr_edges_from_matrix(
     return edges
 
 
-
 def _build_liver_correlation_edges(
     protein_df: pd.DataFrame,
     phospho_df: pd.DataFrame,
@@ -234,11 +272,10 @@ def _build_liver_correlation_edges(
     - control correlations
     - sample correlations
     - only compute if overlap >= 6
-    - only keep if abs(r) >= abs_threshold (to keep graph bounded)
+    - only keep if abs(r) >= abs_threshold
     """
     edges: List[CorrEdge] = []
 
-    # Protein correlations
     prot_control, prot_sample = _find_control_sample_columns(list(protein_df.columns))
     if "Gene Symbol" in protein_df.columns and len(prot_control) > 0 and len(prot_sample) > 0:
         prot_ids_all = [protein_id(str(g).strip()) if str(g).strip() else "" for g in protein_df["Gene Symbol"].astype(str).tolist()]
@@ -249,7 +286,6 @@ def _build_liver_correlation_edges(
         edges += _corr_edges_from_matrix(mat_c, ids_c, "protein_corr_control", min_common, abs_threshold)
         edges += _corr_edges_from_matrix(mat_s, ids_s, "protein_corr_sample", min_common, abs_threshold)
 
-    # Site correlations
     ph_control, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
     if "Gene Symbol" in phospho_df.columns and "Modifications in Master Proteins" in phospho_df.columns and len(ph_control) > 0 and len(ph_sample) > 0:
         site_ids_all: List[str] = []
@@ -261,7 +297,6 @@ def _build_liver_correlation_edges(
             else:
                 site_ids_all.append("")
 
-        # Filter invalid IDs by turning those rows into all-NaN so they get dropped by min_identified
         ph_tmp = phospho_df.copy()
         invalid = [i for i, sid in enumerate(site_ids_all) if sid == ""]
         if invalid:
@@ -300,39 +335,34 @@ def run(
     ppi_min_confidence: int = 0,
     ptmcode_chunksize: int = 250000,
 ) -> None:
-    # Load generic outputs
     nodes_df = read_nodes_csv_gz(generic_nodes)
     edges_df = read_edges_csv_gz(generic_edges)
 
-    # Ensure optional columns exist for later merges
     if "weight" not in edges_df.columns:
         edges_df["weight"] = np.nan
     if "n_common" not in edges_df.columns:
         edges_df["n_common"] = np.nan
 
-    # Read liver excel (header row 2 => header=1)
     protein_df = pd.read_excel(liver_xlsx, sheet_name=protein_sheet, header=1)
     phospho_df = pd.read_excel(liver_xlsx, sheet_name=phospho_sheet, header=1)
 
-    # Build liver additions
     new_nodes, new_has_site = _build_liver_additions(
         protein_df=protein_df,
         phospho_df=phospho_df,
         min_identified=min_identified,
     )
 
-    # Merge nodes + has_site
     nodes_before = nodes_df["node_id"].nunique()
     edges_before = edges_df.drop_duplicates(subset=["source", "target", "relation"]).shape[0]
 
     nodes_df = pd.concat([nodes_df, new_nodes], ignore_index=True).drop_duplicates(subset=["node_id", "node_type"])
+    nodes_df = _ensure_node_metadata(nodes_df)
+
     edges_df = _merge_edges(edges_df, new_has_site.assign(weight=np.nan, n_common=np.nan))
 
-    # Recompute allowed sets
     protein_ids: Set[str] = set(nodes_df.loc[nodes_df["node_type"] == "protein", "node_id"].astype(str))
     site_ids: Set[str] = set(nodes_df.loc[nodes_df["node_type"] == "site", "node_id"].astype(str))
 
-    # Re-run secondary datasets (builders return DataFrames with source/target/relation)
     print("=== Reconnecting liver-added nodes via pathway/PPI/PTMcode datasets ===")
 
     ptm_edges = build_ptmsigdb_edges(ptmsigdb_path, allowed_site_ids=site_ids)
@@ -347,7 +377,6 @@ def run(
         existing_protein_ids=protein_ids,
         min_confidence_score=ppi_min_confidence,
     )
-    # If PPI builder includes a confidence_score column, keep it as weight
     if "confidence_score" in ppi_edges.columns:
         ppi_edges = ppi_edges.rename(columns={"confidence_score": "weight"})
     edges_df = _merge_edges(edges_df, ppi_edges)
@@ -360,7 +389,6 @@ def run(
     )
     edges_df = _merge_edges(edges_df, ptmcode_edges.assign(weight=np.nan, n_common=np.nan))
 
-    # Correlation edges
     print("=== Adding liver correlation edges ===")
     corr_edges = _build_liver_correlation_edges(
         protein_df=protein_df,
@@ -371,7 +399,6 @@ def run(
     )
     edges_df = _merge_edges(edges_df, corr_edges)
 
-    # Write outputs
     write_nodes_csv_gz(nodes_df, out_nodes)
     write_edges_csv_gz(edges_df, out_edges)
 
