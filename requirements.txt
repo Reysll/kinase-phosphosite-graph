@@ -1,6 +1,9 @@
 pandas
 numpy
 networkx
+node2vec
+gensim
+scipy
 tqdm
 xlrd==2.0.1
 openpyxl

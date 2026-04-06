@@ -1,0 +1,11 @@
+Baseline node2vec + cosine similarity results
+==========================================
+top_1_accuracy: 0.04
+top_5_accuracy: 0.08
+top_10_accuracy: 0.14
+top_20_accuracy: 0.2
+n_folds: 50.0
+n_ranked: 50.0
+n_missing_rank: 0.0
+mean_rank: 143.0
+median_rank: 114.5

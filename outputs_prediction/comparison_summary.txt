@@ -1,0 +1,10 @@
+Comparison: generic vs liver + site correlation
+=============================================
+Rows compared: 50
+Top1 changed: 37
+Improved in liver: 22
+Worsened in liver: 26
+Mean generic rank: 176.820
+Mean liver rank: 183.880
+Median generic rank: 147.000
+Median liver rank: 156.000

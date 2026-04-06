@@ -1,0 +1,7 @@
+Prediction prep summary
+=======================
+Liver site nodes: 13,410
+Candidate kinase proteins: 420
+Known positive kinase-site edges on liver sites: 14,596
+Unique positive liver sites: 10,146
+Unique positive kinases in evaluation set: 420
