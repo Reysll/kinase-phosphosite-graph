@@ -14,4 +14,7 @@ run(
     ppi_path="data/raw/high_confidence_score.csv",
     gene_map_path="data/raw/gene_protein.csv",
     ptmcode_path="data/raw/PTMcode2_associations_between_proteins.txt.gz",
+    site_corr_percentile=80.0,
+    protein_corr_percentile=80.0,
+    add_protein_fc_corr=False,
 )

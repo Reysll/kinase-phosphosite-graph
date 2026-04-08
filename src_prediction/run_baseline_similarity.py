@@ -21,26 +21,13 @@ from src_prediction.relation_filters import (
 
 
 def main() -> None:
-    #Exchange the following two blocks to run the different experiments
-    #First block: generic graph, no correlation edges
-    #Second block: liver graph, with site correlation edges
-    #To run the generic graph experiment, set:
-    """
-    experiment_name = "generic_cosine_parallel_baseline"
-    graph_choice = "generic"
-    include_site_corr = False
-    include_protein_corr = False
-    """
+    experiment_name = "liver_trained_model_fc_corr_debug"
 
-    #To run the liver graph experiment, set:
-
-    experiment_name = "liver_cosine_with_site_corr"
     graph_choice = "liver"
     include_site_corr = True
     include_protein_corr = False
 
-
-    frozen_folds_path = PRED_OUTPUTS_DIR / "frozen_folds_50.csv.gz"
+    frozen_folds_path = PRED_OUTPUTS_DIR / "frozen_folds_10.csv.gz"
 
     n_jobs_outer = 2
     workers_per_fold = 1
@@ -48,7 +35,7 @@ def main() -> None:
     params = Node2VecParams(
         dimensions=32,
         walk_length=10,
-        num_walks=50,
+        num_walks=25,
         workers=workers_per_fold,
         p=1.0,
         q=1.0,
@@ -79,23 +66,12 @@ def main() -> None:
     print(f"Frozen evaluation edges: {len(positive_edges):,}\n")
 
     allowed_relations = set(GENERIC_BASE_RELATIONS)
-
     if include_site_corr:
         allowed_relations |= SITE_CORR_RELATIONS
     if include_protein_corr:
         allowed_relations |= PROTEIN_CORR_RELATIONS
 
-    print("=== Experiment relation set ===")
-    for rel in sorted(allowed_relations):
-        print(f"  - {rel}")
-    print()
-
-    print("=== Parallel config ===")
-    print(f"Outer parallel folds: {n_jobs_outer}")
-    print(f"Node2Vec workers per fold: {workers_per_fold}")
-    print()
-
-    print("=== Running leave-one-out: node2vec + cosine similarity ===")
+    print("=== Running leave-one-out: node2vec + trained logistic model ===")
 
     results = run_leave_one_out(
         graph_edges=graph.edges,
@@ -107,6 +83,7 @@ def main() -> None:
         random_state=42,
         verbose_every=2,
         n_jobs_outer=n_jobs_outer,
+        max_negatives_per_site=50,
     )
 
     metrics_df = summarize_results(results)

@@ -27,14 +27,10 @@ class CorrEdge:
     n_common: int
 
 
-PHOSPHO_SITE_RE = re.compile(r"([STY])\s*([0-9]+)")  # catches S311, T539, Y476
+PHOSPHO_SITE_RE = re.compile(r"([STY])\s*([0-9]+)")
 
 
 def _merge_edges(base_edges: pd.DataFrame, new_edges: pd.DataFrame) -> pd.DataFrame:
-    """
-    Your project rule: deduplicate on (source, target, relation).
-    base_edges may optionally have weight/n_common; we preserve extra columns.
-    """
     for col in ["source", "target", "relation"]:
         if col not in base_edges.columns:
             raise ValueError(f"base_edges missing required column: {col}")
@@ -54,24 +50,6 @@ def _merge_edges(base_edges: pd.DataFrame, new_edges: pd.DataFrame) -> pd.DataFr
 
 
 def _ensure_node_metadata(nodes_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Ensure all node rows have metadata columns:
-
-      - is_kinase
-      - is_phosphatase
-      - protein_role
-
-    Rules:
-      - Existing values from the generic graph are preserved when present.
-      - New protein nodes default to:
-          is_kinase = 0
-          is_phosphatase = 0
-          protein_role = "protein"
-      - New site nodes default to:
-          is_kinase = 0
-          is_phosphatase = 0
-          protein_role = "site"
-    """
     out = nodes_df.copy()
 
     if "is_kinase" not in out.columns:
@@ -99,11 +77,6 @@ def _ensure_node_metadata(nodes_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _find_control_sample_columns(cols: List[str]) -> Tuple[List[str], List[str]]:
-    """
-    Uses suffix naming in your Excel:
-    - endswith('Control')
-    - endswith('Sample')
-    """
     control_cols: List[str] = []
     sample_cols: List[str] = []
     for c in cols:
@@ -119,11 +92,6 @@ def _identified_at_least(df: pd.DataFrame, cols: List[str], min_n: int) -> pd.Se
 
 
 def _extract_single_site_label(mod_str: str) -> Optional[str]:
-    """
-    Example:
-      'P02768 1xPhospho [S311(100)]' -> 'S311'
-      '... [Y476(100); S478(100)]' -> None (multi-site, skip)
-    """
     if not isinstance(mod_str, str):
         return None
     hits = PHOSPHO_SITE_RE.findall(mod_str)
@@ -138,12 +106,6 @@ def _build_liver_additions(
     phospho_df: pd.DataFrame,
     min_identified: int = 6,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """
-    Builds:
-      - new nodes from liver sheets (proteins + single-site phosphosites)
-      - structural has_site edges for those phosphosites
-    Filtering rule: keep rows identified in >= min_identified across ALL samples (control+sample).
-    """
     if "Gene Symbol" not in protein_df.columns:
         raise ValueError("ProteinExpression sheet missing required column: 'Gene Symbol'")
 
@@ -200,120 +162,235 @@ def _build_liver_additions(
     return nodes_df, edges_df
 
 
-def _prep_matrix_for_corr(df: pd.DataFrame, id_list: List[str], cols: List[str], min_identified: int) -> Tuple[pd.DataFrame, List[str]]:
-    """
-    Returns numeric matrix with rows filtered by >=min_identified in the given cols.
-    """
-    mat = df[cols].apply(pd.to_numeric, errors="coerce")
-    keep = mat.notna().sum(axis=1) >= min_identified
-    mat = mat.loc[keep].copy()
-    ids = [id_list[i] for i, k in enumerate(keep.tolist()) if k]
-    return mat, ids
+def _prepare_site_fold_change_matrix(
+    phospho_df: pd.DataFrame,
+    min_identified: int = 6,
+) -> Tuple[pd.DataFrame, List[str]]:
+    if "Gene Symbol" not in phospho_df.columns:
+        raise ValueError("Phosphorylation sheet missing required column: 'Gene Symbol'")
+    if "Modifications in Master Proteins" not in phospho_df.columns:
+        raise ValueError("Phosphorylation sheet missing required column: 'Modifications in Master Proteins'")
+
+    ph_control, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
+    if len(ph_control) == 0 or len(ph_sample) == 0:
+        raise ValueError("Phosphorylation: could not detect Control and Sample columns.")
+
+    site_ids_all: List[str] = []
+    for g, mod in zip(
+        phospho_df["Gene Symbol"].astype(str).tolist(),
+        phospho_df["Modifications in Master Proteins"].tolist(),
+    ):
+        gene = str(g).strip()
+        site_label = _extract_single_site_label(mod)
+        if gene and site_label:
+            site_ids_all.append(site_id(gene, site_label))
+        else:
+            site_ids_all.append("")
+
+    control_mat = phospho_df[ph_control].apply(pd.to_numeric, errors="coerce")
+    sample_mat = phospho_df[ph_sample].apply(pd.to_numeric, errors="coerce")
+
+    valid_site = pd.Series([sid != "" for sid in site_ids_all], index=phospho_df.index)
+    keep = (
+        valid_site
+        & (control_mat.notna().sum(axis=1) >= 1)
+        & (sample_mat.notna().sum(axis=1) >= min_identified)
+    )
+
+    control_mat = control_mat.loc[keep].copy()
+    sample_mat = sample_mat.loc[keep].copy()
+    kept_site_ids = [sid for sid, k in zip(site_ids_all, keep.tolist()) if k]
+
+    mu = control_mat.mean(axis=1, skipna=True)
+    mu = mu.where(mu > 0, np.nan)
+
+    fold_change_mat = sample_mat.div(mu, axis=0)
+    keep_fc = fold_change_mat.notna().sum(axis=1) >= min_identified
+
+    fold_change_mat = fold_change_mat.loc[keep_fc].copy()
+    final_site_ids = [sid for sid, k in zip(kept_site_ids, keep_fc.tolist()) if k]
+
+    fold_change_mat.index = final_site_ids
+
+    n_rows_before_collapse = len(fold_change_mat)
+    n_unique_sites = fold_change_mat.index.nunique()
+
+    if n_rows_before_collapse != n_unique_sites:
+        fold_change_mat = fold_change_mat.groupby(level=0).mean()
+
+    final_site_ids = fold_change_mat.index.tolist()
+
+    print("=== Site fold-change matrix stats ===")
+    print(f"Single parsed site rows kept: {n_rows_before_collapse:,}")
+    print(f"Unique sites after duplicate collapse: {n_unique_sites:,}")
+    print(f"Tumor sample columns used: {len(ph_sample):,}")
+
+    return fold_change_mat, final_site_ids
 
 
-def _corr_edges_from_matrix(
-    mat: pd.DataFrame,
-    ids: List[str],
-    relation: str,
-    min_common: int = 6,
-    abs_threshold: float = 0.0,
-    top_k: int = 20,
-) -> List[CorrEdge]:
-    """
-    Top-K correlation edges per node.
-    For each node i, keep the K strongest correlations by absolute value
-    (optionally also require abs(r) >= abs_threshold).
-    Adds directed edges (i->j) for kept neighbors.
-    """
-    if mat.shape[0] < 2:
-        return []
-
-    corr = mat.T.corr(method="pearson", min_periods=min_common)
-    vals = corr.values
-    n = vals.shape[0]
-
-    edges: List[CorrEdge] = []
-
-    for i in range(n):
-        r_row = vals[i, :].copy()
-        r_row[i] = np.nan
-
-        candidates = np.where(~np.isnan(r_row) & (np.abs(r_row) >= abs_threshold))[0]
-        if candidates.size == 0:
-            continue
-
-        order = candidates[np.argsort(-np.abs(r_row[candidates]))]
-        if top_k is not None and top_k > 0:
-            order = order[:top_k]
-
-        xi = mat.iloc[i, :]
-        u = ids[i]
-
-        for j in order:
-            xj = mat.iloc[j, :]
-            common = int((xi.notna() & xj.notna()).sum())
-            if common < min_common:
-                continue
-            v = ids[j]
-            edges.append(CorrEdge(u, v, relation, float(r_row[j]), common))
-
-    return edges
-
-
-def _build_liver_correlation_edges(
+def _prepare_protein_fold_change_matrix(
     protein_df: pd.DataFrame,
+    min_identified: int = 6,
+) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Protein-level fold-change matrix:
+    1. mean across healthy controls per protein
+    2. tumor / mean_control per tumor sample
+    3. collapse duplicate proteins by averaging rows
+    """
+    if "Gene Symbol" not in protein_df.columns:
+        raise ValueError("ProteinExpression sheet missing required column: 'Gene Symbol'")
+
+    prot_control, prot_sample = _find_control_sample_columns(list(protein_df.columns))
+    if len(prot_control) == 0 or len(prot_sample) == 0:
+        raise ValueError("ProteinExpression: could not detect Control and Sample columns.")
+
+    protein_ids_all = []
+    for g in protein_df["Gene Symbol"].astype(str).tolist():
+        gene = str(g).strip()
+        protein_ids_all.append(protein_id(gene) if gene else "")
+
+    control_mat = protein_df[prot_control].apply(pd.to_numeric, errors="coerce")
+    sample_mat = protein_df[prot_sample].apply(pd.to_numeric, errors="coerce")
+
+    valid_protein = pd.Series([pid != "" for pid in protein_ids_all], index=protein_df.index)
+    keep = (
+        valid_protein
+        & (control_mat.notna().sum(axis=1) >= 1)
+        & (sample_mat.notna().sum(axis=1) >= min_identified)
+    )
+
+    control_mat = control_mat.loc[keep].copy()
+    sample_mat = sample_mat.loc[keep].copy()
+    kept_protein_ids = [pid for pid, k in zip(protein_ids_all, keep.tolist()) if k]
+
+    mu = control_mat.mean(axis=1, skipna=True)
+    mu = mu.where(mu > 0, np.nan)
+
+    fold_change_mat = sample_mat.div(mu, axis=0)
+    keep_fc = fold_change_mat.notna().sum(axis=1) >= min_identified
+
+    fold_change_mat = fold_change_mat.loc[keep_fc].copy()
+    final_protein_ids = [pid for pid, k in zip(kept_protein_ids, keep_fc.tolist()) if k]
+
+    fold_change_mat.index = final_protein_ids
+
+    n_rows_before_collapse = len(fold_change_mat)
+    n_unique_proteins = fold_change_mat.index.nunique()
+
+    if n_rows_before_collapse != n_unique_proteins:
+        fold_change_mat = fold_change_mat.groupby(level=0).mean()
+
+    final_protein_ids = fold_change_mat.index.tolist()
+
+    print("=== Protein fold-change matrix stats ===")
+    print(f"Protein rows kept: {n_rows_before_collapse:,}")
+    print(f"Unique proteins after duplicate collapse: {n_unique_proteins:,}")
+    print(f"Tumor sample columns used: {len(prot_sample):,}")
+
+    return fold_change_mat, final_protein_ids
+
+
+def _build_corr_edges_from_fc_matrix(
+    fc_mat: pd.DataFrame,
+    percentile: float,
+    min_common: int,
+    pos_relation: str,
+    neg_relation: str,
+    label: str,
+) -> pd.DataFrame:
+    if fc_mat.shape[0] < 2:
+        print(f"Not enough {label} rows to compute correlations.")
+        return pd.DataFrame(columns=["source", "target", "relation", "weight", "n_common"])
+
+    corr = fc_mat.T.corr(method="pearson", min_periods=min_common)
+
+    mask = np.triu(np.ones(corr.shape, dtype=bool), k=1)
+    upper = corr.where(mask)
+    corr_values = upper.stack().astype(float)
+
+    positive_vals = corr_values[corr_values > 0]
+    negative_vals = corr_values[corr_values < 0]
+
+    pos_threshold = np.percentile(positive_vals, percentile) if len(positive_vals) > 0 else np.inf
+    neg_threshold = np.percentile(negative_vals, 100 - percentile) if len(negative_vals) > 0 else -np.inf
+
+    print(f"=== {label} fold-change correlation thresholds ===")
+    print(f"Percentile: {percentile}")
+    print(f"Positive threshold: {pos_threshold:.6f}" if np.isfinite(pos_threshold) else "Positive threshold: inf")
+    print(f"Negative threshold: {neg_threshold:.6f}" if np.isfinite(neg_threshold) else "Negative threshold: -inf")
+    print(f"Total pairwise correlations evaluated: {len(corr_values):,}")
+
+    selected = upper.stack().reset_index()
+    selected.columns = ["source", "target", "weight"]
+
+    selected = selected.loc[
+        (selected["weight"] >= pos_threshold) | (selected["weight"] <= neg_threshold)
+    ].copy()
+
+    if selected.empty:
+        print(f"No {label} correlation edges passed threshold.")
+        return pd.DataFrame(columns=["source", "target", "relation", "weight", "n_common"])
+
+    selected["relation"] = np.where(
+        selected["weight"] >= pos_threshold,
+        pos_relation,
+        neg_relation,
+    )
+
+    n_common_vals = []
+    for row in selected.itertuples(index=False):
+        common = int((fc_mat.loc[row.source].notna() & fc_mat.loc[row.target].notna()).sum())
+        n_common_vals.append(common)
+
+    selected["n_common"] = n_common_vals
+
+    out = selected[["source", "target", "relation", "weight", "n_common"]].drop_duplicates(
+        subset=["source", "target", "relation"]
+    )
+
+    print(f"{label} fold-change correlation edges kept: {len(out):,}")
+    return out
+
+
+def _build_site_fold_change_corr_edges(
     phospho_df: pd.DataFrame,
     min_identified: int = 6,
     min_common: int = 6,
-    abs_threshold: float = 0.7,
+    percentile: float = 80.0,
 ) -> pd.DataFrame:
-    """
-    Builds correlation edges per Dr. Ayati rules:
-    - control correlations
-    - sample correlations
-    - only compute if overlap >= 6
-    - only keep if abs(r) >= abs_threshold
-    """
-    edges: List[CorrEdge] = []
+    fc_mat, _ = _prepare_site_fold_change_matrix(
+        phospho_df=phospho_df,
+        min_identified=min_identified,
+    )
+    return _build_corr_edges_from_fc_matrix(
+        fc_mat=fc_mat,
+        percentile=percentile,
+        min_common=min_common,
+        pos_relation="site_corr_fc_pos",
+        neg_relation="site_corr_fc_neg",
+        label="Site",
+    )
 
-    prot_control, prot_sample = _find_control_sample_columns(list(protein_df.columns))
-    if "Gene Symbol" in protein_df.columns and len(prot_control) > 0 and len(prot_sample) > 0:
-        prot_ids_all = [protein_id(str(g).strip()) if str(g).strip() else "" for g in protein_df["Gene Symbol"].astype(str).tolist()]
 
-        mat_c, ids_c = _prep_matrix_for_corr(protein_df, prot_ids_all, prot_control, min_identified)
-        mat_s, ids_s = _prep_matrix_for_corr(protein_df, prot_ids_all, prot_sample, min_identified)
-
-        edges += _corr_edges_from_matrix(mat_c, ids_c, "protein_corr_control", min_common, abs_threshold)
-        edges += _corr_edges_from_matrix(mat_s, ids_s, "protein_corr_sample", min_common, abs_threshold)
-
-    ph_control, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
-    if "Gene Symbol" in phospho_df.columns and "Modifications in Master Proteins" in phospho_df.columns and len(ph_control) > 0 and len(ph_sample) > 0:
-        site_ids_all: List[str] = []
-        for g, mod in zip(phospho_df["Gene Symbol"].astype(str).tolist(), phospho_df["Modifications in Master Proteins"].tolist()):
-            gene = str(g).strip()
-            lab = _extract_single_site_label(mod)
-            if gene and lab:
-                site_ids_all.append(site_id(gene, lab))
-            else:
-                site_ids_all.append("")
-
-        ph_tmp = phospho_df.copy()
-        invalid = [i for i, sid in enumerate(site_ids_all) if sid == ""]
-        if invalid:
-            ph_tmp.loc[ph_tmp.index[invalid], ph_control + ph_sample] = np.nan
-
-        mat_c, ids_c = _prep_matrix_for_corr(ph_tmp, site_ids_all, ph_control, min_identified)
-        mat_s, ids_s = _prep_matrix_for_corr(ph_tmp, site_ids_all, ph_sample, min_identified)
-
-        edges += _corr_edges_from_matrix(mat_c, ids_c, "site_corr_control", min_common, abs_threshold)
-        edges += _corr_edges_from_matrix(mat_s, ids_s, "site_corr_sample", min_common, abs_threshold)
-
-    out = pd.DataFrame(
-        [(e.source, e.target, e.relation, e.weight, e.n_common) for e in edges],
-        columns=["source", "target", "relation", "weight", "n_common"],
-    ).drop_duplicates(subset=["source", "target", "relation"])
-
-    return out
+def _build_protein_fold_change_corr_edges(
+    protein_df: pd.DataFrame,
+    min_identified: int = 6,
+    min_common: int = 6,
+    percentile: float = 80.0,
+) -> pd.DataFrame:
+    fc_mat, _ = _prepare_protein_fold_change_matrix(
+        protein_df=protein_df,
+        min_identified=min_identified,
+    )
+    return _build_corr_edges_from_fc_matrix(
+        fc_mat=fc_mat,
+        percentile=percentile,
+        min_common=min_common,
+        pos_relation="protein_corr_fc_pos",
+        neg_relation="protein_corr_fc_neg",
+        label="Protein",
+    )
 
 
 def run(
@@ -331,7 +408,9 @@ def run(
     ptmcode_path: str,
     min_identified: int = 6,
     min_common: int = 6,
-    abs_threshold: float = 0.7,
+    site_corr_percentile: float = 80.0,
+    protein_corr_percentile: float = 80.0,
+    add_protein_fc_corr: bool = True,
     ppi_min_confidence: int = 0,
     ptmcode_chunksize: int = 250000,
 ) -> None:
@@ -389,15 +468,24 @@ def run(
     )
     edges_df = _merge_edges(edges_df, ptmcode_edges.assign(weight=np.nan, n_common=np.nan))
 
-    print("=== Adding liver correlation edges ===")
-    corr_edges = _build_liver_correlation_edges(
-        protein_df=protein_df,
+    print("=== Adding liver site fold-change correlation edges ===")
+    site_corr_edges = _build_site_fold_change_corr_edges(
         phospho_df=phospho_df,
         min_identified=min_identified,
         min_common=min_common,
-        abs_threshold=abs_threshold,
+        percentile=site_corr_percentile,
     )
-    edges_df = _merge_edges(edges_df, corr_edges)
+    edges_df = _merge_edges(edges_df, site_corr_edges)
+
+    if add_protein_fc_corr:
+        print("=== Adding liver protein fold-change correlation edges ===")
+        protein_corr_edges = _build_protein_fold_change_corr_edges(
+            protein_df=protein_df,
+            min_identified=min_identified,
+            min_common=min_common,
+            percentile=protein_corr_percentile,
+        )
+        edges_df = _merge_edges(edges_df, protein_corr_edges)
 
     write_nodes_csv_gz(nodes_df, out_nodes)
     write_edges_csv_gz(edges_df, out_edges)
@@ -431,7 +519,9 @@ def main() -> None:
 
     ap.add_argument("--min-identified", type=int, default=6)
     ap.add_argument("--min-common", type=int, default=6)
-    ap.add_argument("--abs-threshold", type=float, default=0.9)
+    ap.add_argument("--site-corr-percentile", type=float, default=80.0)
+    ap.add_argument("--protein-corr-percentile", type=float, default=80.0)
+    ap.add_argument("--add-protein-fc-corr", action="store_true")
 
     ap.add_argument("--ppi-min-confidence", type=int, default=0)
     ap.add_argument("--ptmcode-chunksize", type=int, default=250000)
@@ -453,7 +543,9 @@ def main() -> None:
         ptmcode_path=args.ptmcode2,
         min_identified=args.min_identified,
         min_common=args.min_common,
-        abs_threshold=args.abs_threshold,
+        site_corr_percentile=args.site_corr_percentile,
+        protein_corr_percentile=args.protein_corr_percentile,
+        add_protein_fc_corr=args.add_protein_fc_corr,
         ppi_min_confidence=args.ppi_min_confidence,
         ptmcode_chunksize=args.ptmcode_chunksize,
     )

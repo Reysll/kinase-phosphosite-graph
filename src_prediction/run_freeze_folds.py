@@ -10,7 +10,7 @@ from src_prediction.io_utils import read_csv_auto, write_csv_gz
 def main() -> None:
     positive_edges = read_csv_auto(LIVER_POSITIVE_EDGES_OUT)
 
-    max_folds = 50
+    max_folds = 10
     random_state = 42
 
     frozen = sample_folds(
@@ -19,7 +19,7 @@ def main() -> None:
         random_state=random_state,
     )
 
-    out_path = PRED_OUTPUTS_DIR / "frozen_folds_50.csv.gz"
+    out_path = PRED_OUTPUTS_DIR / "frozen_folds_10.csv.gz"
     write_csv_gz(frozen, out_path)
 
     print(f"Frozen folds: {len(frozen):,}")

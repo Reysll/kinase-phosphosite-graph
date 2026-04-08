@@ -16,13 +16,13 @@ GENERIC_BASE_RELATIONS: Set[str] = {
 }
 
 SITE_CORR_RELATIONS: Set[str] = {
-    "site_corr_control",
-    "site_corr_sample",
+    "site_corr_fc_pos",
+    "site_corr_fc_neg",
 }
 
 PROTEIN_CORR_RELATIONS: Set[str] = {
-    "protein_corr_control",
-    "protein_corr_sample",
+    "protein_corr_fc_pos",
+    "protein_corr_fc_neg",
 }
 
 

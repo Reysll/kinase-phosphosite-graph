@@ -4,6 +4,7 @@ networkx
 node2vec
 gensim
 scipy
+scikit-learn
 tqdm
 xlrd==2.0.1
 openpyxl

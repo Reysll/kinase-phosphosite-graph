@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 import numpy as np
 import pandas as pd
 
 from src_prediction.embeddings import build_graph_from_edges, fit_node2vec_embeddings
+from src_prediction.model_scoring import train_logistic_pair_model, score_site_with_trained_model
 from src_prediction.parallel_utils import run_in_parallel
-from src_prediction.scoring import CosineSimilarityScorer
+from src_prediction.truth_utils import build_site_to_true_kinases
 
 
 @dataclass
@@ -30,9 +31,12 @@ class Node2VecParams:
 class FoldTask:
     fold_row: dict
     graph_edges: pd.DataFrame
+    all_positive_edges: pd.DataFrame
     candidate_kinase_ids: List[str]
     node2vec_params: Node2VecParams
     allowed_relations: Optional[Set[str]]
+    site_to_true_kinases: Dict[str, List[str]]
+    max_negatives_per_site: int
 
 
 def _prepare_folds(
@@ -50,23 +54,34 @@ def _prepare_folds(
     return folds
 
 
-def _compute_rank(scored: pd.DataFrame, true_kinase_node_id: str) -> Optional[int]:
+def _compute_rank(scored: pd.DataFrame, kinase_node_id: str) -> Optional[int]:
     if scored.empty:
         return None
-
-    hit = scored.index[scored["kinase_node_id"] == true_kinase_node_id].tolist()
+    hit = scored.index[scored["kinase_node_id"] == kinase_node_id].tolist()
     if not hit:
         return None
-
     return int(hit[0] + 1)
+
+
+def _compute_best_true_rank(scored: pd.DataFrame, true_kinase_ids: List[str]) -> Optional[int]:
+    if scored.empty or not true_kinase_ids:
+        return None
+    true_set = set(map(str, true_kinase_ids))
+    hits = scored.index[scored["kinase_node_id"].isin(true_set)].tolist()
+    if not hits:
+        return None
+    return int(min(hits) + 1)
 
 
 def _run_single_fold(task: FoldTask) -> dict:
     fold_row = task.fold_row
     graph_edges = task.graph_edges
+    all_positive_edges = task.all_positive_edges
     candidate_kinase_ids = task.candidate_kinase_ids
     node2vec_params = task.node2vec_params
     allowed_relations = task.allowed_relations
+    site_to_true_kinases = task.site_to_true_kinases
+    max_negatives_per_site = task.max_negatives_per_site
 
     fold_index = int(fold_row["fold_index"])
     true_kinase = str(fold_row["kinase_node_id"])
@@ -94,15 +109,32 @@ def _run_single_fold(task: FoldTask) -> dict:
         seed=node2vec_params.seed,
     )
 
-    scorer = CosineSimilarityScorer()
+    train_positive_edges = all_positive_edges.loc[
+        ~(
+            (all_positive_edges["kinase_node_id"] == true_kinase)
+            & (all_positive_edges["site_node_id"] == site_node)
+        )
+    ].copy()
 
-    scored = scorer.score_site_against_kinases(
+    trained = train_logistic_pair_model(
+        train_positive_edges=train_positive_edges,
+        candidate_kinase_ids=candidate_kinase_ids,
+        site_to_true_kinases=site_to_true_kinases,
+        embeddings=embeddings,
+        max_negatives_per_site=max_negatives_per_site,
+    )
+
+    scored = score_site_with_trained_model(
+        model=trained.model,
         site_node_id=site_node,
-        candidate_kinases=candidate_kinase_ids,
+        candidate_kinase_ids=candidate_kinase_ids,
         embeddings=embeddings,
     )
 
-    rank = _compute_rank(scored, true_kinase_node_id=true_kinase)
+    true_kinases_for_site = site_to_true_kinases.get(site_node, [])
+    held_out_rank = _compute_rank(scored, kinase_node_id=true_kinase)
+    best_true_rank = _compute_best_true_rank(scored, true_kinase_ids=true_kinases_for_site)
+
     top1_pred = scored.iloc[0]["kinase_node_id"] if not scored.empty else None
     top1_score = float(scored.iloc[0]["score"]) if not scored.empty else np.nan
     num_scored = len(scored)
@@ -112,7 +144,10 @@ def _run_single_fold(task: FoldTask) -> dict:
         "true_kinase_node_id": true_kinase,
         "site_node_id": site_node,
         "held_out_relation": relation,
-        "rank_of_true_kinase": rank,
+        "held_out_kinase_rank": held_out_rank,
+        "best_true_kinase_rank": best_true_rank,
+        "n_true_kinases_for_site": len(true_kinases_for_site),
+        "all_true_kinases_for_site": ";".join(true_kinases_for_site),
         "top1_predicted_kinase": top1_pred,
         "top1_score": top1_score,
         "num_candidate_kinases_scored": num_scored,
@@ -131,16 +166,8 @@ def run_leave_one_out(
     random_state: int = 42,
     verbose_every: int = 10,
     n_jobs_outer: int = 1,
+    max_negatives_per_site: int = 50,
 ) -> pd.DataFrame:
-    """
-    True edge-level leave-one-out with optional parallelization across folds.
-
-    IMPORTANT:
-    On Windows, do not combine heavy outer parallelism with inner node2vec
-    multiprocessing. Prefer:
-      - n_jobs_outer > 1
-      - node2vec_params.workers = 1
-    """
     folds = _prepare_folds(
         positive_edges=positive_edges,
         max_folds=max_folds,
@@ -148,15 +175,19 @@ def run_leave_one_out(
     )
 
     candidate_kinase_ids: List[str] = candidate_kinases["node_id"].astype(str).tolist()
+    site_to_true_kinases = build_site_to_true_kinases(positive_edges)
     fold_dicts = folds.to_dict(orient="records")
 
     tasks = [
         FoldTask(
             fold_row=fold_row,
             graph_edges=graph_edges,
+            all_positive_edges=positive_edges,
             candidate_kinase_ids=candidate_kinase_ids,
             node2vec_params=node2vec_params,
             allowed_relations=allowed_relations,
+            site_to_true_kinases=site_to_true_kinases,
+            max_negatives_per_site=max_negatives_per_site,
         )
         for fold_row in fold_dicts
     ]
@@ -173,5 +204,4 @@ def run_leave_one_out(
         if verbose_every and (i % verbose_every == 0 or i == len(tasks)):
             print(f"[leave-one-out] completed {i:,}/{len(tasks):,} folds")
 
-    results_df = pd.DataFrame(results).sort_values("fold_index").reset_index(drop=True)
-    return results_df
+    return pd.DataFrame(results).sort_values("fold_index").reset_index(drop=True)

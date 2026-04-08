@@ -1,0 +1,20 @@
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.0
+held_out_top_5_accuracy: 0.0
+held_out_top_10_accuracy: 0.1
+held_out_top_20_accuracy: 0.1
+held_out_n_ranked: 10.0
+held_out_n_missing_rank: 0.0
+held_out_mean_rank: 146.4
+held_out_median_rank: 118.0
+best_true_top_1_accuracy: 0.0
+best_true_top_5_accuracy: 0.0
+best_true_top_10_accuracy: 0.1
+best_true_top_20_accuracy: 0.1
+best_true_n_ranked: 10.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 146.4
+best_true_median_rank: 118.0
+n_folds: 10.0
+mean_n_true_kinases_per_site: 1.0
