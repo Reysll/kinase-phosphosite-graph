@@ -1,14 +1,14 @@
 Comparison: generic trained model vs liver trained model with fold-change site correlation
 =========================================================================================
 Rows compared: 10
-Top1 changed: 9
-Held-out improved in liver: 5
-Best-true improved in liver: 5
+Top1 changed: 8
+Held-out improved in liver: 7
+Best-true improved in liver: 7
 Mean generic held-out rank: 146.400
-Mean liver held-out rank: 144.800
+Mean liver held-out rank: 73.300
 Median generic held-out rank: 118.000
-Median liver held-out rank: 128.500
+Median liver held-out rank: 58.000
 Mean generic best-true rank: 146.400
-Mean liver best-true rank: 144.800
+Mean liver best-true rank: 73.300
 Median generic best-true rank: 118.000
-Median liver best-true rank: 128.500
+Median liver best-true rank: 58.000
