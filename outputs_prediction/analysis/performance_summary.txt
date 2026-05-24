@@ -1,0 +1,24 @@
+Combined Performance Summary — LOO Evaluation
+==========================================================================================
+
+Experiment                                            n_trials    Top-1    Top-5   Top-10   Top-20   Mean rank  Median rank
+------------------------------------------------------------------------------------------
+Held-out kinase rank (the specific removed edge)
+------------------------------------------------------------------------------------------
+  Generic model     (50-trial single-kinase debug)          50  0.0%  (0/50)  0.0%  (0/50)  0.0%  (0/50)  2.0%  (1/50)       157.4          118
+  Liver model       (50-trial single-kinase debug)          50  0.0%  (0/50)  4.0%  (2/50)  6.0%  (3/50)  8.0%  (4/50)       118.2          104
+  Generic model     (6,909-trial multi-kinase)           6,909  0.0%  (3/6909)  0.8%  (54/6909)  4.0%  (279/6909)  10.1%  (697/6909)       140.0          107
+  Liver model       (6,909-trial multi-kinase)           6,909  0.2%  (11/6909)  0.7%  (49/6909)  2.6%  (177/6909)  8.0%  (551/6909)       148.8          125
+
+------------------------------------------------------------------------------------------
+Best-true kinase rank (best-ranked among all known kinases for the site)
+------------------------------------------------------------------------------------------
+  Generic model     (50-trial single-kinase debug)          50  0.0%  (0/50)  0.0%  (0/50)  0.0%  (0/50)  2.0%  (1/50)       157.4          118
+  Liver model       (50-trial single-kinase debug)          50  0.0%  (0/50)  4.0%  (2/50)  6.0%  (3/50)  8.0%  (4/50)       118.2          104
+  Generic model     (6,909-trial multi-kinase)           6,909  0.1%  (9/6909)  2.9%  (203/6909)  12.9%  (890/6909)  29.3%  (2026/6909)        64.1           39
+  Liver model       (6,909-trial multi-kinase)           6,909  1.0%  (69/6909)  2.9%  (202/6909)  8.9%  (612/6909)  22.8%  (1578/6909)        76.3           63
+
+Note: candidate kinase pool = 420. Random top-1 baseline ≈ 0.24%, top-20 ≈ 4.8%.
+Note: multi-kinase generic outperforms liver on held-out rank because multi-kinase
+      sites are dominated by well-studied hub kinases (AKT1, GSK3B, TP53) that are
+      richly connected in the generic graph. Liver wins for sparse, less-studied sites.

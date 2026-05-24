@@ -1,0 +1,90 @@
+Ranking Shift Case Studies — Multi-Kinase LOO (liver vs generic)
+==========================================================================================
+
+Interpretation: delta = generic_rank - liver_rank
+  Positive delta -> liver improved ranking (lower rank number = better)
+  Negative delta -> liver worsened ranking
+
+Top-20 trials with BIGGEST IMPROVEMENT in liver model (n_total_improved = 2,589):
+------------------------------------------------------------------------------------------
+  MLKL-Y376                     true: TYRO3             generic rank:  411  liver rank:   15  delta:   +396  top-1: VRK3 -> VRK2
+  AKT1-T308                     true: TYRO3             generic rank:  407  liver rank:   14  delta:   +393  top-1: VRK3 -> VRK2
+  ENG-S649                      true: TGFBR1            generic rank:  409  liver rank:   34  delta:   +375  top-1: VRK3 -> VRK2
+  ENG-S646                      true: TGFBR1            generic rank:  409  liver rank:   36  delta:   +373  top-1: VRK3 -> VRK2
+  TP63-S66                      true: TGFBR1            generic rank:  409  liver rank:   36  delta:   +373  top-1: VRK3 -> VRK2
+  TP63-S68                      true: TGFBR1            generic rank:  407  liver rank:   37  delta:   +370  top-1: VRK3 -> VRK2
+  MYC-S77                       true: MAPK7             generic rank:  402  liver rank:   45  delta:   +357  top-1: VRK3 -> VRK2
+  CDKN1A-S98                    true: MAP3K5            generic rank:  363  liver rank:   26  delta:   +337  top-1: VRK3 -> VRK2
+  TH-S19                        true: MAPKAPK5          generic rank:  380  liver rank:   50  delta:   +330  top-1: VRK3 -> VRK2
+  TH-S404                       true: MAPKAPK5          generic rank:  380  liver rank:   50  delta:   +330  top-1: VRK3 -> VRK2
+  MAP2K3-S218                   true: MAP3K5            generic rank:  362  liver rank:   33  delta:   +329  top-1: VRK3 -> VRK2
+  FOS-T232                      true: MAPK7             generic rank:  371  liver rank:   43  delta:   +328  top-1: VRK3 -> VRK2
+  TP53-S37                      true: MAPKAPK5          generic rank:  365  liver rank:   37  delta:   +328  top-1: VRK1 -> VRK2
+  MAP3K5-T838                   true: MAP3K5            generic rank:  357  liver rank:   31  delta:   +326  top-1: VRK3 -> VRK2
+  MAP2K6-S207                   true: MAP3K5            generic rank:  358  liver rank:   34  delta:   +324  top-1: VRK3 -> VRK2
+  BAD-S99                       true: PRKCQ             generic rank:  351  liver rank:   28  delta:   +323  top-1: VRK3 -> VRK2
+  SHC3-Y218                     true: NTRK2             generic rank:  380  liver rank:   63  delta:   +317  top-1: VRK3 -> VRK2
+  ETS1-T38                      true: MAPK7             generic rank:  367  liver rank:   51  delta:   +316  top-1: VRK3 -> VRK2
+  MEF2A-T312                    true: MAPK7             generic rank:  367  liver rank:   51  delta:   +316  top-1: VRK3 -> VRK2
+  SHC3-Y219                     true: NTRK2             generic rank:  382  liver rank:   66  delta:   +316  top-1: VRK3 -> VRK2
+
+Top-20 trials with BIGGEST WORSENING in liver model (n_total_worsened = 4,320):
+------------------------------------------------------------------------------------------
+  SLC12A6-T991                  true: WNK1              generic rank:   17  liver rank:  403  delta:   -386  top-1: VRK3 -> VRK2
+  WNK1-S382                     true: WNK1              generic rank:   15  liver rank:  390  delta:   -375  top-1: WNK4 -> VRK2
+  STK39-S371                    true: WNK1              generic rank:   44  liver rank:  413  delta:   -369  top-1: WNK4 -> VRK2
+  PKM-S37                       true: TRIB2             generic rank:   56  liver rank:  419  delta:   -363  top-1: VRK3 -> VRK2
+  SLC12A6-T1048                 true: WNK1              generic rank:   25  liver rank:  388  delta:   -363  top-1: VRK3 -> VRK2
+  TP53-T55                      true: TAF1              generic rank:  103  liver rank:  407  delta:   -304  top-1: VRK1 -> VRK2
+  YWHAQ-S232                    true: BCR               generic rank:  103  liver rank:  404  delta:   -301  top-1: VRK3 -> VRK2
+  SIRT1-S27                     true: HIPK2             generic rank:  102  liver rank:  400  delta:   -298  top-1: VRK3 -> VRK2
+  PRKAA1-T183                   true: STK26             generic rank:   43  liver rank:  339  delta:   -296  top-1: VRK3 -> VRK2
+  YWHAZ-T232                    true: BCR               generic rank:  115  liver rank:  410  delta:   -295  top-1: VRK3 -> VRK2
+  NDC80-S165                    true: NEK1              generic rank:  113  liver rank:  396  delta:   -283  top-1: VRK3 -> VRK2
+  SIAH2-S28                     true: HIPK2             generic rank:  133  liver rank:  409  delta:   -276  top-1: VRK3 -> VRK2
+  AKT1S1-T246                   true: PGK1              generic rank:   73  liver rank:  349  delta:   -276  top-1: VRK3 -> VRK2
+  CEBPB-T235                    true: HIPK2             generic rank:  126  liver rank:  401  delta:   -275  top-1: VRK1 -> VRK2
+  TP63-T491                     true: HIPK2             generic rank:  140  liver rank:  413  delta:   -273  top-1: VRK3 -> VRK2
+  FFAR4-S366                    true: GRK1              generic rank:   39  liver rank:  310  delta:   -271  top-1: VRK3 -> VRK2
+  FFAR4-T363                    true: GRK1              generic rank:   38  liver rank:  305  delta:   -267  top-1: VRK3 -> VRK2
+  PML-S36                       true: HIPK2             generic rank:  147  liver rank:  413  delta:   -266  top-1: VRK3 -> VRK2
+  FFAR4-S373                    true: GRK1              generic rank:   40  liver rank:  305  delta:   -265  top-1: VRK3 -> VRK2
+  PPP1R14C-T73                  true: STK26             generic rank:   80  liver rank:  344  delta:   -264  top-1: VRK3 -> VRK2
+
+Kinases with most consistent IMPROVEMENT in liver (min 5 trials, sorted by mean delta):
+  Kinase                n_trials  mean_delta  n_improved  pct_improved
+  ----------------------------------------------------------------
+  NTRK2                        7      +310.6           7       100.0%
+  MAPK7                        9      +307.4           9       100.0%
+  MAP3K5                      10      +294.9          10       100.0%
+  PRKCQ                       17      +271.3          17       100.0%
+  CSNK1D                      45      +252.4          45       100.0%
+  MAPK10                      14      +249.3          14       100.0%
+  TGFBR1                       7      +235.1           7       100.0%
+  PTK2                        18      +222.2          18       100.0%
+  MAP2K3                       7      +221.1           7       100.0%
+  IRAK1                       12      +220.0          12       100.0%
+  PRKAB1                      11      +204.9          11       100.0%
+  TAOK1                        6      +191.8           6       100.0%
+  STK38L                       5      +191.0           5       100.0%
+  MST1R                        7      +190.1           7       100.0%
+  BRAF                        13      +186.6          13       100.0%
+
+Kinases with most consistent WORSENING in liver (min 5 trials):
+  Kinase                n_trials  mean_delta  n_improved  pct_improved
+  ----------------------------------------------------------------
+  HIPK2                       25      -227.0           0         0.0%
+  STK26                        9      -209.1           0         0.0%
+  EEF2K                        5      -205.0           0         0.0%
+  CSK                          6      -193.3           0         0.0%
+  CSNK2A2                     17      -192.2           0         0.0%
+  BRSK1                        7      -190.6           0         0.0%
+  PRKCB                       61      -184.2           0         0.0%
+  GRK5                        16      -161.8           0         0.0%
+  MAP2K1                      13      -161.1           0         0.0%
+  ARAF                         5      -160.0           0         0.0%
+  DAPK3                       14      -159.1           0         0.0%
+  LRRK2                       19      -154.5           0         0.0%
+  ATM                         93      -152.9           0         0.0%
+  EIF2AK2                      9      -151.7           0         0.0%
+  GSK3A                       61      -145.9           3         4.9%

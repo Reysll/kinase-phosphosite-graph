@@ -1,24 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, List
+from typing import Dict
 
 import numpy as np
 import pandas as pd
-
-
-def build_pair_feature_vector(kinase_vec: np.ndarray, site_vec: np.ndarray) -> np.ndarray:
-    """
-    Pair features:
-      [kinase_vec, site_vec, abs(kinase-site), kinase*site]
-    """
-    return np.concatenate(
-        [
-            kinase_vec,
-            site_vec,
-            np.abs(kinase_vec - site_vec),
-            kinase_vec * site_vec,
-        ]
-    )
 
 
 def build_pair_feature_table(
@@ -28,28 +13,34 @@ def build_pair_feature_table(
     site_col: str = "site_node_id",
     label_col: str | None = None,
 ) -> pd.DataFrame:
-    rows = []
+    kinase_ids = pairs_df[kinase_col].astype(str).tolist()
+    site_ids = pairs_df[site_col].astype(str).tolist()
 
-    for row in pairs_df.itertuples(index=False):
-        kinase_id = str(getattr(row, kinase_col))
-        site_id = str(getattr(row, site_col))
+    valid_indices = [
+        i for i, (k, s) in enumerate(zip(kinase_ids, site_ids))
+        if k in embeddings and s in embeddings
+    ]
 
-        if kinase_id not in embeddings or site_id not in embeddings:
-            continue
+    if not valid_indices:
+        return pd.DataFrame(columns=["kinase_node_id", "site_node_id"])
 
-        feat = build_pair_feature_vector(embeddings[kinase_id], embeddings[site_id])
+    valid_kinases = [kinase_ids[i] for i in valid_indices]
+    valid_sites = [site_ids[i] for i in valid_indices]
 
-        out_row = {
-            "kinase_node_id": kinase_id,
-            "site_node_id": site_id,
-        }
+    K = np.array([embeddings[k] for k in valid_kinases])
+    S = np.array([embeddings[s] for s in valid_sites])
+    features = np.hstack([K, S, np.abs(K - S), K * S])
 
-        for i, val in enumerate(feat):
-            out_row[f"f_{i}"] = float(val)
+    feat_df = pd.DataFrame(features, columns=[f"f_{i}" for i in range(features.shape[1])])
+    out = pd.concat(
+        [
+            pd.DataFrame({"kinase_node_id": valid_kinases, "site_node_id": valid_sites}),
+            feat_df,
+        ],
+        axis=1,
+    )
 
-        if label_col is not None:
-            out_row[label_col] = int(getattr(row, label_col))
+    if label_col is not None:
+        out[label_col] = pairs_df[label_col].values[valid_indices]
 
-        rows.append(out_row)
-
-    return pd.DataFrame(rows)
+    return out

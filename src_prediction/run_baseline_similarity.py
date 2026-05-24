@@ -27,16 +27,16 @@ def main() -> None:
     include_site_corr = True
     include_protein_corr = False
 
-    frozen_folds_path = PRED_OUTPUTS_DIR / "frozen_folds_10.csv.gz"
+    frozen_trials_path = PRED_OUTPUTS_DIR / "frozen_trials_50.csv.gz"
 
-    n_jobs_outer = 2
-    workers_per_fold = 1
+    n_jobs_outer = 1
+    node2vec_workers = 8
 
     params = Node2VecParams(
         dimensions=32,
         walk_length=10,
         num_walks=25,
-        workers=workers_per_fold,
+        workers=node2vec_workers,
         p=1.0,
         q=1.0,
         window=5,
@@ -60,7 +60,7 @@ def main() -> None:
 
     print("=== Loading evaluation inputs ===")
     candidate_kinases = read_csv_auto(CANDIDATE_KINASES_OUT)
-    positive_edges = read_csv_auto(frozen_folds_path)
+    positive_edges = read_csv_auto(frozen_trials_path)
 
     print(f"Candidate kinases: {len(candidate_kinases):,}")
     print(f"Frozen evaluation edges: {len(positive_edges):,}\n")
@@ -79,7 +79,7 @@ def main() -> None:
         candidate_kinases=candidate_kinases,
         node2vec_params=params,
         allowed_relations=allowed_relations,
-        max_folds=None,
+        max_trials=None,
         random_state=42,
         verbose_every=2,
         n_jobs_outer=n_jobs_outer,
@@ -102,7 +102,7 @@ def main() -> None:
     print(f"Wrote: {paths['results']}")
     print(f"Wrote: {paths['metrics']}")
     print(f"Wrote: {paths['summary']}")
-    print("✅ Done.")
+    print("Done.")
 
 
 if __name__ == "__main__":

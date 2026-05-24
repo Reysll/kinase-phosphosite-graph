@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".venv312/Scripts/python .claude/hooks/format_on_edit.py 2>/dev/null || true",
+            "timeout": 15,
+            "statusMessage": "Formatting with ruff..."
+          }
+        ]
+      }
+    ]
+  }
+}

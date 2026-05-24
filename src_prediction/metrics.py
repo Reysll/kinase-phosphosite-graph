@@ -18,7 +18,7 @@ def summarize_results(
 ) -> pd.DataFrame:
     rows = []
 
-    n_folds = len(results_df)
+    n_trials = len(results_df)
 
     for rank_col, prefix in [
         ("held_out_kinase_rank", "held_out"),
@@ -41,20 +41,26 @@ def summarize_results(
                 {"metric": f"{prefix}_n_missing_rank", "value": float(n_missing_rank)},
                 {
                     "metric": f"{prefix}_mean_rank",
-                    "value": float(results_df[rank_col].dropna().mean()) if n_ranked > 0 else float("nan"),
+                    "value": float(results_df[rank_col].dropna().mean())
+                    if n_ranked > 0
+                    else float("nan"),
                 },
                 {
                     "metric": f"{prefix}_median_rank",
-                    "value": float(results_df[rank_col].dropna().median()) if n_ranked > 0 else float("nan"),
+                    "value": float(results_df[rank_col].dropna().median())
+                    if n_ranked > 0
+                    else float("nan"),
                 },
             ]
         )
 
-    rows.append({"metric": "n_folds", "value": float(n_folds)})
+    rows.append({"metric": "n_trials", "value": float(n_trials)})
     rows.append(
         {
             "metric": "mean_n_true_kinases_per_site",
-            "value": float(results_df["n_true_kinases_for_site"].mean()) if n_folds > 0 else float("nan"),
+            "value": float(results_df["n_true_kinases_for_site"].mean())
+            if n_trials > 0
+            else float("nan"),
         }
     )
 

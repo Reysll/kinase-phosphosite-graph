@@ -8,3 +8,4 @@ scikit-learn
 tqdm
 xlrd==2.0.1
 openpyxl
+ruff

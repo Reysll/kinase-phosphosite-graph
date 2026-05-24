@@ -28,7 +28,7 @@ def train_logistic_pair_model(
     Train a simple logistic regression model for kinase-site scoring.
 
     Positives:
-      known kinase-site edges in training folds
+      known kinase-site edges in the training set
 
     Negatives:
       for each positive site, candidate kinases not known to be true for that site
@@ -49,8 +49,10 @@ def train_logistic_pair_model(
         )
         neg_tables.append(neg_df)
 
-    neg = pd.concat(neg_tables, ignore_index=True) if neg_tables else pd.DataFrame(
-        columns=["kinase_node_id", "site_node_id", "label"]
+    neg = (
+        pd.concat(neg_tables, ignore_index=True)
+        if neg_tables
+        else pd.DataFrame(columns=["kinase_node_id", "site_node_id", "label"])
     )
 
     train_pairs = pd.concat(

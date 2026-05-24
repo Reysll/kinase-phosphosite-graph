@@ -1,0 +1,30 @@
+Comparison: generic model vs liver model — full multi-kinase LOO (80% fold-change site correlation)
+====================================================================================================
+LOO trials compared:             6,909
+Candidate kinases:               420
+
+Held-out kinase rank (the removed kinase-site edge)
+  Top-1  generic / liver:        0.0% (3/6909)  /  0.2% (11/6909)
+  Top-5  generic / liver:        0.8% (54/6909)  /  0.7% (49/6909)
+  Top-10 generic / liver:        4.0% (279/6909)  /  2.6% (177/6909)
+  Top-20 generic / liver:        10.1% (697/6909)  /  8.0% (551/6909)
+  Mean rank  generic / liver:    140.0  /  148.8
+  Median rank generic / liver:   107.0  /  125.0
+
+Best-true kinase rank (best-ranked among all known kinases for the site)
+  Top-1  generic / liver:        0.1% (9/6909)  /  1.0% (69/6909)
+  Top-5  generic / liver:        2.9% (203/6909)  /  2.9% (202/6909)
+  Top-10 generic / liver:        12.9% (890/6909)  /  8.9% (612/6909)
+  Top-20 generic / liver:        29.3% (2026/6909)  /  22.8% (1578/6909)
+  Mean rank  generic / liver:    64.1  /  76.3
+  Median rank generic / liver:   39.0  /  63.0
+
+Per-trial changes
+  Top-1 prediction changed:          6,901 / 6,909  (99.9%)
+  Held-out rank improved (liver):    2,589 / 6,909  (37.5%)
+  Best-true rank improved (liver):   2,140 / 6,909  (31.0%)
+
+Mean held-out rank delta (generic - liver, positive = liver improved):
+  All trials:                    -8.84
+  Trials improved in liver:      84.91  (n=2,589)
+  Trials worsened in liver:      -65.03  (n=4,320)

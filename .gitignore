@@ -1,3 +1,11 @@
+# Virtual environment (project-specific, not .venv)
+.venv312/
+
+# Source data files (large; regenerate from raw sources)
+data/raw/
+data/liver/
+data/processed/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -190,6 +198,10 @@ cython_debug/
 
 # Ruff stuff:
 .ruff_cache/
+
+# Claude Code personal overrides (never commit these)
+CLAUDE.local.md
+.claude/settings.local.json
 
 # PyPI configuration file
 .pypirc

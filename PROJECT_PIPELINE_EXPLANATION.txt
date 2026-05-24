@@ -1,0 +1,880 @@
+PROJECT PIPELINE EXPLANATION
+============================
+
+Overview
+========
+This project builds and evaluates a context-aware biological network for kinase-substrate association (KSA)
+prediction, with a specific focus on liver cancer.
+
+The pipeline has two main layers:
+
+1. Graph construction
+   This layer builds biological networks from known data sources.
+
+2. Prediction and evaluation
+   This layer uses the graph to rank kinases for phosphosites and compare generic versus liver-specific predictions.
+
+The full flow is:
+
+1. Build the generic graph
+2. Build the liver-specific graph
+3. Prepare evaluation inputs
+4. Freeze trials for reproducibility
+5. Run prediction on the generic graph
+6. Run prediction on the liver graph
+7. Compare ranking differences
+
+This document explains what each main Python file does, why it exists, how it works, what formats it uses,
+and how the files connect as one complete system.
+
+
+SECTION 1. HIGH-LEVEL FILE MAP
+==============================
+
+Graph construction files
+------------------------
+- src/builders/kinase_substrate.py
+- src/builders/ppase_substrate.py
+- src/main.py
+- src/liver_network.py
+- src/run_liver.py
+
+Prediction files
+----------------
+- src_prediction/run_freeze_trials.py
+- src_prediction/pair_features.py
+- src_prediction/negative_sampling.py
+- src_prediction/model_scoring.py
+- src_prediction/leave_one_out.py
+- src_prediction/run_baseline_similarity.py
+- src_prediction/compare_experiments.py
+- src_prediction/relation_filters.py
+
+Supporting helper files
+-----------------------
+- src/config.py
+- src/io_utils.py
+- src/ids.py
+- src/normalize.py
+- src_prediction/graph_loader.py
+- src_prediction/embeddings.py
+- src_prediction/metrics.py
+- src_prediction/truth_utils.py
+- src_prediction/parallel_utils.py
+- src_prediction/experiment_utils.py
+
+
+SECTION 2. GRAPH CONSTRUCTION LAYER
+===================================
+
+File: src/builders/kinase_substrate.py
+--------------------------------------
+Purpose
+This file builds the core graph components from the Kinase_Substrate_Dataset.
+
+It creates:
+- protein nodes for kinases
+- protein nodes for substrates
+- site nodes for phosphosites
+- edges for:
+  - substrate protein -> phosphosite   relation = has_site
+  - kinase protein -> phosphosite      relation = phosphorylates
+
+Why this file exists
+This file defines the main biological supervision signal in the project:
+kinase -> phosphosite
+
+Without it, there is no known kinase-site relationship to learn from.
+
+Design idea
+This file uses a unified protein-level representation:
+- kinases are protein nodes
+- substrates are protein nodes
+- both share node_type = protein
+
+Instead of splitting kinases and other proteins into separate node types, protein role is stored later as metadata
+such as is_kinase, is_phosphatase, and protein_role.
+
+Main function
+build_kinase_substrate_graph(path: str)
+
+Input
+A table like:
+data/raw/Kinase_Substrate_Dataset.tsv
+
+Output
+Two pandas DataFrames:
+- nodes_df
+- edges_df
+
+Node format example
+node_id              node_type
+PROTEIN:AKT1         protein
+PROTEIN:FOXO3        protein
+SITE:FOXO3-T32       site
+
+Edge format example
+source            target           relation
+PROTEIN:FOXO3     SITE:FOXO3-T32   has_site
+PROTEIN:AKT1      SITE:FOXO3-T32   phosphorylates
+
+Internal logic
+1. Read the table
+2. Extract:
+   - kinase name
+   - kinase organism
+   - substrate name
+   - substrate organism
+   - phosphosite
+3. Keep only rows where both kinase and substrate are human
+4. Keep only rows with exactly one site token
+5. Normalize protein names
+6. Normalize site labels into a standard form
+7. Create node IDs and edge triples
+8. Drop duplicate nodes and edges
+9. Print parsing statistics
+
+Example
+If the raw row contains:
+kinase = AKT1
+substrate = FOXO3
+site = Thr 32
+
+the normalized graph objects become:
+PROTEIN:AKT1
+PROTEIN:FOXO3
+SITE:FOXO3-T32
+
+and the edges become:
+PROTEIN:FOXO3 -> SITE:FOXO3-T32   relation=has_site
+PROTEIN:AKT1  -> SITE:FOXO3-T32   relation=phosphorylates
+
+Why the single-site filter matters
+Rows containing multiple or ambiguous sites are dropped because each site node must represent one exact phosphosite.
+
+
+File: src/builders/ppase_substrate.py
+-------------------------------------
+Purpose
+This file adds phosphatase-substrate information to the graph.
+
+It creates:
+- phosphatase protein nodes
+- substrate protein nodes
+- phosphosite nodes
+- edges for:
+  - substrate protein -> phosphosite     relation = has_site
+  - phosphatase protein -> phosphosite   relation = dephosphorylates
+
+Why this file exists
+Kinase biology is only one side of phosphorylation regulation. Phosphatases remove phosphate groups and add
+important mechanistic context to the graph.
+
+Main function
+build_ppase_substrate_graph(path: str)
+
+Input
+A phosphatase substrate table such as:
+data/PPase_protSubtrates_201903.xls
+
+Output
+Two pandas DataFrames:
+- nodes_df
+- edges_df
+
+Edge format example
+source              target             relation
+PROTEIN:PPP1CA      SITE:MYL9-S20      dephosphorylates
+PROTEIN:MYL9        SITE:MYL9-S20      has_site
+
+Internal logic
+1. Read the phosphatase table
+2. Extract phosphatase, substrate, and site
+3. Drop rows with missing values
+4. Keep only rows with one site token
+5. Normalize names
+6. Create nodes and edges
+7. Deduplicate rows
+8. Print parsing statistics
+
+
+File: src/main.py
+-----------------
+Purpose
+This is the main entry point for building the generic graph.
+
+It merges the outputs of multiple biological resources into a single network.
+
+What it builds
+It combines:
+1. kinase-substrate graph
+2. phosphatase-substrate graph
+3. PTMsigDB site-site pathway edges
+4. MsigDB protein-protein pathway edges
+5. PPI edges
+6. PTMcode2 site-site coevolution edges
+
+It then writes:
+- outputs/nodes.csv.gz
+- outputs/edges.csv.gz
+
+Why this file exists
+Each builder file creates one piece of the graph. This file orchestrates all of them into one final generic network.
+
+Important additional role
+This file is where node metadata is added:
+- is_kinase
+- is_phosphatase
+- protein_role
+
+Example node output
+node_id            node_type   is_kinase   is_phosphatase   protein_role
+PROTEIN:AKT1       protein     1           0                kinase
+PROTEIN:PPP1CA     protein     0           1                phosphatase
+PROTEIN:FOXO3      protein     0           0                protein
+SITE:FOXO3-T32     site        0           0                site
+
+Why the metadata matters
+This keeps one clean protein node type while preserving biological role information. It is important later for:
+- candidate kinase selection
+- graph inspection
+- result interpretation
+
+Typical flow in main.py
+1. Load processed human kinase-substrate data
+2. Build kinase graph
+3. Build phosphatase graph
+4. Merge base nodes and edges
+5. Add node role metadata
+6. Add pathway edges
+7. Add PPI edges
+8. Add coevolution edges
+9. Save final outputs
+
+Why it is central
+This file generates the generic graph that every later liver and prediction step depends on.
+
+
+File: src/liver_network.py
+--------------------------
+Purpose
+This file builds the liver-specific graph by extending the generic graph with liver cancer data.
+
+Why this file exists
+The generic graph is context-free. It contains known biology but does not capture liver-specific signaling behavior.
+This file adds disease-specific context.
+
+Main idea
+Start with the generic graph, then:
+1. add liver-observed proteins
+2. add liver-observed phosphosites
+3. reconnect those new nodes to known resources
+4. add liver-specific phosphosite correlation edges
+
+Major internal sections
+
+A. Add liver nodes
+This section reads:
+- ProteinExpression sheet
+- Phosphorylation sheet
+
+It extracts:
+- proteins observed in the liver dataset
+- phosphosites observed in the liver dataset
+
+These nodes are added even if they were not already in the generic graph.
+
+Example
+If A-S40 is observed in liver data but not in the original graph, then:
+- PROTEIN:A
+- SITE:A-S40
+are added.
+
+B. Reconnect liver-added nodes
+After adding new nodes, the file reruns integration using:
+- PTMsigDB
+- MsigDB
+- PPI
+- PTMcode2
+
+These resources are applied to the updated node set so liver-added nodes can gain pathway, interaction,
+or coevolution edges when evidence exists.
+
+C. Build site fold-change correlation edges
+This is the main context-specific part of the pipeline.
+
+Step-by-step logic
+1. Detect healthy and tumor columns
+   Columns ending with:
+   - Control
+   - Sample
+
+2. Compute healthy mean per phosphosite
+   For each site:
+   mu = mean intensity across healthy controls
+
+3. Compute tumor fold-change vector
+   For each tumor sample:
+   fold change = tumor intensity / mu
+
+4. Compute pairwise site-site correlation
+   Correlate fold-change vectors between phosphosites
+
+5. Apply percentile threshold
+   Keep only strong positive and strong negative correlations
+
+6. Add context-specific edges
+   Relation names:
+   - site_corr_fc_pos
+   - site_corr_fc_neg
+
+Example
+If two phosphosites vary together strongly across tumor samples:
+SITE:MAP2K1-S298
+SITE:MAPK3-Y204
+
+an edge may be added:
+source                 target                 relation            weight
+SITE:MAP2K1-S298       SITE:MAPK3-Y204        site_corr_fc_pos    0.89
+
+Why this matters scientifically
+This file is what makes the project context-aware and liver-cancer-specific. It is the core of the current
+scientific contribution.
+
+Additional note on protein correlation
+An analogous protein fold-change correlation layer was explored, but the current protein expression sheet
+yielded too few proteins with usable control values under the current preprocessing rules. Therefore, protein
+fold-change correlation edges are currently kept off in the working configuration.
+
+
+File: src/run_liver.py
+----------------------
+Purpose
+This is the small launcher script for building the liver-specific graph.
+
+Why it exists
+liver_network.py contains the full logic, but it has many parameters. This file provides a simple,
+experiment-specific call to the liver graph builder.
+
+Typical settings in this file
+- site_corr_percentile=80.0
+- add_protein_fc_corr=False
+
+Why this matters
+This file makes experiment choices explicit and reproducible. It keeps liver_network.py general while recording
+the exact settings used in a specific run.
+
+
+SECTION 3. PREDICTION AND EVALUATION LAYER
+==========================================
+
+File: src_prediction/run_freeze_trials.py
+-----------------------------------------
+Purpose
+This file creates a fixed set of evaluation trials for debugging and reproducibility.
+
+Why it exists
+Leave-one-out evaluation is expensive. If each run uses a different random subset, comparing experiments becomes
+difficult. Freezing trials ensures all experiments are compared on the same held-out edges.
+
+Typical output
+outputs_prediction/frozen_trials_10.csv.gz
+
+Why this matters
+It enables fair comparison between:
+- generic graph
+- liver graph
+- different thresholds
+- different scoring models
+
+
+File: src_prediction/pair_features.py
+-------------------------------------
+Purpose
+This file converts node embeddings into machine-learning features for kinase-site pairs.
+
+Why it exists
+Node2vec produces embeddings for individual nodes, but the supervised model needs features that describe a pair:
+one kinase and one phosphosite.
+
+Core idea
+Given:
+- kinase embedding k
+- site embedding s
+
+the pair feature vector includes:
+1. kinase embedding
+2. site embedding
+3. absolute difference |k - s|
+4. elementwise product k * s
+
+Example
+If:
+AKT1 vector = [0.2, 0.5]
+FOXO3-T32 vector = [0.3, 0.4]
+
+then the pair features are roughly:
+[0.2, 0.5, 0.3, 0.4, 0.1, 0.1, 0.06, 0.20]
+
+Why this design
+It gives the model access to:
+- each node individually
+- how different they are
+- how they interact component by component
+
+
+File: src_prediction/negative_sampling.py
+-----------------------------------------
+Purpose
+This file creates negative kinase-site examples for training.
+
+Why it exists
+Supervised classification requires both positive and negative examples.
+
+Positives
+Known kinase-site edges
+
+Negatives
+Candidate kinases that are not known to regulate that site
+
+Example
+If:
+site = SITE:FOXO3-T32
+candidate kinases = [AKT1, MAPK1, CDK1]
+true kinase = AKT1
+
+negative pairs are:
+- MAPK1, SITE:FOXO3-T32
+- CDK1, SITE:FOXO3-T32
+
+Why this matters
+Without negatives, the model cannot learn what a non-associated kinase-site pair looks like.
+
+
+File: src_prediction/model_scoring.py
+-------------------------------------
+Purpose
+This file trains the supervised scorer and ranks candidate kinases for a site.
+
+Why it exists
+Earlier ranking was done by cosine similarity, but that is not a strong or biologically well-justified scoring rule.
+This file replaces that step with a learned model.
+
+Main model
+LogisticRegression
+
+Training logic
+1. Positive pairs = known kinase-site edges from the training set
+2. Negative pairs = sampled non-true kinase-site pairs
+3. Convert pairs into features using pair_features.py
+4. Train logistic regression
+
+Scoring logic
+After training, the model scores all candidate kinases for a held-out site and returns ranked predictions.
+
+Example output
+kinase_node_id      site_node_id         score
+PROTEIN:AKT1        SITE:FOXO3-T32       0.91
+PROTEIN:MAPK1       SITE:FOXO3-T32       0.63
+PROTEIN:CDK1        SITE:FOXO3-T32       0.22
+
+Why this matters scientifically
+This file is what changed the project from similarity-based scoring to a learned scoring function, which aligns
+much better with the project’s current scientific framing.
+
+
+File: src_prediction/leave_one_out.py
+-------------------------------------
+Purpose
+This file performs the core leave-one-out evaluation.
+
+Why it exists
+This is the main evaluation engine. It asks:
+If one known kinase-site edge is removed, can the model still rank a biologically plausible kinase near the top?
+
+Main steps per trial
+1. Remove one known phosphorylation edge
+2. Rebuild the graph
+3. Recompute node2vec embeddings
+4. Train the logistic regression model on remaining training pairs
+5. Score all candidate kinases for the held-out site
+6. Record:
+   - held_out_kinase_rank
+   - best_true_kinase_rank
+   - top1_predicted_kinase
+   - top1_score
+
+Why multi-true logic matters
+A phosphosite may have multiple known kinases. Therefore the evaluation records both:
+- the rank of the specific held-out kinase
+- the best rank among all known true kinases for that site
+
+Example
+If true kinases are K1, K2, and K5 and the ranking is:
+1. K5
+2. MAPK3
+3. K1
+
+then:
+- held_out_kinase_rank = 3
+- best_true_kinase_rank = 1
+
+Parallel execution
+This file supports outer parallelization across trials, which is why trial completion often happens in pairs
+such as 2/10, 4/10, 6/10.
+
+Why it is central
+This file is the core engine used to compare generic and liver-specific models.
+
+
+File: src_prediction/run_baseline_similarity.py
+-----------------------------------------------
+Purpose
+This is the main experiment runner, even though the filename still references the earlier baseline.
+
+Why it exists
+It provides one place to configure and run a full experiment.
+
+Typical controls in this file
+- experiment_name
+- graph_choice = generic or liver
+- include_site_corr = True or False
+- include_protein_corr = True or False
+- frozen trial file
+- node2vec parameters
+- outer parallel jobs
+- workers per trial
+
+Example settings
+Generic experiment:
+graph_choice = "generic"
+include_site_corr = False
+include_protein_corr = False
+
+Liver experiment:
+graph_choice = "liver"
+include_site_corr = True
+include_protein_corr = False
+
+What it does
+1. Load graph
+2. Load candidate kinases
+3. Load frozen trials
+4. Build the allowed relation set
+5. Call run_leave_one_out(...)
+6. Summarize metrics
+7. Write outputs
+
+Typical outputs
+- results.csv.gz
+- metrics.csv.gz
+- summary.txt
+
+Why the name is misleading
+The file originally ran cosine-similarity experiments. The filename was kept for convenience, but the internal
+pipeline now uses the trained logistic regression scorer.
+
+
+File: src_prediction/compare_experiments.py
+-------------------------------------------
+Purpose
+This file compares generic and liver experiment outputs trial by trial.
+
+Why it exists
+The main scientific question is not only whether accuracy improves, but whether kinase rankings change in a
+biologically meaningful way when liver context is added.
+
+What it computes
+- whether top1 changed
+- held-out rank delta
+- best-true rank delta
+- whether liver improved held-out rank
+- whether liver improved best-true rank
+
+Example
+Generic:
+site = SITE:MAP2K2-S226
+top1 = PROTEIN:MAP3K20
+held_out_rank = 68
+
+Liver:
+site = SITE:MAP2K2-S226
+top1 = PROTEIN:NPM/ALK
+held_out_rank = 5
+
+Then:
+- top1_changed = True
+- held_out_rank_delta = 63
+- held_out_improved_in_liver = True
+
+Why this matters
+This directly supports the context-specific biological interpretation your supervisor wants:
+What changed when liver context was added, and are those changed predictions more relevant to liver cancer?
+
+
+File: src_prediction/relation_filters.py
+----------------------------------------
+Purpose
+This file defines which edge types are allowed in each prediction experiment.
+
+Why it exists
+Not every experiment should include every relation type. This file makes it possible to isolate the effect of
+different graph layers.
+
+Current relation groups
+
+Generic base relations
+- has_site
+- phosphorylates
+- dephosphorylates
+- site_same_pathway
+- protein_same_pathway
+- ppi_high_confidence
+- site_coevolution
+
+Site context relations
+- site_corr_fc_pos
+- site_corr_fc_neg
+
+Protein context relations
+- protein_corr_fc_pos
+- protein_corr_fc_neg
+
+Why this matters
+It allows controlled comparisons such as:
+- generic graph only
+- generic + liver site context
+- generic + liver site and protein context
+
+
+SECTION 4. IMPORTANT SUPPORTING FILES
+=====================================
+
+File: src/ids.py
+----------------
+Purpose
+Creates standardized node IDs.
+
+Examples
+protein_id("AKT1") -> PROTEIN:AKT1
+site_id("FOXO3", "T32") -> SITE:FOXO3-T32
+
+Why it matters
+Consistent node IDs are essential for merging graph pieces from different resources.
+
+
+File: src/normalize.py
+----------------------
+Purpose
+Normalizes protein names and phosphosite labels.
+
+Why it matters
+Biological files use inconsistent formatting. This file converts variants such as:
+- Ser473
+- S 473
+- SER-473
+into one standard label such as S473.
+
+
+File: src/io_utils.py
+---------------------
+Purpose
+Centralized file reading and writing.
+
+Typical jobs
+- read TSV, CSV, and compressed files
+- write compressed graph outputs
+- support cached processed files
+
+Why it matters
+It reduces repeated I/O code and makes the pipeline more robust.
+
+
+File: src_prediction/graph_loader.py
+------------------------------------
+Purpose
+Loads saved node and edge tables into the structures needed by the prediction pipeline.
+
+Why it matters
+Prediction code depends on consistent graph loading from outputs/nodes.csv.gz and outputs/edges.csv.gz.
+
+
+File: src_prediction/embeddings.py
+----------------------------------
+Purpose
+Builds graph objects and computes node2vec embeddings.
+
+Why it matters
+This is the bridge between graph tables and learned low-dimensional node representations.
+
+
+File: src_prediction/truth_utils.py
+-----------------------------------
+Purpose
+Builds ground-truth mappings such as:
+- site -> all known true kinases
+
+Why it matters
+This is essential for multi-true evaluation and biological interpretation.
+
+
+File: src_prediction/parallel_utils.py
+--------------------------------------
+Purpose
+Handles outer parallel execution across trials.
+
+Why it matters
+Leave-one-out embedding recomputation is expensive, and controlled parallelism significantly improves runtime.
+
+
+File: src_prediction/metrics.py
+-------------------------------
+Purpose
+Summarizes trial-level results into experiment-level metrics.
+
+Typical metrics
+- top1 accuracy
+- top5 accuracy
+- top10 accuracy
+- top20 accuracy
+- mean rank
+- median rank
+- held-out metrics
+- best-true metrics
+
+
+File: src_prediction/experiment_utils.py
+----------------------------------------
+Purpose
+Writes experiment outputs and summary text in a standard format.
+
+
+SECTION 5. HOW ALL FILES WORK TOGETHER
+======================================
+
+Stage 1. Build generic graph
+----------------------------
+Files:
+- src/builders/kinase_substrate.py
+- src/builders/ppase_substrate.py
+- src/main.py
+
+Outputs:
+- outputs/nodes.csv.gz
+- outputs/edges.csv.gz
+
+This creates the context-free biological prior graph.
+
+Stage 2. Build liver-specific graph
+-----------------------------------
+Files:
+- src/liver_network.py
+- src/run_liver.py
+
+Inputs:
+- generic graph outputs
+- liver proteomics and phosphoproteomics Excel file
+
+Outputs:
+- outputs/Liver_network_nodes.csv.gz
+- outputs/Liver_network_edges.csv.gz
+
+This creates the context-aware liver graph.
+
+Stage 3. Prepare evaluation universe
+------------------------------------
+Files:
+- preprocessing scripts already created earlier
+- src_prediction/run_freeze_trials.py
+
+Output:
+- outputs_prediction/frozen_trials_10.csv.gz
+
+This defines a reproducible held-out evaluation subset.
+
+Stage 4. Run trained model on generic graph
+-------------------------------------------
+Files:
+- src_prediction/run_baseline_similarity.py
+- src_prediction/leave_one_out.py
+- src_prediction/embeddings.py
+- src_prediction/model_scoring.py
+- src_prediction/pair_features.py
+- src_prediction/negative_sampling.py
+
+Output:
+- generic experiment results
+
+Stage 5. Run trained model on liver graph
+-----------------------------------------
+The same prediction stack is used, but the liver graph and liver context relations are loaded.
+
+Output:
+- liver experiment results
+
+Stage 6. Compare generic versus liver
+-------------------------------------
+File:
+- src_prediction/compare_experiments.py
+
+This identifies:
+- top1 changes
+- rank improvements
+- examples to inspect biologically
+
+
+SECTION 6. EXAMPLE END-TO-END INTERPRETATION
+============================================
+
+Suppose one held-out edge is:
+true kinase = PROTEIN:PDPK1
+site = SITE:MAP2K2-S226
+
+Generic graph result
+top1 = PROTEIN:MAP3K20
+held_out_rank = 68
+
+Liver graph result
+top1 = PROTEIN:NPM/ALK
+held_out_rank = 5
+
+Interpretation
+- Adding liver context changed the top-ranked kinase
+- The true kinase moved much closer to the top
+- Whether NPM/ALK is biologically more relevant to liver cancer becomes a follow-up biological question
+
+This is exactly the type of context-shift story the current project is designed to uncover.
+
+
+SECTION 7. SCIENTIFIC MEANING OF THE PIPELINE
+=============================================
+
+This pipeline is not just a coding workflow. Each file contributes to a scientific argument.
+
+Generic graph files
+- establish prior biological knowledge
+
+Liver network file
+- adds disease-specific signaling context
+
+Prediction files
+- test whether liver context changes kinase prioritization
+
+Comparison file
+- makes those differences inspectable and biologically interpretable
+
+This is the core scientific contribution:
+not simply improved accuracy,
+but different and potentially more liver-relevant kinase prioritization.
+
+
+SECTION 8. SHORT SUMMARY FOR THE REPOSITORY
+===========================================
+
+This project builds a generic heterogeneous protein-phosphosite graph from curated phosphorylation,
+phosphatase, pathway, interaction, and coevolution resources. The generic graph is then extended with
+liver-specific proteins and phosphosites observed in proteomic and phosphoproteomic data. Context is
+introduced primarily through phosphosite fold-change correlation edges computed from tumor relative to
+healthy controls. Prediction is performed by recomputing node2vec embeddings under leave-one-out edge
+removal and training a logistic regression model on embedding-derived kinase-site pair features. Generic
+and liver-specific predictions are compared to identify context-dependent changes in kinase ranking.

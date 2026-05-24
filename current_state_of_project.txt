@@ -1,78 +1,274 @@
-Goal so far:
-Construct a clean heterogeneous graph from the human Kinase_Substrate_Dataset with correct phosphosite modeling.
+CURRENT STATE OF PROJECT
+========================
 
-Implemented features:
-Modular Python package structure (src/)
-Graph construction from kinase–substrate data
+Project Title
+==============
+Context-Aware Prediction of Kinase-Substrate Associations in Liver Cancer
 
-Three node types:
-kinase
-protein
-site
+Last updated: 2026-05-23
 
-Two edge types:
-protein → site (has_site)
-kinase → site (phosphorylates)
+HOW TO USE THIS FILE
+=====================
+Paste this file at the start of any new Claude session (claude.ai or Claude Code)
+to restore full project context without rebuilding from scratch.
+Update after each significant experimental result or code change.
 
-Robust normalization of:
-protein names
-phosphosite strings (Ser/Thr/Tyr → S/T/Y)
+For code editing and running scripts: use Claude Code (terminal).
+For analysis, interpretation, writing, strategy: use claude.ai chat.
 
-Strict phosphosite naming rule:
-sites are uniquely identified as PROTEIN-S###
+Claude Code tips:
+- Do NOT use /init or /compact — both require the paid 1M context add-on.
+- Instead, tell Claude Code which files to read: "read src_prediction/leave_one_out.py"
+- Use /model Sonnet if you hit context errors mid-session.
 
-Sanity checks to validate biological assumptions
-Outputs written as compressed CSV for scalability
 
-Validated assumptions (from sanity checks):
-~10,000 unique phosphosite nodes
-~1,800 site labels shared across multiple proteins (expected)
-No duplicate phosphosites within the same protein
+PROJECT GOAL
+=============
+Study how disease-specific biological context changes kinase-substrate association
+(KSA) prediction.
 
-######################################################################################
-(Tentative) Next steps
+Most existing KSA prediction methods are context-free (static sequence motifs,
+generic interaction networks, previously known phosphorylation patterns).
+Phosphorylation signaling is highly dynamic and context-dependent.
 
-From here, each step adds biological information without breaking what I’ve built.
+This project incorporates liver cancer context into a heterogeneous biological graph
+by integrating phosphoproteomics, proteomics, pathway data, protein interactions,
+coevolution data, and phosphosite fold-change correlation structure.
 
-Step 1: Add PTMsigDB (site–site pathway edges)
+Main scientific question:
+Does adding liver cancer context change kinase prioritization in biologically
+meaningful ways?
 
-Why next:
 
-Operates at the site level
-Does not introduce new nodes
-Enriches functional context
+SECTION 1. GENERIC GRAPH
+=========================
 
-What it adds:
-Edge type: site_same_pathway
-Connects phosphosites participating in the same signaling pathway
+Status: Completed and functional.
 
-Implementation style:
-New file: src/builders/ptmsigdb.py
-One extra call in main.py
-No changes to existing logic
+Node types (intentionally only two):
+- protein nodes  (e.g. PROTEIN:AKT1)
+- phosphosite nodes  (e.g. SITE:FOXO3-T32)
 
-Step 2: Add MSigDB (protein–protein pathway edges)
+Kinases and phosphatases are proteins with metadata flags:
+is_kinase, is_phosphatase, protein_role. They are NOT separate node types.
 
-Why:
+Sources: kinase-substrate edges, phosphatase-substrate edges, protein-site
+ownership edges, pathway-based protein/site associations, PPI, PTMcode coevolution.
 
-Adds protein-level pathway context
-Complements site-level pathways
+Size: ~13,318 nodes, ~1.1 million edges
 
-Adds:
-Edge type: protein_same_pathway
 
-Step 3: Add protein–protein interactions (PPI)
+SECTION 2. LIVER-SPECIFIC GRAPH
+=================================
 
-Using:
+Status: Completed and functional.
 
-high_confidence_score(in).csv
-gene_protein(in).csv for Ensembl → gene mapping
+Extends the generic graph by:
+1. Adding liver-observed proteins (even if absent from generic graph)
+2. Adding liver-observed phosphosites (even if absent from generic graph)
+3. Reconnecting new nodes via pathway, PPI, PTMcode integration
+4. Adding liver-specific phosphosite fold-change correlation edges
 
-Adds:
-Edge type: protein_interacts_with_protein
+Size: ~16,605 nodes, ~2.1 million edges
+(+3,287 liver-derived nodes, ~+1M context edges vs generic)
 
-Step 4 (optional, advanced): PTMcode2 co-evolution edges
 
-Adds:
-Site–site co-evolution relationships across proteins
-Strong signal for functional coupling
+SECTION 3. LIVER CONTEXT MODELING
+===================================
+
+Status: Functional. Core scientific contribution.
+
+Strategy: phosphosite fold-change correlation
+1. Compute healthy control mean per phosphosite
+2. Compute tumor fold-change vectors
+3. Correlate fold-change vectors across tumor samples
+4. Keep strong correlations at 80th percentile threshold
+5. Add correlation edges (site_corr_fc_pos, site_corr_fc_neg)
+
+Statistics:
+- ~3,245 unique phosphosites used
+- ~10.5 million pairwise correlations evaluated
+- ~976,855 liver correlation edges added
+
+
+SECTION 4. PROTEIN CO-EXPRESSION
+==================================
+
+Status: DISABLED. Partially implemented.
+
+After preprocessing, only a very small number of proteins retained valid
+control/sample measurements — too few edges to be useful.
+Disabled pending preprocessing clarification and supervisor guidance.
+
+
+SECTION 5. NODE2VEC + PREDICTION MODEL
+========================================
+
+Status: Completed and functional. Redesigned for speed (May 2026).
+
+Model: logistic regression on pair features
+(kinase embedding, site embedding, absolute difference, elementwise product)
+
+Evaluation: leave-one-out edge-level LOO
+Metrics: top1/5/10/20 accuracy, mean/median rank,
+         held_out_rank, best_true_rank (best rank among ALL known true kinases)
+
+Key design (post-redesign):
+- Graph built ONCE per run (not per trial)
+- Embeddings computed ONCE per run
+- Training feature matrix built ONCE (_build_training_matrix)
+- Scoring feature cache built ONCE for all unique test sites (_build_scoring_cache)
+- Each trial: numpy mask (microseconds) + LR fit + predict_proba only
+- ThreadPoolExecutor in parallel_utils.py (threads share memory, no pickling)
+
+Result of redesign: 50-trial run dropped from ~24 hours to ~2-3 minutes.
+6,909-trial run dropped from ~36 hours to ~5 minutes total (both models).
+
+
+SECTION 6. DATASET OVERVIEW
+=============================
+
+Total positive edges:          14,596
+Unique sites:                  10,146
+Sites with exactly 1 kinase:    7,687  (76%)
+Sites with 2+ kinases:          2,459  (24%)
+Edges from multi-kinase sites:  6,909
+Unique candidate kinases:         420
+Sites with 10+ known kinases:    ~65
+  Examples: AKT1-S473 (19), GSK3B-S9 (20), TP53-S15 (15), PRKAA2-T172 (20)
+
+
+SECTION 7. EXPERIMENTAL RESULTS
+=================================
+
+--- GENERAL EVALUATION (50-trial frozen set, same trials for both models) ---
+
+Both runs completed in under 5 minutes total after the redesign.
+All 50 trials happened to have only one known kinase per site (76% of sites
+are single-kinase), so best_true_rank = held_out_rank throughout.
+
+                        Generic     Liver (80% FC corr)
+Mean held-out rank:     157.4       118.2
+Median held-out rank:   118.5       104.0
+Top-1 accuracy:         0%          0%
+Top-5 accuracy:         0%          4%  (2/50)
+Top-10 accuracy:        0%          6%  (3/50)
+Top-20 accuracy:        2% (1/50)   8%  (4/50)
+Rank improved (liver):  —           29/50 trials
+Top-1 pred changed:     —           50/50 trials
+
+Result: Liver wins. Mean rank ~25% better, top-1 prediction changed in ALL
+trials — liver correlation edges are substantially reshaping model output.
+
+
+--- MULTI-KINASE EVALUATION (6,909 trials, 2,459 sites, avg 3.93 true kinases/site) ---
+
+Random baseline (avg 3.93 kinases out of 420 candidates by chance):
+  Top-1: 0.9%   Top-5: 4.6%   Top-10: 9.1%   Top-20: 17.5%
+
+held_out_rank:
+                        Generic     Liver (80% FC corr)
+Mean:                   140.0       148.8
+Median:                 107.0       125.0
+
+best_true_rank (main metric for multi-kinase sites):
+                        Generic     Liver       Random baseline
+Top-1:                  0.1%        1.0%        0.9%
+Top-5:                  2.9%        2.9%        4.6%
+Top-10:                 12.9%       8.9%        9.1%
+Top-20:                 29.3%       22.8%       17.5%
+Mean rank:              64.1        76.3        —
+Median rank:            39.0        63.0        —
+
+Result: Generic wins on multi-kinase hub sites. Unexpected reversal.
+
+
+SECTION 8. KEY SCIENTIFIC FINDING
+===================================
+
+The two evaluations together tell a coherent and scientifically defensible story:
+
+GENERAL trials (random sample, mostly sparse/novel sites):
+  Liver graph wins clearly (mean rank 118 vs 157).
+  These include less-studied, potentially liver-specific phosphosites where
+  the generic graph is sparse. Liver correlation edges fill the gap.
+
+MULTI-KINASE trials (well-studied hub phosphosites):
+  Generic graph wins clearly (best_true median rank 39 vs 63 for liver).
+  Hub sites like AKT1-S473, GSK3B-S9, TP53-S15 are already richly covered
+  by PPI, pathway, and coevolution databases. The ~1M liver correlation edges
+  reflect tissue co-regulation patterns, not direct kinase-substrate biology,
+  which dilutes the signal for these well-connected hubs.
+
+Interpretation:
+  Liver-specific context adds the most value exactly where the generic graph
+  is sparse. The generic graph retains advantage where prior database knowledge
+  is dense. This is the expected behavior of a context-specific graph and is
+  itself the scientific result.
+
+  The generic model beats random at top-10 (12.9% vs 9.1%) and top-20
+  (29.3% vs 17.5%). The liver model beats random only at top-20 (22.8% vs
+  17.5%), suggesting correlation edges do not help for hub sites.
+
+This finding drives the abstract.
+
+
+SECTION 9. CURRENT LIMITATIONS
+================================
+
+1. Protein co-expression disabled (too few edges after preprocessing).
+
+2. Biological validation not done. Ranking shifts are identified but no
+   literature-supported case studies or experimental validation yet.
+
+3. Top-1 kinase frequency table not yet produced (immediate next step).
+
+4. The 50-trial general evaluation frozen set contains no multi-kinase sites
+   (all 50 happened to be single-kinase), so best_true_rank was uninformative
+   in that sample. The multi-kinase evaluation covers this separately.
+
+
+SECTION 10. IMMEDIATE NEXT STEPS
+==================================
+
+1. TOP-1 KINASE FREQUENCY TABLE  [next to run]
+   Which kinases does the liver model most often predict as top-1 across all
+   trials vs the generic model? This surfaces TTK and other liver-cancer-relevant
+   candidates and is the starting point for the biology discussion.
+
+2. RANKING SHIFT CASE STUDIES
+   Find sites where liver ranks a kinase highly but generic does not (or vice
+   versa). These become the biological examples in the report/paper.
+
+3. LITERATURE VALIDATION
+   Once candidate kinases are identified from steps 1-2, search for their
+   known roles in liver cancer signaling to support the scientific argument.
+
+4. ABSTRACT WRITING
+   The two-result story is now solid enough to frame the abstract around.
+
+5. UNIVERSITY CLUSTER (if access granted)
+   Run full 14,596-trial evaluation (all positive edges). On Linux, fork-based
+   multiprocessing gives copy-on-write memory sharing — high n_jobs_outer is
+   very effective. Set use_threads=False and n_jobs_outer=N_CORES on cluster.
+
+6. RUNNER SETTINGS FOR SPEED
+   Local machine: n_jobs_outer=6, use_threads=True
+   Linux cluster:  n_jobs_outer=N_CORES, use_threads=False
+
+
+SECTION 11. PROJECT SUMMARY
+=============================
+
+Fully operational framework for:
+- Heterogeneous phosphorylation graph construction (generic and liver-specific)
+- Disease-specific signaling context via fold-change correlation
+- node2vec embeddings + logistic regression kinase-site ranking
+- Large-scale LOO evaluation (6,909 trials in ~5 minutes after redesign)
+- Generic vs context-aware comparison
+
+Primary scientific contribution:
+Liver-specific context changes kinase prioritization in a site-type-dependent
+way — improving predictions for sparse/novel sites while the generic graph
+retains advantage for well-studied hub phosphosites. This context-dependence
+is itself a biologically meaningful and novel result.
