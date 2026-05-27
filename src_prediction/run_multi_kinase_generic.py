@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from src_prediction.config import (
+    CANDIDATE_KINASES_OUT,
     GENERIC_EDGES,
     GENERIC_NODES,
-    CANDIDATE_KINASES_OUT,
     PRED_OUTPUTS_DIR,
 )
+from src_prediction.embedding_strategy import Node2VecStrategy
 from src_prediction.experiment_utils import write_experiment_outputs
 from src_prediction.graph_loader import load_graph
 from src_prediction.io_utils import read_csv_auto
-from src_prediction.leave_one_out import Node2VecParams, run_leave_one_out
+from src_prediction.leave_one_out import run_leave_one_out
 from src_prediction.metrics import summarize_results, summarize_results_text
 from src_prediction.relation_filters import GENERIC_BASE_RELATIONS
 
@@ -19,16 +20,16 @@ def main() -> None:
 
     frozen_trials_path = PRED_OUTPUTS_DIR / "frozen_trials_multi_kinase.csv.gz"
 
-    params = Node2VecParams(
+    strategy = Node2VecStrategy(
         dimensions=32,
         walk_length=10,
         num_walks=25,
-        workers=8,
+        workers=4,
         p=1.0,
         q=1.0,
         window=5,
         min_count=1,
-        batch_words=4,
+        batch_words=10000,
         seed=42,
         directed=True,
     )
@@ -44,6 +45,9 @@ def main() -> None:
     print(f"Candidate kinases: {len(candidate_kinases):,}")
     print(f"Multi-kinase LOO trials: {len(positive_edges):,}\n")
 
+    # Generic model: no correlation edges.
+    # PSP 'phosphorylates' edges are automatically excluded from the embedding
+    # graph inside run_leave_one_out (leakage fix); they remain as training labels.
     allowed_relations = set(GENERIC_BASE_RELATIONS)
 
     print("=== Running leave-one-out on multi-kinase sites: generic model ===")
@@ -52,12 +56,12 @@ def main() -> None:
         graph_edges=graph.edges,
         positive_edges=positive_edges,
         candidate_kinases=candidate_kinases,
-        node2vec_params=params,
+        embedding_strategy=strategy,
         allowed_relations=allowed_relations,
         max_trials=None,
         random_state=42,
         verbose_every=100,
-        n_jobs_outer=1,
+        n_jobs_outer=8,
         max_negatives_per_site=50,
     )
 

@@ -1,45 +1,41 @@
-TTK Deep-Dive — LOO Evaluation across all TTK substrates
+TTK Deep-Dive — LOO Evaluation across all four networks
 ======================================================================
 
-TTK is a liver cancer-relevant kinase with 68 substrates in the graph.
+TTK (polo-like kinase 4 / Mps1) is a liver-cancer-relevant mitotic kinase.
 
-Generic model     (50-trial single-kinase debug)
-------------------------------------------------
-  TTK trials (sites where TTK is the held-out kinase):  1
-  Held-out rank:    top-1 0.0%  (0/1)  top-5 0.0%  (0/1)  top-10 0.0%  (0/1)  top-20 0.0%  (0/1)
-                    mean 402.0  median 402  min 402  max 402
-  Best-true rank:   top-1 0.0%  (0/1)  top-5 0.0%  (0/1)  top-10 0.0%  (0/1)  top-20 0.0%  (0/1)
-                    mean 402.0  median 402
-  Top-10 most frequent top-1 predictions (when TTK is true kinase):
-    ZAP70                            1 times
+Generic            (no correlation)
+-----------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=247.7  median=246
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=246.7  median=245
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=182.0  median=187
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    ULK1                            18×
+    WNK1                             3×
 
-Liver model       (50-trial single-kinase debug)
-------------------------------------------------
-  TTK trials (sites where TTK is the held-out kinase):  1
-  Held-out rank:    top-1 0.0%  (0/1)  top-5 0.0%  (0/1)  top-10 0.0%  (0/1)  top-20 0.0%  (0/1)
-                    mean 284.0  median 284  min 284  max 284
-  Best-true rank:   top-1 0.0%  (0/1)  top-5 0.0%  (0/1)  top-10 0.0%  (0/1)  top-20 0.0%  (0/1)
-                    mean 284.0  median 284
-  Top-10 most frequent top-1 predictions (when TTK is true kinase):
-    TEC                              1 times
-
-Generic model     (6,909-trial multi-kinase)
+Control / healthy  (ctrl raw abundance corr)
 --------------------------------------------
-  TTK trials (sites where TTK is the held-out kinase):  21
-  Held-out rank:    top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  top-20 4.8%  (1/21)
-                    mean 25.2  median 25  min 19  max 37
-  Best-true rank:   top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  top-20 9.5%  (2/21)
-                    mean 24.8  median 24
-  Top-10 most frequent top-1 predictions (when TTK is true kinase):
-    VRK3                            20 times
-    VRK1                             1 times
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=25.7  median=25
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=25.7  median=25
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=25.7  median=25
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    VRK2                            21×
 
-Liver model       (6,909-trial multi-kinase)
---------------------------------------------
-  TTK trials (sites where TTK is the held-out kinase):  21
-  Held-out rank:    top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  top-20 0.0%  (0/21)
-                    mean 64.0  median 65  min 40  max 76
-  Best-true rank:   top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  top-20 0.0%  (0/21)
-                    mean 63.7  median 65
-  Top-10 most frequent top-1 predictions (when TTK is true kinase):
-    VRK2                            21 times
+Cancer / tumor     (cancer raw abundance corr)
+----------------------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=112.7  median=111
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=112.5  median=111
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=105.1  median=111
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    VRK3                            21×
+
+Liver FC           (fold-change corr, 80th pct)
+-----------------------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=242.6  median=240
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=241.6  median=239
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=164.4  median=149
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    ULK1                            21×

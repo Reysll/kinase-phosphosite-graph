@@ -20,10 +20,16 @@ def summarize_results(
 
     n_trials = len(results_df)
 
-    for rank_col, prefix in [
+    rank_cols = [
         ("held_out_kinase_rank", "held_out"),
+        ("adjusted_held_out_rank", "adjusted_held_out"),
         ("best_true_kinase_rank", "best_true"),
-    ]:
+    ]
+
+    for rank_col, prefix in rank_cols:
+        if rank_col not in results_df.columns:
+            continue
+
         n_ranked = results_df[rank_col].notna().sum()
         n_missing_rank = results_df[rank_col].isna().sum()
 

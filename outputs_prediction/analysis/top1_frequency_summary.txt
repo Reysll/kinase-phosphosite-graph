@@ -1,33 +1,33 @@
-Top-1 Predicted Kinase Frequency — Multi-Kinase LOO (6,909 trials per model)
+Top-1 Predicted Kinase Frequency — Multi-Kinase LOO (per network)
 ================================================================================
 
-Rank    Generic model top-1 kinase     Count       %
--------------------------------------------------------
-  1     VRK3                            6397  92.6%
-  2     WNK4                             311   4.5%
-  3     VRK1                             190   2.8%
-  4     UHMK1                              7   0.1%
-  5     TYK2                               4   0.1%
+Generic            (no correlation)  (n=6,909)
+  Rank   Kinase                         Count       %
+  --------------------------------------------------
+  1      ULK1                            5284  76.5%
+  2      WNK1                            1451  21.0%
+  3      ZAP70                            174   2.5%
 
-Rank    Liver model top-1 kinase       Count       %
--------------------------------------------------------
-  1     VRK2                            6844  99.1%
-  2     ZAP70                             36   0.5%
-  3     VRK1                              29   0.4%
+Control / healthy  (ctrl raw abundance corr)  (n=6,909)
+  Rank   Kinase                         Count       %
+  --------------------------------------------------
+  1      VRK2                            6549  94.8%
+  2      YES1                             329   4.8%
+  3      VRK3                              27   0.4%
+  4      ULK2                               2   0.0%
+  5      WNK3                               2   0.0%
 
-Top-10 kinases gaining most top-1 predictions in liver vs generic:
-  Kinase                         Generic     Liver     Delta
-  ----------------------------------------------------
-  VRK2                                 0      6844  +   6844
-  ZAP70                                0        36  +     36
+Cancer / tumor     (cancer raw abundance corr)  (n=6,909)
+  Rank   Kinase                         Count       %
+  --------------------------------------------------
+  1      VRK3                            6596  95.5%
+  2      VRK2                             262   3.8%
+  3      TYK2                              27   0.4%
+  4      ULK3                              17   0.2%
+  5      YES1                               6   0.1%
+  6      ULK2                               1   0.0%
 
-Top-10 kinases losing top-1 predictions in liver vs generic:
-  Kinase                         Generic     Liver     Delta
-  ----------------------------------------------------
-  VRK3                              6397         0     -6397
-  WNK4                               311         0      -311
-  VRK1                               190        29      -161
-  UHMK1                                7         0        -7
-  TYK2                                 4         0        -4
-
-TTK top-1 predictions: generic = 0  |  liver = 0  (out of 6,909 trials each)
+Liver FC           (fold-change corr, 80th pct)  (n=6,909)
+  Rank   Kinase                         Count       %
+  --------------------------------------------------
+  1      ULK1                            6909  100.0%

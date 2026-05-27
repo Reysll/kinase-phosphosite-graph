@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-from typing import Callable, Iterable, List, TypeVar
+from typing import Callable, Iterable, List, Optional, TypeVar
 
 
 T = TypeVar("T")
@@ -13,9 +13,13 @@ def run_in_parallel(
     worker_fn: Callable[[T], R],
     max_workers: int,
     use_threads: bool = False,
+    progress_fn: Optional[Callable[[int, int], None]] = None,
 ) -> List[R]:
     """
     Run worker_fn over items in parallel and return results in completion order.
+
+    progress_fn(done, total) is called after each task completes, from inside
+    the as_completed loop, so timing/ETA reflect actual wall-clock progress.
 
     use_threads=True  — ThreadPoolExecutor: threads share memory (no copying of
                         large numpy arrays). sklearn/liblinear releases the GIL
@@ -29,13 +33,22 @@ def run_in_parallel(
                         arrays in tasks are pickled per task — avoid for big data.
     """
     items = list(items)
+    n = len(items)
+
     if max_workers <= 1:
-        return [worker_fn(item) for item in items]
+        results: List[R] = []
+        for i, item in enumerate(items, 1):
+            results.append(worker_fn(item))
+            if progress_fn:
+                progress_fn(i, n)
+        return results
 
     executor_cls = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
-    results: List[R] = []
+    results = []
     with executor_cls(max_workers=max_workers) as ex:
         futures = {ex.submit(worker_fn, item): item for item in items}
-        for fut in as_completed(futures):
+        for i, fut in enumerate(as_completed(futures), 1):
             results.append(fut.result())
+            if progress_fn:
+                progress_fn(i, n)
     return results

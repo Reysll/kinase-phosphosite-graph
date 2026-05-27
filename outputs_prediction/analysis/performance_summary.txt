@@ -1,24 +1,36 @@
-Combined Performance Summary — LOO Evaluation
-==========================================================================================
+Combined Performance Summary — LOO Evaluation (all four networks)
+==================================================================================================================
 
-Experiment                                            n_trials    Top-1    Top-5   Top-10   Top-20   Mean rank  Median rank
-------------------------------------------------------------------------------------------
-Held-out kinase rank (the specific removed edge)
-------------------------------------------------------------------------------------------
-  Generic model     (50-trial single-kinase debug)          50  0.0%  (0/50)  0.0%  (0/50)  0.0%  (0/50)  2.0%  (1/50)       157.4          118
-  Liver model       (50-trial single-kinase debug)          50  0.0%  (0/50)  4.0%  (2/50)  6.0%  (3/50)  8.0%  (4/50)       118.2          104
-  Generic model     (6,909-trial multi-kinase)           6,909  0.0%  (3/6909)  0.8%  (54/6909)  4.0%  (279/6909)  10.1%  (697/6909)       140.0          107
-  Liver model       (6,909-trial multi-kinase)           6,909  0.2%  (11/6909)  0.7%  (49/6909)  2.6%  (177/6909)  8.0%  (551/6909)       148.8          125
+Experiment                                               n    Top-1    Top-5   Top-10   Top-20      Mean    Median
 
-------------------------------------------------------------------------------------------
-Best-true kinase rank (best-ranked among all known kinases for the site)
-------------------------------------------------------------------------------------------
-  Generic model     (50-trial single-kinase debug)          50  0.0%  (0/50)  0.0%  (0/50)  0.0%  (0/50)  2.0%  (1/50)       157.4          118
-  Liver model       (50-trial single-kinase debug)          50  0.0%  (0/50)  4.0%  (2/50)  6.0%  (3/50)  8.0%  (4/50)       118.2          104
-  Generic model     (6,909-trial multi-kinase)           6,909  0.1%  (9/6909)  2.9%  (203/6909)  12.9%  (890/6909)  29.3%  (2026/6909)        64.1           39
-  Liver model       (6,909-trial multi-kinase)           6,909  1.0%  (69/6909)  2.9%  (202/6909)  8.9%  (612/6909)  22.8%  (1578/6909)        76.3           63
+------------------------------------------------------------------------------------------------------------------
+Held-out rank  (naive: held-out kinase vs all 420 candidates)
+------------------------------------------------------------------------------------------------------------------
+  Generic            (no correlation)                6,909  0.4%  (27/6909)  0.9%  (59/6909)  1.5%  (104/6909)  2.2%  (150/6909)     191.9       189
+  Control / healthy  (ctrl raw abundance corr)       6,909  0.1%  (10/6909)  0.7%  (51/6909)  1.1%  (77/6909)  1.7%  (120/6909)     179.1       168
+  Cancer / tumor     (cancer raw abundance corr)     6,909  0.0%  (1/6909)  0.9%  (59/6909)  1.4%  (96/6909)  2.2%  (149/6909)     187.5       176
+  Liver FC           (fold-change corr, 80th pct)    6,909  0.3%  (21/6909)  0.9%  (64/6909)  1.8%  (121/6909)  2.7%  (186/6909)     177.3       167
 
-Note: candidate kinase pool = 420. Random top-1 baseline ≈ 0.24%, top-20 ≈ 4.8%.
-Note: multi-kinase generic outperforms liver on held-out rank because multi-kinase
-      sites are dominated by well-studied hub kinases (AKT1, GSK3B, TP53) that are
-      richly connected in the generic graph. Liver wins for sparse, less-studied sites.
+------------------------------------------------------------------------------------------------------------------
+Adjusted held-out rank  (other co-true kinases removed before ranking — fairer metric)
+------------------------------------------------------------------------------------------------------------------
+  Generic            (no correlation)                6,909  0.4%  (27/6909)  0.9%  (59/6909)  1.5%  (104/6909)  2.2%  (150/6909)     190.4       188
+  Control / healthy  (ctrl raw abundance corr)       6,909  0.1%  (10/6909)  0.7%  (51/6909)  1.1%  (77/6909)  1.7%  (120/6909)     177.7       166
+  Cancer / tumor     (cancer raw abundance corr)     6,909  0.0%  (1/6909)  0.9%  (59/6909)  1.4%  (98/6909)  2.2%  (152/6909)     186.0       174
+  Liver FC           (fold-change corr, 80th pct)    6,909  0.3%  (21/6909)  0.9%  (64/6909)  1.8%  (123/6909)  2.7%  (186/6909)     175.8       165
+
+------------------------------------------------------------------------------------------------------------------
+Best-true rank  (best-ranked known true kinase for the site)
+------------------------------------------------------------------------------------------------------------------
+  Generic            (no correlation)                6,909  1.1%  (73/6909)  2.4%  (165/6909)  4.4%  (305/6909)  8.4%  (577/6909)     114.6        78
+  Control / healthy  (ctrl raw abundance corr)       6,909  0.8%  (58/6909)  2.7%  (186/6909)  3.8%  (260/6909)  6.0%  (412/6909)     103.2        80
+  Cancer / tumor     (cancer raw abundance corr)     6,909  0.0%  (3/6909)  3.1%  (213/6909)  4.7%  (324/6909)  7.0%  (481/6909)     117.0       116
+  Liver FC           (fold-change corr, 80th pct)    6,909  0.9%  (61/6909)  2.1%  (148/6909)  4.6%  (320/6909)  8.7%  (603/6909)     108.6        83
+
+Notes:
+  candidate pool = 420 kinases
+  adjusted_held_out_rank: all OTHER known true kinases for the site are
+    removed from the ranked list before computing the held-out kinase rank.
+    e.g. if site has k1/k2/k3 and k1 is held out, k2 and k3 are dropped
+    from scoring before k1's position is measured.
+  best_true_rank: best rank any known true kinase achieves (not adjusted).

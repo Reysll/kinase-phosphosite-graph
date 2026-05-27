@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -7,26 +8,20 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
-from src_prediction.embeddings import build_graph_from_edges, fit_node2vec_embeddings
+from src_prediction.embedding_strategy import EmbeddingStrategy, Node2VecStrategy
+from src_prediction.embeddings import build_graph_from_edges
 from src_prediction.negative_sampling import sample_negative_pairs_for_site
 from src_prediction.pair_features import build_pair_feature_table
 from src_prediction.parallel_utils import run_in_parallel
+from src_prediction.relation_filters import PSP_KSA_RELATIONS
 from src_prediction.truth_utils import build_site_to_true_kinases
 
 
-@dataclass
-class Node2VecParams:
-    dimensions: int = 64
-    walk_length: int = 30
-    num_walks: int = 200
-    workers: int = 1
-    p: float = 1.0
-    q: float = 1.0
-    window: int = 10
-    min_count: int = 1
-    batch_words: int = 4
-    seed: int = 42
-    directed: bool = True
+# ---------------------------------------------------------------------------
+# Backward-compat alias: old callers that imported Node2VecParams from here
+# can switch to importing Node2VecStrategy from embedding_strategy instead.
+# ---------------------------------------------------------------------------
+Node2VecParams = Node2VecStrategy
 
 
 @dataclass
@@ -79,6 +74,35 @@ def _compute_best_true_rank(scored: pd.DataFrame, true_kinase_ids: List[str]) ->
     return int(min(hits) + 1)
 
 
+def _compute_adjusted_held_out_rank(
+    scored: pd.DataFrame,
+    held_out_kinase: str,
+    other_true_kinases: List[str],
+) -> Optional[int]:
+    """
+    Rank of the held-out kinase after dropping all OTHER known true kinases
+    from the scored list.
+
+    Motivation: if k2 is another known kinase for this site and is ranked
+    above the held-out k1, that is expected correct behaviour, not an error.
+    Removing k2 gives a fairer estimate of how hard it is to recover k1.
+
+    Example
+    -------
+    Scored list: [k7, k4, k2, k1]   (k2 and k1 are both true; k1 is held-out)
+    After dropping k2  →  [k7, k4, k1]
+    adjusted_held_out_rank = 3   (instead of the naive rank of 4)
+    """
+    if scored.empty:
+        return None
+    other_set = set(map(str, other_true_kinases))
+    filtered = scored[~scored["kinase_node_id"].isin(other_set)].reset_index(drop=True)
+    hit = filtered.index[filtered["kinase_node_id"] == held_out_kinase].tolist()
+    if not hit:
+        return None
+    return int(hit[0] + 1)
+
+
 def _run_single_trial(task: TrialTask) -> dict:
     trial_row = task.trial_row
     trial_index = int(trial_row["trial_index"])
@@ -117,8 +141,18 @@ def _run_single_trial(task: TrialTask) -> dict:
         )
 
     true_kinases_for_site = task.site_to_true_kinases.get(site_node, [])
+
+    # Standard ranks (full scored list)
     held_out_rank = _compute_rank(scored, kinase_node_id=true_kinase)
     best_true_rank = _compute_best_true_rank(scored, true_kinase_ids=true_kinases_for_site)
+
+    # Adjusted held-out rank: drop other true kinases before ranking.
+    # This removes the "credit" other co-kinases get from NOT being held out,
+    # so the held-out kinase is evaluated only against non-true candidates.
+    other_true_kinases = [k for k in true_kinases_for_site if k != true_kinase]
+    adjusted_held_out_rank = _compute_adjusted_held_out_rank(
+        scored, true_kinase, other_true_kinases
+    )
 
     top1_pred = scored.iloc[0]["kinase_node_id"] if not scored.empty else None
     top1_score = float(scored.iloc[0]["score"]) if not scored.empty else np.nan
@@ -129,6 +163,7 @@ def _run_single_trial(task: TrialTask) -> dict:
         "site_node_id": site_node,
         "held_out_relation": "phosphorylates",
         "held_out_kinase_rank": held_out_rank,
+        "adjusted_held_out_rank": adjusted_held_out_rank,
         "best_true_kinase_rank": best_true_rank,
         "n_true_kinases_for_site": len(true_kinases_for_site),
         "all_true_kinases_for_site": ";".join(true_kinases_for_site),
@@ -209,11 +244,31 @@ def _build_scoring_cache(
     return cache
 
 
+def _build_embedding_relations(
+    graph_edges: pd.DataFrame,
+    allowed_relations: Optional[Set[str]],
+) -> Optional[Set[str]]:
+    """
+    Derive the relation set to use for building the embedding graph.
+
+    PSP KSA edges ('phosphorylates') are excluded because they encode the
+    prediction target directly — including them leaks the answer into the
+    node2vec embeddings before the LOO trial loop begins.
+
+    If allowed_relations is None (meaning 'use all'), we explicitly enumerate
+    all relations present in the edge table and subtract the PSP KSA set.
+    """
+    if allowed_relations is None:
+        all_rels = set(graph_edges["relation"].astype(str).unique())
+        return all_rels - PSP_KSA_RELATIONS
+    return allowed_relations - PSP_KSA_RELATIONS
+
+
 def run_leave_one_out(
     graph_edges: pd.DataFrame,
     positive_edges: pd.DataFrame,
     candidate_kinases: pd.DataFrame,
-    node2vec_params: Node2VecParams,
+    embedding_strategy: EmbeddingStrategy,
     allowed_relations: Optional[Set[str]] = None,
     max_trials: Optional[int] = None,
     random_state: int = 42,
@@ -221,7 +276,30 @@ def run_leave_one_out(
     n_jobs_outer: int = 1,
     max_negatives_per_site: int = 50,
     use_threads: bool = True,
+    # Legacy keyword kept for scripts that pass node2vec_params= by name
+    node2vec_params: Optional[EmbeddingStrategy] = None,
 ) -> pd.DataFrame:
+    """
+    Run leave-one-out evaluation.
+
+    Parameters
+    ----------
+    embedding_strategy : EmbeddingStrategy
+        Any concrete EmbeddingStrategy (e.g. Node2VecStrategy).
+        PSP 'phosphorylates' edges are removed from the graph before calling
+        strategy.fit() to prevent embedding leakage of the prediction target.
+    allowed_relations : optional set of str
+        Which edge relation types to include in the graph.  None = all.
+        PSP KSA edges are additionally excluded at embedding time regardless.
+    """
+    # Support old callers that pass node2vec_params= kwarg
+    if node2vec_params is not None and not isinstance(node2vec_params, EmbeddingStrategy):
+        raise TypeError(
+            "node2vec_params must be an EmbeddingStrategy instance. "
+            "Use Node2VecStrategy from src_prediction.embedding_strategy."
+        )
+    strategy = node2vec_params if node2vec_params is not None else embedding_strategy
+
     trials = _prepare_trials(
         positive_edges=positive_edges,
         max_trials=max_trials,
@@ -233,35 +311,34 @@ def run_leave_one_out(
     trial_dicts = trials.to_dict(orient="records")
 
     # --- One-time setup ---
+    t_start = time.time()
 
-    print("[leave-one-out] Building graph once for all trials...")
-    graph = build_graph_from_edges(
+    # Embedding graph: PSP KSA edges excluded to prevent leakage.
+    # The model still TRAINS on those edges as labels (positive_edges),
+    # but the embedding only sees structural context (PPI, pathway, coevolution,
+    # dephosphorylates, has_site, correlation) not the KSA edges themselves.
+    embedding_relations = _build_embedding_relations(graph_edges, allowed_relations)
+    print(f"[leave-one-out] Building embedding graph (excluded relations: {PSP_KSA_RELATIONS})...")
+    t0 = time.time()
+    embedding_graph = build_graph_from_edges(
         edges_df=graph_edges,
-        allowed_relations=allowed_relations,
-        directed=node2vec_params.directed,
+        allowed_relations=embedding_relations,
+        directed=strategy.directed,
     )
     print(
-        f"[leave-one-out] Graph: {graph.number_of_nodes():,} nodes, "
-        f"{graph.number_of_edges():,} edges"
+        f"[leave-one-out] Embedding graph: {embedding_graph.number_of_nodes():,} nodes, "
+        f"{embedding_graph.number_of_edges():,} edges  ({time.time() - t0:.1f}s)"
     )
 
-    print("[leave-one-out] Fitting node2vec (once)...")
-    embeddings = fit_node2vec_embeddings(
-        graph=graph,
-        dimensions=node2vec_params.dimensions,
-        walk_length=node2vec_params.walk_length,
-        num_walks=node2vec_params.num_walks,
-        workers=node2vec_params.workers,
-        p=node2vec_params.p,
-        q=node2vec_params.q,
-        window=node2vec_params.window,
-        min_count=node2vec_params.min_count,
-        batch_words=node2vec_params.batch_words,
-        seed=node2vec_params.seed,
+    print(f"[leave-one-out] Fitting embeddings via {type(strategy).__name__} (once)...")
+    t0 = time.time()
+    embeddings = strategy.fit(embedding_graph)
+    print(
+        f"[leave-one-out] Embeddings ready: {len(embeddings):,} nodes embedded  ({time.time() - t0:.1f}s)"
     )
-    print(f"[leave-one-out] Embeddings ready: {len(embeddings):,} nodes embedded")
 
     print("[leave-one-out] Pre-computing training feature matrix (once)...")
+    t0 = time.time()
     X_train, y_train, train_pair_keys = _build_training_matrix(
         positive_edges=positive_edges,
         embeddings=embeddings,
@@ -271,14 +348,18 @@ def run_leave_one_out(
     )
     print(
         f"[leave-one-out] Training matrix: {X_train.shape[0]:,} pairs × {X_train.shape[1]} features"
+        f"  ({time.time() - t0:.1f}s)"
     )
 
     unique_test_sites = trials["site_node_id"].astype(str).unique().tolist()
     print(
         f"[leave-one-out] Pre-computing scoring features for {len(unique_test_sites):,} test sites..."
     )
+    t0 = time.time()
     scoring_cache = _build_scoring_cache(unique_test_sites, candidate_kinase_ids, embeddings)
-    print(f"[leave-one-out] Scoring cache ready: {len(scoring_cache):,} sites")
+    print(
+        f"[leave-one-out] Scoring cache ready: {len(scoring_cache):,} sites  ({time.time() - t0:.1f}s)"
+    )
 
     # --- Build lightweight tasks (all share the same numpy array references) ---
     tasks = []
@@ -298,17 +379,26 @@ def run_leave_one_out(
             )
         )
 
-    out = run_in_parallel(
+    t_trials_start = time.time()
+    n_tasks = len(tasks)
+
+    def _print_progress(done: int, total: int) -> None:
+        if verbose_every and (done % verbose_every == 0 or done == total):
+            elapsed = time.time() - t_trials_start
+            rate = done / elapsed if elapsed > 0 else float("inf")
+            eta = (total - done) / rate if rate > 0 else 0.0
+            print(
+                f"[leave-one-out] {done:,}/{total:,} trials  "
+                f"({elapsed:.1f}s elapsed, ETA {eta:.0f}s)",
+                flush=True,
+            )
+
+    results = run_in_parallel(
         items=tasks,
         worker_fn=_run_single_trial,
         max_workers=n_jobs_outer,
         use_threads=use_threads,
+        progress_fn=_print_progress,
     )
-
-    results = []
-    for i, row in enumerate(out, start=1):
-        results.append(row)
-        if verbose_every and (i % verbose_every == 0 or i == len(tasks)):
-            print(f"[leave-one-out] completed {i:,}/{len(tasks):,} trials")
 
     return pd.DataFrame(results).sort_values("trial_index").reset_index(drop=True)

@@ -11,7 +11,8 @@ from src_prediction.config import (
 from src_prediction.experiment_utils import write_experiment_outputs
 from src_prediction.graph_loader import load_graph
 from src_prediction.io_utils import read_csv_auto
-from src_prediction.leave_one_out import Node2VecParams, run_leave_one_out
+from src_prediction.embedding_strategy import Node2VecStrategy
+from src_prediction.leave_one_out import run_leave_one_out
 from src_prediction.metrics import summarize_results, summarize_results_text
 from src_prediction.relation_filters import (
     GENERIC_BASE_RELATIONS,
@@ -32,7 +33,7 @@ def main() -> None:
     n_jobs_outer = 1
     node2vec_workers = 8
 
-    params = Node2VecParams(
+    params = Node2VecStrategy(
         dimensions=32,
         walk_length=10,
         num_walks=25,
@@ -77,7 +78,7 @@ def main() -> None:
         graph_edges=graph.edges,
         positive_edges=positive_edges,
         candidate_kinases=candidate_kinases,
-        node2vec_params=params,
+        embedding_strategy=params,
         allowed_relations=allowed_relations,
         max_trials=None,
         random_state=42,

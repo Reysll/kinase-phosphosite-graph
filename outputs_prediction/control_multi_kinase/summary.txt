@@ -1,0 +1,28 @@
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.001450536698578474
+held_out_top_5_accuracy: 0.0073977371627502175
+held_out_top_10_accuracy: 0.01116913257905425
+held_out_top_20_accuracy: 0.017406440382941687
+held_out_n_ranked: 6894.0
+held_out_n_missing_rank: 15.0
+held_out_mean_rank: 179.11865390194373
+held_out_median_rank: 167.5
+adjusted_held_out_top_1_accuracy: 0.001450536698578474
+adjusted_held_out_top_5_accuracy: 0.0073977371627502175
+adjusted_held_out_top_10_accuracy: 0.01116913257905425
+adjusted_held_out_top_20_accuracy: 0.017406440382941687
+adjusted_held_out_n_ranked: 6894.0
+adjusted_held_out_n_missing_rank: 15.0
+adjusted_held_out_mean_rank: 177.65085581665215
+adjusted_held_out_median_rank: 166.5
+best_true_top_1_accuracy: 0.008394847300622376
+best_true_top_5_accuracy: 0.026921406860616587
+best_true_top_10_accuracy: 0.03763207410623824
+best_true_top_20_accuracy: 0.05963236358373136
+best_true_n_ranked: 6909.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 103.15487045882183
+best_true_median_rank: 80.0
+n_trials: 6909.0
+mean_n_true_kinases_per_site: 3.9326964828484585

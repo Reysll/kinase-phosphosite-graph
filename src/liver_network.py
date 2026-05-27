@@ -10,7 +10,12 @@ import numpy as np
 import pandas as pd
 
 from src.ids import protein_id, site_id
-from src.io_utils import read_nodes_csv_gz, read_edges_csv_gz, write_nodes_csv_gz, write_edges_csv_gz
+from src.io_utils import (
+    read_nodes_csv_gz,
+    read_edges_csv_gz,
+    write_nodes_csv_gz,
+    write_edges_csv_gz,
+)
 
 from src.builders.ptmsigdb import build_ptmsigdb_edges
 from src.builders.msigdb import build_msigdb_edges
@@ -112,7 +117,9 @@ def _build_liver_additions(
     prot_control, prot_sample = _find_control_sample_columns(list(protein_df.columns))
     prot_cols = prot_control + prot_sample
     if len(prot_cols) == 0:
-        raise ValueError("ProteinExpression: could not detect any Control/Sample abundance columns.")
+        raise ValueError(
+            "ProteinExpression: could not detect any Control/Sample abundance columns."
+        )
 
     keep_prot = _identified_at_least(protein_df, prot_cols, min_identified)
     prot_genes = (
@@ -130,7 +137,9 @@ def _build_liver_additions(
     if "Gene Symbol" not in phospho_df.columns:
         raise ValueError("Phosphorylation sheet missing required column: 'Gene Symbol'")
     if "Modifications in Master Proteins" not in phospho_df.columns:
-        raise ValueError("Phosphorylation sheet missing required column: 'Modifications in Master Proteins'")
+        raise ValueError(
+            "Phosphorylation sheet missing required column: 'Modifications in Master Proteins'"
+        )
 
     ph_control, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
     ph_cols = ph_control + ph_sample
@@ -138,7 +147,9 @@ def _build_liver_additions(
         raise ValueError("Phosphorylation: could not detect any Control/Sample abundance columns.")
 
     keep_ph = _identified_at_least(phospho_df, ph_cols, min_identified)
-    ph_sub = phospho_df.loc[keep_ph, ["Gene Symbol", "Modifications in Master Proteins"] + ph_cols].copy()
+    ph_sub = phospho_df.loc[
+        keep_ph, ["Gene Symbol", "Modifications in Master Proteins"] + ph_cols
+    ].copy()
 
     site_nodes: List[Tuple[str, str]] = []
     has_site_edges: List[Tuple[str, str, str]] = []
@@ -156,8 +167,12 @@ def _build_liver_additions(
         site_nodes.append((s, "site"))
         has_site_edges.append((p, s, "has_site"))
 
-    nodes_df = pd.DataFrame(protein_nodes + site_nodes, columns=["node_id", "node_type"]).drop_duplicates()
-    edges_df = pd.DataFrame(has_site_edges, columns=["source", "target", "relation"]).drop_duplicates()
+    nodes_df = pd.DataFrame(
+        protein_nodes + site_nodes, columns=["node_id", "node_type"]
+    ).drop_duplicates()
+    edges_df = pd.DataFrame(
+        has_site_edges, columns=["source", "target", "relation"]
+    ).drop_duplicates()
 
     return nodes_df, edges_df
 
@@ -169,7 +184,9 @@ def _prepare_site_fold_change_matrix(
     if "Gene Symbol" not in phospho_df.columns:
         raise ValueError("Phosphorylation sheet missing required column: 'Gene Symbol'")
     if "Modifications in Master Proteins" not in phospho_df.columns:
-        raise ValueError("Phosphorylation sheet missing required column: 'Modifications in Master Proteins'")
+        raise ValueError(
+            "Phosphorylation sheet missing required column: 'Modifications in Master Proteins'"
+        )
 
     ph_control, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
     if len(ph_control) == 0 or len(ph_sample) == 0:
@@ -313,12 +330,22 @@ def _build_corr_edges_from_fc_matrix(
     negative_vals = corr_values[corr_values < 0]
 
     pos_threshold = np.percentile(positive_vals, percentile) if len(positive_vals) > 0 else np.inf
-    neg_threshold = np.percentile(negative_vals, 100 - percentile) if len(negative_vals) > 0 else -np.inf
+    neg_threshold = (
+        np.percentile(negative_vals, 100 - percentile) if len(negative_vals) > 0 else -np.inf
+    )
 
     print(f"=== {label} fold-change correlation thresholds ===")
     print(f"Percentile: {percentile}")
-    print(f"Positive threshold: {pos_threshold:.6f}" if np.isfinite(pos_threshold) else "Positive threshold: inf")
-    print(f"Negative threshold: {neg_threshold:.6f}" if np.isfinite(neg_threshold) else "Negative threshold: -inf")
+    print(
+        f"Positive threshold: {pos_threshold:.6f}"
+        if np.isfinite(pos_threshold)
+        else "Positive threshold: inf"
+    )
+    print(
+        f"Negative threshold: {neg_threshold:.6f}"
+        if np.isfinite(neg_threshold)
+        else "Negative threshold: -inf"
+    )
     print(f"Total pairwise correlations evaluated: {len(corr_values):,}")
 
     selected = upper.stack().reset_index()
@@ -353,6 +380,55 @@ def _build_corr_edges_from_fc_matrix(
     return out
 
 
+def _prepare_site_raw_abundance_matrix(
+    phospho_df: pd.DataFrame,
+    abundance_cols: List[str],
+    min_identified: int = 6,
+) -> Tuple[pd.DataFrame, List[str]]:
+    """
+    Build a site × sample abundance matrix using the specified raw-abundance
+    columns (either control cols or sample/tumor cols).
+
+    Rows with fewer than *min_identified* non-NA values are dropped.
+    Duplicate site IDs are collapsed by row-mean.
+    """
+    if "Gene Symbol" not in phospho_df.columns:
+        raise ValueError("Phosphorylation sheet missing required column: 'Gene Symbol'")
+    if "Modifications in Master Proteins" not in phospho_df.columns:
+        raise ValueError(
+            "Phosphorylation sheet missing required column: 'Modifications in Master Proteins'"
+        )
+
+    site_ids_all: List[str] = []
+    for g, mod in zip(
+        phospho_df["Gene Symbol"].astype(str).tolist(),
+        phospho_df["Modifications in Master Proteins"].tolist(),
+    ):
+        gene = str(g).strip()
+        sl = _extract_single_site_label(mod)
+        site_ids_all.append(site_id(gene, sl) if gene and sl else "")
+
+    abund_mat = phospho_df[abundance_cols].apply(pd.to_numeric, errors="coerce")
+
+    valid_site = pd.Series([sid != "" for sid in site_ids_all], index=phospho_df.index)
+    keep = valid_site & (abund_mat.notna().sum(axis=1) >= min_identified)
+
+    abund_mat = abund_mat.loc[keep].copy()
+    kept_site_ids = [sid for sid, k in zip(site_ids_all, keep.tolist()) if k]
+
+    abund_mat.index = kept_site_ids
+
+    n_before = len(abund_mat)
+    n_unique = abund_mat.index.nunique()
+    if n_before != n_unique:
+        abund_mat = abund_mat.groupby(level=0).mean()
+
+    final_site_ids = abund_mat.index.tolist()
+
+    print(f"  Raw abundance rows kept: {n_before:,}  unique sites: {n_unique:,}")
+    return abund_mat, final_site_ids
+
+
 def _build_site_fold_change_corr_edges(
     phospho_df: pd.DataFrame,
     min_identified: int = 6,
@@ -369,7 +445,69 @@ def _build_site_fold_change_corr_edges(
         min_common=min_common,
         pos_relation="site_corr_fc_pos",
         neg_relation="site_corr_fc_neg",
-        label="Site",
+        label="Site FC",
+    )
+
+
+def _build_site_control_corr_edges(
+    phospho_df: pd.DataFrame,
+    min_identified: int = 6,
+    min_common: int = 6,
+    percentile: float = 80.0,
+) -> pd.DataFrame:
+    """
+    Correlation edges from raw phosphosite abundances across healthy/control
+    samples.  Relation names: site_corr_ctrl_pos / site_corr_ctrl_neg.
+    """
+    ph_control, _ = _find_control_sample_columns(list(phospho_df.columns))
+    if len(ph_control) < min_identified:
+        print(
+            f"Not enough control columns ({len(ph_control)}) for "
+            f"control correlation (min_identified={min_identified}). Skipping."
+        )
+        return pd.DataFrame(columns=["source", "target", "relation", "weight", "n_common"])
+    print(f"=== Building control-specific correlation edges ({len(ph_control)} ctrl cols) ===")
+    mat, _ = _prepare_site_raw_abundance_matrix(phospho_df, ph_control, min_identified)
+    return _build_corr_edges_from_fc_matrix(
+        fc_mat=mat,
+        percentile=percentile,
+        min_common=min_common,
+        pos_relation="site_corr_ctrl_pos",
+        neg_relation="site_corr_ctrl_neg",
+        label="Site-Control",
+    )
+
+
+def _build_site_cancer_corr_edges(
+    phospho_df: pd.DataFrame,
+    min_identified: int = 6,
+    min_common: int = 6,
+    percentile: float = 80.0,
+) -> pd.DataFrame:
+    """
+    Correlation edges from raw phosphosite abundances across tumor/cancer
+    samples.  Relation names: site_corr_cancer_pos / site_corr_cancer_neg.
+
+    Compare with FC-based: FC divides each tumor value by the per-site mean of
+    control samples before correlating, which removes the baseline abundance
+    level.  This variant correlates raw tumor abundances directly.
+    """
+    _, ph_sample = _find_control_sample_columns(list(phospho_df.columns))
+    if len(ph_sample) < min_identified:
+        print(
+            f"Not enough sample columns ({len(ph_sample)}) for "
+            f"cancer correlation (min_identified={min_identified}). Skipping."
+        )
+        return pd.DataFrame(columns=["source", "target", "relation", "weight", "n_common"])
+    print(f"=== Building cancer-specific correlation edges ({len(ph_sample)} tumor cols) ===")
+    mat, _ = _prepare_site_raw_abundance_matrix(phospho_df, ph_sample, min_identified)
+    return _build_corr_edges_from_fc_matrix(
+        fc_mat=mat,
+        percentile=percentile,
+        min_common=min_common,
+        pos_relation="site_corr_cancer_pos",
+        neg_relation="site_corr_cancer_neg",
+        label="Site-Cancer",
     )
 
 
@@ -410,10 +548,23 @@ def run(
     min_common: int = 6,
     site_corr_percentile: float = 80.0,
     protein_corr_percentile: float = 80.0,
-    add_protein_fc_corr: bool = True,
+    add_protein_fc_corr: bool = False,
+    add_ctrl_corr: bool = True,
+    add_cancer_corr: bool = True,
     ppi_min_confidence: int = 0,
     ptmcode_chunksize: int = 250000,
 ) -> None:
+    """
+    Build the liver-specific graph.
+
+    The single output file (out_edges) now contains THREE site-correlation
+    edge types so that all four network variants can be selected at LOO time
+    via allowed_relations without rebuilding the graph:
+
+      site_corr_fc_pos / site_corr_fc_neg      — fold-change correlation (original)
+      site_corr_ctrl_pos / site_corr_ctrl_neg   — healthy/control raw abundance corr
+      site_corr_cancer_pos / site_corr_cancer_neg — tumor raw abundance corr
+    """
     nodes_df = read_nodes_csv_gz(generic_nodes)
     edges_df = read_edges_csv_gz(generic_edges)
 
@@ -434,12 +585,16 @@ def run(
     nodes_before = nodes_df["node_id"].nunique()
     edges_before = edges_df.drop_duplicates(subset=["source", "target", "relation"]).shape[0]
 
-    nodes_df = pd.concat([nodes_df, new_nodes], ignore_index=True).drop_duplicates(subset=["node_id", "node_type"])
+    nodes_df = pd.concat([nodes_df, new_nodes], ignore_index=True).drop_duplicates(
+        subset=["node_id", "node_type"]
+    )
     nodes_df = _ensure_node_metadata(nodes_df)
 
     edges_df = _merge_edges(edges_df, new_has_site.assign(weight=np.nan, n_common=np.nan))
 
-    protein_ids: Set[str] = set(nodes_df.loc[nodes_df["node_type"] == "protein", "node_id"].astype(str))
+    protein_ids: Set[str] = set(
+        nodes_df.loc[nodes_df["node_type"] == "protein", "node_id"].astype(str)
+    )
     site_ids: Set[str] = set(nodes_df.loc[nodes_df["node_type"] == "site", "node_id"].astype(str))
 
     print("=== Reconnecting liver-added nodes via pathway/PPI/PTMcode datasets ===")
@@ -468,14 +623,32 @@ def run(
     )
     edges_df = _merge_edges(edges_df, ptmcode_edges.assign(weight=np.nan, n_common=np.nan))
 
-    print("=== Adding liver site fold-change correlation edges ===")
-    site_corr_edges = _build_site_fold_change_corr_edges(
+    print("=== Adding liver site fold-change (FC) correlation edges ===")
+    site_fc_edges = _build_site_fold_change_corr_edges(
         phospho_df=phospho_df,
         min_identified=min_identified,
         min_common=min_common,
         percentile=site_corr_percentile,
     )
-    edges_df = _merge_edges(edges_df, site_corr_edges)
+    edges_df = _merge_edges(edges_df, site_fc_edges)
+
+    if add_ctrl_corr:
+        site_ctrl_edges = _build_site_control_corr_edges(
+            phospho_df=phospho_df,
+            min_identified=min_identified,
+            min_common=min_common,
+            percentile=site_corr_percentile,
+        )
+        edges_df = _merge_edges(edges_df, site_ctrl_edges)
+
+    if add_cancer_corr:
+        site_cancer_edges = _build_site_cancer_corr_edges(
+            phospho_df=phospho_df,
+            min_identified=min_identified,
+            min_common=min_common,
+            percentile=site_corr_percentile,
+        )
+        edges_df = _merge_edges(edges_df, site_cancer_edges)
 
     if add_protein_fc_corr:
         print("=== Adding liver protein fold-change correlation edges ===")
@@ -492,9 +665,13 @@ def run(
 
     print("=== Liver network build complete ===")
     print(f"Generic nodes: {nodes_before:,}")
-    print(f"Liver network nodes: {nodes_df['node_id'].nunique():,} (added {nodes_df['node_id'].nunique() - nodes_before:,})")
+    print(
+        f"Liver network nodes: {nodes_df['node_id'].nunique():,} (added {nodes_df['node_id'].nunique() - nodes_before:,})"
+    )
     print(f"Generic edges: {edges_before:,}")
-    print(f"Liver network edges: {edges_df.drop_duplicates(subset=['source','target','relation']).shape[0]:,}")
+    print(
+        f"Liver network edges: {edges_df.drop_duplicates(subset=['source', 'target', 'relation']).shape[0]:,}"
+    )
     print(f"Wrote: {out_nodes}")
     print(f"Wrote: {out_edges}")
 
@@ -515,7 +692,9 @@ def main() -> None:
     ap.add_argument("--msigdb", type=str, default="data/MsigDB.txt")
     ap.add_argument("--ppi", type=str, default="data/high_confidence_score.csv")
     ap.add_argument("--gene-map", type=str, default="data/gene_protein.csv")
-    ap.add_argument("--ptmcode2", type=str, default="data/PTMcode2_associations_between_proteins.txt.gz")
+    ap.add_argument(
+        "--ptmcode2", type=str, default="data/PTMcode2_associations_between_proteins.txt.gz"
+    )
 
     ap.add_argument("--min-identified", type=int, default=6)
     ap.add_argument("--min-common", type=int, default=6)

@@ -1,6 +1,17 @@
 from pathlib import Path
 from src.liver_network import run
 
+# Builds the liver-specific graph with ALL THREE correlation edge types embedded
+# in a single output file.  The LOO evaluation scripts select which type to use
+# via allowed_relations — no need to rebuild the graph for each experiment.
+#
+# Edge types added:
+#   site_corr_fc_pos / site_corr_fc_neg       fold-change correlation (original)
+#   site_corr_ctrl_pos / site_corr_ctrl_neg    control/healthy raw abundance corr
+#   site_corr_cancer_pos / site_corr_cancer_neg tumor raw abundance corr
+#
+# All three use 80th percentile threshold and require ≥6 samples per site.
+
 run(
     liver_xlsx=Path("data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx"),
     protein_sheet="ProteinExpression",
@@ -15,6 +26,7 @@ run(
     gene_map_path="data/raw/gene_protein.csv",
     ptmcode_path="data/raw/PTMcode2_associations_between_proteins.txt.gz",
     site_corr_percentile=80.0,
-    protein_corr_percentile=80.0,
+    add_ctrl_corr=True,
+    add_cancer_corr=True,
     add_protein_fc_corr=False,
 )

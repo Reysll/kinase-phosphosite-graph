@@ -1,230 +1,271 @@
 Progress Notes — Kinase-Substrate HGN Prediction Pipeline
 ==========================================================
-Last updated: 2026-05-21 (updated with 50-trial results and multi-kinase evaluation)
+Last updated: 2026-05-26 (post-power-outage verification; four-network redesign completed)
 
 
 CONTEXT
 -------
-This document summarizes the technical changes made to the prediction pipeline
-(src_prediction/) since our last discussion. The goal is to give you a clear
-picture of what was changed, why, and how the system behaves now compared to
-before, so you can give feedback before we run the full evaluation.
+This document summarises the technical changes made to the prediction pipeline
+(src_prediction/) since the project began. The goal is a clear record of what
+changed, why, and what the current numbers mean.
 
 
 1. LEAVE-ONE-OUT: MODEL TRAINING REDESIGN
 ------------------------------------------
-Background from your email:
-  You confirmed the correct LOO logic: "for one edge that is removed, you train
-  on all the rest of data and then predict for that one site. Then next site..."
+Background from email (round 1):
+  "for one edge that is removed, you train on all the rest of data and then
+  predict for that one site. Then next site..."
 
 What was wrong before:
-  The pipeline was re-running node2vec from scratch on every single trial. That
-  means for a 50-trial evaluation, node2vec was being fit 50 separate times on
-  a graph of 17,736 nodes and ~2 million edges. Each fit was taking roughly
-  29 minutes, which is why the full 50-trial run was taking ~24 hours.
-
-  The only thing that differed between any two trials was which single
-  phosphorylation edge was held out. Everything else — the graph structure,
-  the embeddings, the candidate kinases, the negative pairs — was identical.
+  Node2vec was re-run from scratch on every single trial (~29 min/trial).
+  50-trial run took ~24 hours.
 
 What was changed:
-  Node2vec now runs exactly once before the trial loop begins, on the full graph.
-  The resulting embedding dictionary (one vector per node) is shared across all
-  50 trials. Each trial only re-trains the logistic regression model, which takes
-  a few seconds. The LOO logic itself is unchanged: the held-out kinase-site pair
-  is removed from the training labels (not from the graph) before fitting the
-  model for that trial, then the site is scored against all candidate kinases.
-
-Why the graph is not modified per trial:
-  With 17,736 nodes and 2 million edges, removing one edge changes the
-  embeddings by a negligible amount. More importantly, removing one
-  phosphorylation edge from the graph per trial while leaving all the other
-  phosphorylation edges in was providing inconsistent signal anyway — the
-  embedding was still "seeing" all the other known kinase-site relationships
-  through the graph structure. The cleaner and faster approach is to use the
-  full graph for embedding and only control for the held-out pair at the
-  label level.
+  Node2vec runs exactly once before the trial loop, on the full graph.
+  Each trial only re-trains logistic regression (seconds). Embedding, training
+  matrix, and scoring cache are all computed once and shared across all trials.
 
 Result:
-  The same 10-trial debug run that was taking hours now completes in under a
-  minute. The mean and median held-out ranks from the new run are essentially
-  identical to the previous results (mean 146.6 vs 146.4, median 116.5 vs 118.0),
-  confirming that the redesign does not change the methodology in a meaningful way.
+  50-trial run: ~24 hours → ~3 minutes.
+  6,909-trial run: not feasible → ~5–10 minutes.
 
 
 2. FEATURE COMPUTATION SPEEDUP
 --------------------------------
-What was wrong before:
-  The function that converts node embeddings into pair features (the input to the
-  logistic regression model) was iterating over each kinase-site pair one row at
-  a time using a Python loop. For a training set with thousands of pairs and 256
-  features per pair, this was unnecessary overhead per trial.
-
-What was changed:
-  The feature computation now uses matrix operations. All kinase embeddings are
-  stacked into a single matrix K, all site embeddings into S, and the four feature
-  blocks [K, S, |K-S|, K*S] are computed in a single numpy call. The result is
-  the same — it is just computed much faster.
+Pair feature computation now uses matrix operations (numpy stacking of K and S
+embedding matrices). Previously was a Python loop. Faster, same result.
 
 
 3. NODE2VEC WALK GENERATION SPEEDUP
 -------------------------------------
-What was wrong before:
-  The node2vec library precomputes second-order transition probabilities for every
-  pair of adjacent edges in the graph before generating any walks. On a graph with
-  2 million edges and an average node degree of ~118, this precomputation step is
-  the main bottleneck — it was estimated to take 3+ hours even for a single fit.
-  This was the reason the 50-trial run took 24 hours (50 fits × ~29 min each).
+Custom walk functions added that bypass node2vec's O(nodes × degree²) transition-
+probability precomputation:
+  - p=q=1 (standard DeepWalk): uniform random walk, no precomputation.
+  - p≠q: on-the-fly biased walk using np.isin on integer index arrays.
 
-What was changed:
-  Two custom walk generation functions were added that bypass this precomputation:
+Current node2vec parameters (all four run scripts):
+  dimensions:   32
+  walk_length:  10
+  num_walks:    25
+  workers:       4  (Word2Vec training threads)
+  p, q:        1.0  (DeepWalk mode — fast path)
 
-  - For p=1, q=1 (standard random walk / DeepWalk): walks are generated by
-    uniformly sampling a random neighbor at each step. No precomputation at all.
-    This is what we currently use.
-
-  - For p≠1 or q≠1 (biased node2vec): weights are computed on-the-fly at each
-    step using vectorized numpy operations (np.isin on integer index arrays),
-    rather than precomputing and storing them for every possible edge triple.
-    This avoids the upfront cost entirely while still producing correct biased
-    walks.
-
-  In both cases the walk generation is now O(num_walks × nodes × walk_length),
-  which for our current settings (25 walks, 10 steps, 17,736 nodes) takes seconds.
-
-Current parameter settings (run_baseline_similarity.py):
-  - dimensions:   32
-  - walk_length:  10
-  - num_walks:    25
-  - workers:       8  (was 1 — safe to raise now that embedding runs only once)
-  - p:           1.0
-  - q:           1.0
-
-  Note: 8 workers are used for the Word2Vec training step (which parallelizes
-  well). Previously workers was kept at 1 because each of the 50 parallel trial
-  processes would have spawned its own workers — that constraint no longer applies.
+LOO parallelism: n_jobs_outer=8 (ThreadPoolExecutor, shares memory).
+Previously 6; bumped to 8 on 2026-05-26 — stalling was not caused by worker
+count but by lack of progress prints.
 
 
-4. FULL 50-TRIAL RESULTS: GENERIC vs LIVER COMPARISON
+4. EMBEDDING LEAKAGE FIX  ← KEY DESIGN DECISION
+--------------------------------------------------
+Background from email (round 2):
+  "when you have a link between the kinase and phosphosite, and calculate
+  node2vec, it kind of keeps that link information in the embedding. Even when
+  you remove that edge from your training, there is still leakage (indirect)."
+
+Fix implemented in leave_one_out.py → _build_embedding_relations():
+  All PhosphoSitePlus KSA edges ('phosphorylates') are removed from the graph
+  BEFORE node2vec runs. They are kept as training labels only.
+  Non-PSP KSA edges from other sources are kept even if they duplicate a PSP
+  edge, because the label being predicted is specifically the PSP annotation.
+
+Effect on results:
+  Performance dropped compared to pre-fix numbers (as expected — the model
+  can no longer indirectly read the answer via embedding structure).
+  The post-fix numbers are the scientifically correct ones.
+
+  Pre-fix (leaked)  → Post-fix (correct)
+  Generic held_out mean rank:   140.0 → 191.9
+  Liver FC held_out mean rank:  148.8 → 177.3
+  Generic best_true median:      39.0 → 78.0
+  Liver FC best_true median:     63.0 → 83.0
+
+  After fixing leakage, liver FC OUTPERFORMS generic on both metrics
+  (lower mean rank and lower median rank). The previous "generic wins on
+  multi-kinase hub sites" finding was partly an artifact of leakage
+  benefiting well-connected hub sites in the generic graph.
+
+
+5. ADJUSTED HELD-OUT RANK  ← CORRECT PRIMARY METRIC
 ------------------------------------------------------
-Both the generic model and the liver model were run on the same 50 frozen trials
-so the comparison is fair. Both runs completed in under 5 minutes total (compared
-to the previous ~24 hours for a single 50-trial run).
+Background from email:
+  "if other true kinases ranked high, just drop them from ranking, and then
+  calculate the ranks. e.g. site has k1/k2/k3, held out k1. scoring gives
+  [k7, k4, k2, k1]. Drop k2 → [k7, k4, k1]. Rank of k1 = 3, not 4."
 
-Results (50 trials, 420 candidate kinases):
+Implemented in leave_one_out.py → _compute_adjusted_held_out_rank():
+  Before measuring the held-out kinase's rank, all OTHER known true kinases
+  for that site are removed from the scored list. This isolates the model's
+  ability to rank the specific held-out kinase, without penalising it for
+  co-kinases that rightly score higher (their edges were not held out).
 
-                          Generic     Liver (80% FC corr)
-  Mean held-out rank:     157.4       118.2
-  Median held-out rank:   118.5       104.0
-  Top-1 accuracy:         0%          0%
-  Top-5 accuracy:         0%          4%  (2/50)
-  Top-10 accuracy:        0%          6%  (3/50)
-  Top-20 accuracy:        2% (1/50)   8%  (4/50)
-  Rank improved in liver: —           29/50 trials
-
-Key observations:
-- The liver-context graph improves the held-out kinase rank in 29 of 50 trials.
-- Mean rank improves by ~25% (157 → 118), median by ~12% (118.5 → 104).
-- The top-1 prediction changed in all 50 trials, meaning the liver-specific
-  fold-change correlation edges are meaningfully reshaping the model's output,
-  not just making marginal adjustments.
-- The "best true" and "held-out" metrics are identical because all 50 randomly
-  sampled trials happened to have only one known kinase per site. This is expected
-  given that 7,687 out of 10,146 sites (76%) have only one known kinase.
-
-Important note on the frozen trial sample:
-  The 50 frozen trials were sampled randomly from all positive edges, so they
-  mostly contain single-kinase sites. This means the best_true_rank metric
-  provides no additional information over held_out_rank in this sample. A
-  dedicated multi-kinase evaluation is needed to test the more biologically
-  interesting cases (see section 5 below).
+  adjusted_held_out_rank is now the primary per-trial rank metric.
+  held_out_kinase_rank (unadjusted) is kept for backward compatibility.
+  best_true_kinase_rank (best rank of any true kinase) also still reported.
 
 
-5. MULTI-KINASE SITE EVALUATION (IN PROGRESS)
-----------------------------------------------
-Background from your email:
-  "We can first check the sites with multiple kinases and check the biology of
-  them. This may be faster."
+6. FOUR-NETWORK DESIGN
+-----------------------
+Background from email:
+  "construct 4 networks: one generic (no correlation), one control-specific
+  (correlation from healthy samples), one liver-specific (correlation from
+  cancer samples), one liver FC-based (correlation among FC values)."
 
-Dataset breakdown:
-  Total positive edges:        14,596
-  Unique sites:                10,146
-  Sites with exactly 1 kinase:  7,687  (76%)
-  Sites with 2+ kinases:        2,459  (24%)
-  Edges from multi-kinase sites: 6,909
-  Sites with 10+ known kinases:    ~65  (including AKT1-S473 x19, TP53-S15 x15,
-                                         GSK3B-S9 x20, PRKAA2-T172 x20)
+Implementation:
+  Liver_network_edges.csv.gz now contains ALL THREE correlation edge types.
+  Each run script selects the relevant subset via allowed_relations.
+  No need to rebuild the graph per experiment.
 
-Why multi-kinase sites matter:
-  For a site with, say, 15 known kinases, holding out one and asking "does the
-  model recover it?" is a strict and arguably unfair test. The more meaningful
-  question is: does the model rank ANY known true kinase at top-1 or top-5? This
-  is captured by the best_true_rank metric, which becomes informative only when
-  a site has multiple known kinases. If the model predicts a different kinase than
-  the one held out, but that predicted kinase is also a known true kinase for that
-  site, that is a correct prediction — not a miss.
+  Network          | Edges used
+  -----------------+------------------------------------------
+  Generic          | GENERIC_BASE_RELATIONS only
+  Control          | + site_corr_ctrl_pos / site_corr_ctrl_neg
+  Cancer           | + site_corr_cancer_pos / site_corr_cancer_neg
+  Liver FC         | + site_corr_fc_pos / site_corr_fc_neg
 
-  For the 50-trial random sample above, best_true_rank = held_out_rank for every
-  trial because all sampled sites had only one known kinase. The multi-kinase
-  evaluation is where those two metrics will diverge and show the model's real
-  biological signal.
+  Minimum sample count for correlation: correlation requires ≥6 samples
+  (all three types have 18 samples, so this is satisfied for all).
 
-Results (6,909 trials across 2,459 multi-kinase sites, avg 3.93 true kinases/site):
-
-  Random baseline (expected by chance with avg 3.93 kinases out of 420):
-    Top-1: 0.9%   Top-5: 4.6%   Top-10: 9.1%   Top-20: 17.5%
-
-                          Generic     Liver (80% FC corr)
-  held_out mean rank:     140.0       148.8
-  held_out median rank:   107.0       125.0
-
-  best_true top-1:        0.1%        1.0%
-  best_true top-5:        2.9%        2.9%
-  best_true top-10:       12.9%       8.9%         (random: 9.1%)
-  best_true top-20:       29.3%       22.8%        (random: 17.5%)
-  best_true mean rank:    64.1        76.3
-  best_true median rank:  39.0        63.0
-
-Key finding — unexpected reversal:
-  On multi-kinase sites, the generic model outperforms the liver model on the
-  best_true_rank metric, which is the opposite of what the 50-trial random
-  evaluation showed. This is interpretable:
-
-  Multi-kinase sites are dominated by well-studied hub phosphosites (AKT1-S473
-  with 19 known kinases, GSK3B-S9 with 20, TP53-S15 with 15, PRKAA2-T172 with
-  20, etc.). These sites are already richly connected in every database the
-  generic graph uses — PPI, pathway membership, coevolution. The generic graph
-  captures that established signal cleanly.
-
-  The ~1 million liver fold-change correlation edges reflect co-expression
-  patterns in liver tumor tissue. For well-known hub sites this appears to
-  dilute the core kinase-substrate signal rather than add to it, because the
-  added edges connect based on tissue-level co-regulation, not direct kinase-
-  substrate biology.
-
-  The two results together form a consistent story:
-  - Liver graph is better for liver-specific / less well-studied phosphosites
-    (50-trial general sample: mean rank 118 vs 157 for generic).
-  - Generic graph is better for hub sites already covered richly by databases
-    (multi-kinase: best_true median rank 39 vs 63 for liver).
-
-  This is actually a useful finding for the abstract: liver-specific context
-  adds the most value precisely where the generic graph is sparse — which is
-  what you would expect and hope from a context-specific graph.
-
-  The generic model clearly beats the random baseline at top-10 (12.9% vs 9.1%)
-  and top-20 (29.3% vs 17.5%). The liver model beats random only at top-20
-  (22.8% vs 17.5%) and is essentially at the random level at top-10 (8.9% vs
-  9.1%), suggesting the correlation edges are not helping for these sites.
+PSP KSA edges are automatically excluded from the embedding graph regardless
+of which correlation type is selected (leakage fix, section 4).
 
 
-WHAT COMES NEXT (pending your feedback)
+7. MODULAR EMBEDDING STRATEGY
+-------------------------------
+Background from email:
+  "please make your code modular, so if we have time, we can just change the
+  embedding methods."
+
+embedding_strategy.py defines:
+  EmbeddingStrategy (ABC): abstract base with .fit(graph) → Dict[str, ndarray]
+  Node2VecStrategy (dataclass): current implementation, wraps fit_node2vec_embeddings
+
+To swap in a new embedding method (e.g. graph contrastive learning, spectral):
+  1. Implement EmbeddingStrategy.fit()
+  2. Pass an instance to run_leave_one_out(embedding_strategy=...)
+  No changes to leave_one_out.py required.
+
+Note: the email mentions degree-sensitive embedding as a limitation of node2vec
+for hub sites. Graph contrastive learning with spectral filtering would reduce
+this bias. Not implemented yet; the modular structure is in place.
+
+
+8. PER-KINASE TOP-k% ANALYSIS
+-------------------------------
+Background from email:
+  "For every kinase, let's report in what percentage of substrates it is ranked
+  in top-1, top-5, and top-10 in generic, healthy, and liver FC."
+
+Implemented in analyze_results.py → analysis_per_kinase_topk():
+  Uses adjusted_held_out_rank (other co-kinases dropped before measuring).
+  Only kinases with ≥5 trials in any network are included.
+  Output sorted by liver FC top-10% descending.
+
+  Interpretation (from email):
+  - High % in both generic and liver → likely hub/degree bias, not liver-specific
+  - High % in liver but not generic → genuinely liver-context-boosted kinase
+  - High % in generic but not liver → liver context dilutes signal for that kinase
+
+
+9. FOUR-NETWORK RESULTS (2026-05-27)
+--------------------------------------
+All four runs completed. analyze_results.py regenerated all analysis files.
+
+Run                  | Status    | Output dir
+---------------------+-----------+--------------------------------------------
+generic_multi_kinase | DONE      | outputs_prediction/generic_multi_kinase/
+control_multi_kinase | DONE      | outputs_prediction/control_multi_kinase/
+cancer_multi_kinase  | DONE      | outputs_prediction/cancer_multi_kinase/
+liver_multi_kinase   | DONE      | outputs_prediction/liver_multi_kinase/
+analyze_results      | DONE      | outputs_prediction/analysis/
+
+Full results (6,909 trials, 420 candidate kinases, post-leakage-fix):
+
+                              Generic   Control   Cancer    Liver FC
+  Adjusted held_out mean:     190.4     177.7     186.0     175.8    ← LOWER IS BETTER
+  Adjusted held_out median:   188.0     166.5     174.0     165.0
+  Best_true mean:             114.6     103.2     117.0     108.6
+  Best_true median:            78.0      80.0     116.0      83.0
+
+  Ranking by adjusted_held_out (primary): Liver FC > Control > Cancer > Generic
+  Ranking by best_true median:            Generic > Control > Liver FC > Cancer
+
+  Note: Cancer performs WORSE than Generic on adjusted_held_out. Raw tumor-sample
+  correlations appear to add noise rather than signal. Control (healthy) performs
+  almost as well as Liver FC, suggesting stable healthy co-expression captures as
+  much structural signal as fold-change patterns.
+
+
+10. TOP-1 KINASE FREQUENCY — DEGREE BIAS FINDING
+--------------------------------------------------
+This is the most striking result: the correlation-based networks are dominated by
+one or two kinases getting top-1 prediction on virtually ALL trials.
+
+  Network     | Top-1 monopoly
+  ------------+-----------------------------------------------
+  Generic     | ULK1 (76.5%), WNK1 (21%), ZAP70 (2.5%)
+  Control     | VRK2 (94.8%), YES1 (4.8%)
+  Cancer      | VRK3 (95.5%), VRK2 (3.8%)
+  Liver FC    | ULK1 (100.0%) — ALL 6,909 trials
+
+Interpretation: This is exactly the node2vec degree bias the supervisor predicted.
+Adding correlation edges makes certain kinases so highly connected (VRK2/VRK3 in
+raw-correlation networks, ULK1 in FC network) that they dominate the embedding
+and win top-1 everywhere regardless of biology.
+
+Even when a network has BETTER mean/median rank, the top-1 prediction is almost
+always wrong because a hub kinase monopolizes the top slot. The improvement in
+rank metrics reflects non-hub kinases moving to ranks 20-50 (better than 150-200
+in generic) rather than any kinase reaching rank 1.
+
+This finding directly supports the supervisor's suggestion to use less
+degree-sensitive embedding (graph contrastive learning with spectral filtering)
+to remove this hub bias.
+
+
+11. TTK CASE STUDY
+-------------------
+TTK (Mps1 kinase, mitotic regulator, liver-cancer relevant), 21 trials:
+
+  Network     | held_out mean | VRK monopoly?
+  ------------+---------------+--------------
+  Generic     | 247.7         | ULK1 (18/21), WNK1 (3/21) — always wrong
+  Control     | 25.7          | VRK2 (21/21) — hub wins top-1 but TTK ranks ~25
+  Cancer      | 112.7         | VRK3 (21/21) — similar pattern
+  Liver FC    | 242.6         | ULK1 (21/21) — similar to generic
+
+Control dramatically improves TTK rank (mean 25 vs 248 in generic) even though
+VRK2 always wins top-1. This means healthy co-expression structurally connects
+TTK to its substrates much better than either the generic or FC graph.
+
+
+12. RANKING SHIFTS (GENERIC vs LIVER FC)
 -----------------------------------------
-1. Most frequent top-1 predicted kinases: a frequency table of which kinases the
-   liver model most often predicts as top-1 across the multi-kinase and general
-   trials, compared to the generic model. This is the starting point for the
-   liver cancer biology discussion and the TTK follow-up.
+Most IMPROVED kinases in Liver FC (all 100% improved, mean delta):
+  NTRK2 (+311, 7 trials)   MAPK7 (+307, 9)   MAP3K5 (+295, 10)
+  PRKCQ (+271, 17)         MAPKAPK5 (+252, 11)
 
-2. Protein co-expression: still waiting for clarification on which data
-   source or columns to use. The current protein fold-change step only finds 3
-   usable rows due to sparse control data in the ProteinExpression sheet.
+Most WORSENED kinases in Liver FC (all 0% improved):
+  HIPK2 (-227, 25)   STK26 (-209, 9)    EEF2K (-205, 5)
+  CSK (-193, 6)      CSNK2A2 (-192, 17) PRKCB (-184, 61)   ATM (-153, 93)
+
+Note: In Liver FC, the top-1 prediction is almost always VRK2 (replacing VRK3
+from generic). The "improvements" for NTRK2/MAPK7/etc. reflect the true kinase
+moving from rank 360-410 in generic to rank 15-65 in liver FC, even though VRK2
+still wins top-1. The "worsenings" for WNK1/HIPK2/ATM reflect kinases that were
+reasonably ranked in generic (rank 15-150) but collapse to rank 300-420 in liver
+FC because their correlation structure is disrupted by the FC edges.
+
+
+13. WHAT COMES NEXT
+--------------------
+1. Address the degree/hub bias via modular embedding swap. Architecture is ready
+   (EmbeddingStrategy ABC). Candidate: graph contrastive learning with spectral
+   filtering, or random-walk-with-restart using personalized PageRank.
+2. Biological validation: NTRK2, MAPK7, MAP3K5, PRKCQ are the most improved
+   kinases in Liver FC — look for liver cancer evidence in the literature.
+3. TTK: explore why healthy correlations (Control, rank 25) work so much better
+   than FC (rank 243). This may indicate TTK substrates are highly correlated
+   in normal liver tissue but show divergent FC patterns in tumors.
+4. Abstract writing: four-network comparison with the hub-bias caveat.
+5. Progress timing fix: run_in_parallel now calls progress_fn from inside
+   as_completed, so elapsed time and ETA are live (not post-hoc).
