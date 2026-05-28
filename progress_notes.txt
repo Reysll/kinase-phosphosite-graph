@@ -241,19 +241,19 @@ TTK to its substrates much better than either the generic or FC graph.
 12. RANKING SHIFTS (GENERIC vs LIVER FC)
 -----------------------------------------
 Most IMPROVED kinases in Liver FC (all 100% improved, mean delta):
-  NTRK2 (+311, 7 trials)   MAPK7 (+307, 9)   MAP3K5 (+295, 10)
-  PRKCQ (+271, 17)         MAPKAPK5 (+252, 11)
+  CSK (+241, 6 trials)   STK24 (+238, 8)   STK11 (+216, 15)
+  MAP3K5 (+177, 10)      RET (+172, 15)
 
 Most WORSENED kinases in Liver FC (all 0% improved):
-  HIPK2 (-227, 25)   STK26 (-209, 9)    EEF2K (-205, 5)
-  CSK (-193, 6)      CSNK2A2 (-192, 17) PRKCB (-184, 61)   ATM (-153, 93)
+  PKN1 (-177, 10)   MAP3K11 (-168, 7)   MAP3K8 (-156, 23)
+  SIK2 (-155, 5)    PDK1 (-149, 5)
 
-Note: In Liver FC, the top-1 prediction is almost always VRK2 (replacing VRK3
-from generic). The "improvements" for NTRK2/MAPK7/etc. reflect the true kinase
-moving from rank 360-410 in generic to rank 15-65 in liver FC, even though VRK2
-still wins top-1. The "worsenings" for WNK1/HIPK2/ATM reflect kinases that were
-reasonably ranked in generic (rank 15-150) but collapse to rank 300-420 in liver
-FC because their correlation structure is disrupted by the FC edges.
+Note: In Liver FC, the top-1 prediction is ULK1 for 100% of all 6,909 trials.
+The "improvements" for CSK/STK24/STK11 reflect the true kinase moving from
+rank ~400 in generic to rank 25-160 in liver FC, even though ULK1 still wins
+top-1. The "worsenings" for PKN1/MAP3K11/MAP3K8 reflect kinases that were
+reasonably ranked in generic (rank 40-170) but collapse to rank 220-375 in
+liver FC because their correlation structure is disrupted by the FC edges.
 
 
 13. WHAT COMES NEXT

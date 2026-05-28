@@ -1,30 +1,30 @@
 Comparison: generic model vs liver model — full multi-kinase LOO (80% fold-change site correlation)
 ====================================================================================================
 LOO trials compared:             6,909
-Candidate kinases:               420
+Candidate kinases:               415
 
 Held-out kinase rank (the removed kinase-site edge)
-  Top-1  generic / liver:        0.0% (3/6909)  /  0.2% (11/6909)
-  Top-5  generic / liver:        0.8% (54/6909)  /  0.7% (49/6909)
-  Top-10 generic / liver:        4.0% (279/6909)  /  2.6% (177/6909)
-  Top-20 generic / liver:        10.1% (697/6909)  /  8.0% (551/6909)
-  Mean rank  generic / liver:    140.0  /  148.8
-  Median rank generic / liver:   107.0  /  125.0
+  Top-1  generic / liver:        0.4% (27/6894)  /  0.3% (21/6894)
+  Top-5  generic / liver:        0.9% (59/6894)  /  0.9% (64/6894)
+  Top-10 generic / liver:        1.5% (104/6894)  /  1.8% (123/6894)
+  Top-20 generic / liver:        2.2% (150/6894)  /  2.7% (186/6894)
+  Mean rank  generic / liver:    190.4  /  175.8
+  Median rank generic / liver:   188.0  /  165.0
 
 Best-true kinase rank (best-ranked among all known kinases for the site)
-  Top-1  generic / liver:        0.1% (9/6909)  /  1.0% (69/6909)
-  Top-5  generic / liver:        2.9% (203/6909)  /  2.9% (202/6909)
-  Top-10 generic / liver:        12.9% (890/6909)  /  8.9% (612/6909)
-  Top-20 generic / liver:        29.3% (2026/6909)  /  22.8% (1578/6909)
-  Mean rank  generic / liver:    64.1  /  76.3
-  Median rank generic / liver:   39.0  /  63.0
+  Top-1  generic / liver:        1.1% (73/6909)  /  0.9% (61/6909)
+  Top-5  generic / liver:        2.4% (165/6909)  /  2.1% (148/6909)
+  Top-10 generic / liver:        4.4% (305/6909)  /  4.6% (320/6909)
+  Top-20 generic / liver:        8.4% (577/6909)  /  8.7% (603/6909)
+  Mean rank  generic / liver:    114.6  /  108.6
+  Median rank generic / liver:   78.0  /  83.0
 
 Per-trial changes
-  Top-1 prediction changed:          6,901 / 6,909  (99.9%)
-  Held-out rank improved (liver):    2,589 / 6,909  (37.5%)
-  Best-true rank improved (liver):   2,140 / 6,909  (31.0%)
+  Top-1 prediction changed:          1,625 / 6,909  (23.5%)
+  Held-out rank improved (liver):    3,908 / 6,909  (56.6%)
+  Best-true rank improved (liver):   3,684 / 6,909  (53.3%)
 
 Mean held-out rank delta (generic - liver, positive = liver improved):
-  All trials:                    -8.84
-  Trials improved in liver:      84.91  (n=2,589)
-  Trials worsened in liver:      -65.03  (n=4,320)
+  All trials:                    14.57
+  Trials improved in liver:      53.31  (n=3,908)
+  Trials worsened in liver:      -36.14  (n=3,001)

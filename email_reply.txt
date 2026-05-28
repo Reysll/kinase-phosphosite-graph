@@ -1,25 +1,28 @@
 Subject: Re: Kinase-Substrate HGN — All four networks complete + results
 
-Dear [Supervisor],
+Hello Dr Ayati,
 
-Thank you for the detailed feedback and the very clear implementation roadmap.
-I have addressed each of your points in full. Below is a structured summary
-organized as your request -> my implementation -> result.
+Thank you for the feedback and roadmap. I have addressed each of your points
+below as: your request → what I did → result.
 
-All outputs are committed to the repository under outputs_prediction/analysis/.
+All outputs are in outputs_prediction/analysis/.
 
 ──────────────────────────────────────────────────────────────────────────────
 1. EMBEDDING LEAKAGE FIX
 ──────────────────────────────────────────────────────────────────────────────
 
 Your concern:
-  When node2vec sees a kinase-phosphosite link during embedding, the structural
-  information about that relationship is captured in the node vectors even when
-  the edge is withheld as a training label — an indirect form of data leakage.
-  You suggested dropping all PhosphoSitePlus (PSP) KSA edges before computing
-  embeddings, while keeping non-PSP KSA edges from other resources even if they
-  coincide with a PSP annotation (since the label being predicted is specifically
-  the PSP annotation).
+  "I read your modification to node2vec. It seems that you calculate embedding
+  once, and then in LOO, do the training. The problem is that when you have a
+  link between the kinase and phosphosite, and calculate node2vec, it kind of
+  keeps that link information in the embedding. Even when you remove that edge
+  from your training, there is still a leakage (cheating) in the training
+  (although indirect). So if you want to keep the speed and do one-time
+  embedding, I have a suggestion: drop all the links between kinases and
+  phosphosites that are obtained from phosphpsitePlus. calculate embedding, and
+  then train and test. Don't drop edges that are obtained from other resources
+  even if it is duplicate with PSP. (I forgot how we created the network, did
+  we keep the site and protein level?)"
 
 What I did:
   In leave_one_out.py, I added _build_embedding_relations() which subtracts all
@@ -27,29 +30,38 @@ What I did:
   remain as training labels (positive_edges). Non-PSP KSA edges are kept. This
   runs once before the trial loop, so there is no performance penalty.
 
+  To answer your implicit question — yes, both node types are present in the
+  graph throughout: PROTEIN:GENE nodes (e.g. PROTEIN:AKT1) and SITE:GENE-pSXXX
+  nodes (e.g. SITE:AKT1-S473). The PSP 'phosphorylates' edges connect protein
+  nodes to site nodes and are the ones stripped from the embedding graph. All
+  other edge types (PPI, protein_same_pathway, has_site, site_coevolution,
+  site_same_pathway, correlation edges) are retained.
+
 Result:
   Performance dropped relative to the pre-fix numbers, as expected — the model
   can no longer indirectly read the answer via embedding structure. The corrected
-  numbers are the scientifically valid ones. Importantly, the ranking of networks
+  numbers are the scientifically valid ones. Importantly, the network ranking
   changed after the fix:
 
-  Pre-fix (leaked):  Generic mean rank 140, Liver FC 149  → appeared to tie/reverse
+  Pre-fix (leaked):   Generic mean rank 140, Liver FC 149  → appeared to tie
   Post-fix (correct): Generic mean rank 190, Liver FC 176  → Liver FC consistently
                                                               outperforms Generic
 
-  The earlier observation of "generic wins on multi-kinase hub sites" was partly
-  an artifact of leakage disproportionately benefiting well-connected hub sites
-  in the generic graph.
+  The earlier "generic wins" observation was partly an artifact of leakage
+  disproportionately benefiting well-connected hub sites in the generic graph.
 
 ──────────────────────────────────────────────────────────────────────────────
 2. FOUR NETWORKS
 ──────────────────────────────────────────────────────────────────────────────
 
 Your request:
-  Construct four networks and compare: (1) generic, no correlation edges;
-  (2) control-specific, correlations from healthy/control samples; (3) cancer-
-  specific, correlations from tumor samples; (4) liver FC-based, correlations
-  among fold-change vectors. Minimum 6 samples for correlation calculation.
+  "Also another modification, can we construct 4 networks: one generic (no
+  correlation edge included), one control-specific (correlation obtained from
+  relationship among phosphosite pairs across control/healthy samples), one
+  liver-specific (correlation obtained from relationship among phosphosite pairs
+  across cancer samples), one liver FC-based (which is the correlation among FC
+  that you are already using). Let's see how different they would be. make sure,
+  we have at least 6 samples for correlation calculation."
 
 What I did:
   The liver graph builder (liver_network.py) now computes all three correlation
@@ -58,12 +70,19 @@ What I did:
   graph per experiment. All three types use 18 samples, satisfying the ≥6
   sample requirement.
 
+  Note on the per-pair floor: the Pearson correlation is computed per site-pair,
+  and pairs with fewer than 6 overlapping non-NaN measurements are skipped before
+  the threshold filter. I have verified this at the experiment level (18/18
+  samples present) but have not added an explicit assert for the per-pair count
+  in liver_network.py — I can add one and log the number of dropped pairs if you
+  want a hard guarantee.
+
   Scripts: run_multi_kinase_{generic,control,cancer,liver}.py
   Analysis: src_prediction/analyze_results.py (four networks side by side)
 
 Results (6,909 trials, 2,459 multi-kinase sites, 420 candidate kinases):
 
-  Adjusted held-out rank (primary metric — see point 4 below):
+  Adjusted held-out rank (primary metric — see point 3 below):
 
                           Generic   Control   Cancer    Liver FC
   Mean rank:              190.4     177.7     186.0     175.8   ← lower is better
@@ -78,20 +97,25 @@ Results (6,909 trials, 2,459 multi-kinase sites, 420 candidate kinases):
   Key findings:
   - Liver FC and Control both outperform Generic on adjusted held-out rank.
   - Cancer performs WORSE than Generic on both metrics. Raw tumor abundance
-    correlations appear to add noise rather than signal — tumor phosphoproteomics
-    is inherently noisier than fold-change-normalized values.
-  - Control (healthy co-expression) rivals Liver FC, suggesting that stable
-    baseline co-expression patterns carry as much structural information as
-    the disease-specific fold-change signal.
+    correlations add noise rather than signal — tumor phosphoproteomics is
+    inherently noisier than fold-change-normalised values.
+  - Control (healthy co-expression) rivals Liver FC, suggesting stable baseline
+    co-expression patterns carry nearly as much structural information as the
+    disease-specific fold-change signal.
 
 ──────────────────────────────────────────────────────────────────────────────
 3. ADJUSTED HELD-OUT RANK (PRIMARY METRIC)
 ──────────────────────────────────────────────────────────────────────────────
 
 Your request:
-  For a site with kinases k1/k2/k3, if k1 is held out and the model produces
-  [k7, k4, k2, k1], the naive rank of k1 is 4 — but k2 should not count against
-  me since its edge was not hidden. Drop k2 and report rank = 3.
+  "Best-true rank seems to be biased and suffers from leakage. what should be
+  done is that, if other true kinases ranked high, just drop them from ranking,
+  and then calculate the ranks. for example, let's say a substrate has 3 kinases
+  of k1, k2, and k3, and you held out k1. so in the ranking you have k7, k4,
+  k2, k1. So now the rank of k1 (that you held out) should be 3 instead of 4.
+  Because k2 was already expected to be ranked higher since the information was
+  not hidden. basically, for each ranked set, drop the true kinases, and
+  calculate the rank of held-out kinase."
 
 What I did:
   Implemented _compute_adjusted_held_out_rank() in leave_one_out.py.
@@ -107,10 +131,14 @@ What I did:
 ──────────────────────────────────────────────────────────────────────────────
 
 Your request:
-  Replace mean rank with a per-kinase table: for each kinase, report the
-  percentage of its substrates where it is ranked in top-1, top-5, and top-10
-  across each of the four networks. This exposes biological signal more clearly
-  than a mean that averages over hub and sparse sites alike.
+  "Also, instead of mean ranking, let's have a different measurement. mean
+  ranking might fade away the signal since mean is not a robust measurement.
+  For every kinase, let's report in what percentage of substrates, it is ranked
+  in top1, top5, and top10 in generic network, in healthy network and in liver
+  and FC network. It may give us a better view of kinase movement. [similar to
+  what you did for VRK family]. For example, in the case of VRK, you are right
+  in interpretation. if it is ranked high in generic and liver, then it is not
+  liver associated and it is mostly the network bias."
 
 What I did:
   analysis_per_kinase_topk() in analyze_results.py generates this table using
@@ -124,14 +152,37 @@ What I did:
   - High % in liver only       → context genuinely boosts this kinase
   - High % in generic only     → liver context dilutes this kinase's signal
 
+  Excerpt from per_kinase_topk.txt (selected rows):
+
+  Kinase    n   ── Generic ──────   ── Control ──────   ── Cancer ───────   ── Liver FC ─────
+               top1   top5  top10  top1   top5  top10  top1   top5  top10  top1   top5  top10
+  ULK1     21  90.5% 100.0% 100.0%  0.0%  0.0%  0.0%  0.0%  0.0%  0.0% 100.0% 100.0% 100.0%
+  ZAP70    26  23.1% 100.0% 100.0%  0.0% 76.9% 100.0%  0.0% 100.0% 100.0%  0.0% 88.5% 100.0%
+  SYK      43   0.0%  0.0%  0.0%   0.0%  0.0%  0.0%   0.0%  0.0% 53.5%   0.0%  0.0% 76.7%
+  CDK5     89   0.0%  0.0%  0.0%   0.0%  0.0%  0.0%   0.0%  0.0%  0.0%   0.0%  0.0%  0.0%
+  [the vast majority of kinases: 0% at top-1/5/10 across all networks]
+
+  ULK1 is the clearest example of your VRK interpretation applied: 90.5% top-1
+  in generic and 100% in liver FC → pure degree/hub bias, not liver biology.
+  SYK is a rare case showing a liver FC top-10 signal (76.7%) absent in generic,
+  suggesting context adds something for it specifically — though still not top-1.
+
+  Caveat: the table is currently dominated by the hub bias described in point 6.
+  Because a single kinase occupies top-1 in nearly every trial across all
+  networks, almost all kinases show 0% at top-1 and very low percentages at
+  top-5/10. The interpretation framework above is correct in principle, but
+  meaningful biological signal will only be readable from this table after the
+  embedding swap.
+
 ──────────────────────────────────────────────────────────────────────────────
 5. MODULAR EMBEDDING ARCHITECTURE
 ──────────────────────────────────────────────────────────────────────────────
 
 Your request:
-  Make the embedding code modular so that a different method (e.g. graph
-  contrastive learning with spectral filtering) can be substituted without
-  changing the evaluation pipeline.
+  "If we want to remove the network degree bias, we can use less degree-sensitive
+  embedding such as graph contrastive learning with spectral filtering. I am not
+  sure if we want to make that big change at this stage, but please make your
+  code modular, so if we have time, we can just change the embedding methods."
 
 What I did:
   src_prediction/embedding_strategy.py defines:
@@ -141,19 +192,18 @@ What I did:
   To swap the embedding method: implement EmbeddingStrategy.fit() and pass an
   instance to run_leave_one_out(embedding_strategy=...). No other changes needed.
 
-  Your note on node2vec being degree-sensitive: confirmed and now directly
-  observed in the results (see point 6 below). The modular structure is ready
-  for the swap when I proceed to the next phase.
+  Your note on node2vec being degree-sensitive is confirmed by the results in
+  point 6. The modular structure is ready for the swap.
 
 ──────────────────────────────────────────────────────────────────────────────
 6. HUB/DEGREE BIAS — CRITICAL FINDING
 ──────────────────────────────────────────────────────────────────────────────
 
-Your prediction:
-  If a kinase is ranked high in both generic and liver networks, that is likely
-  a network degree bias rather than liver-specific biology. You noted that node2vec
-  is degree-sensitive, and suggested graph contrastive learning with spectral
-  filtering as a remedy.
+Your note:
+  "if it is ranked high in generic and liver, then it is not liver associated
+  and it is mostly the network bias. If we want to remove the network degree
+  bias, we can use less degree-sensitive embedding such as graph contrastive
+  learning with spectral filtering."
 
 What I observed:
   The top-1 prediction frequency across all 6,909 trials reveals a severe degree
@@ -170,57 +220,90 @@ What I observed:
   graph that node2vec concentrates its representation there, and that kinase wins
   top-1 for essentially all sites regardless of biology.
 
-  The improvements in mean/median rank metrics are real: for example, NTRK2 moves
-  from rank ~380 in generic to rank ~63 in liver FC (100% improvement across all
-  7 of its trials). But none of the correlation networks ever recovers top-1
-  biology because the hub kinase always occupies that position.
+  The improvements in mean/median rank metrics are real: for example, CSK moves
+  from mean rank ~402 in generic to ~162 in Liver FC (100% improvement across
+  all 6 of its trials). But the correct kinase never reaches rank 1 because the
+  hub kinase always occupies that position.
 
-  This is exactly the phenomenon you anticipated. The adjusted rank metrics show
-  genuine structural improvement, but biologically meaningful top-1 predictions
-  will require a degree-normalised embedding. The EmbeddingStrategy swap
-  architecture is already in place.
+  The adjusted rank metrics show genuine structural improvement, but biologically
+  meaningful top-1 predictions will require a degree-normalised embedding. The
+  EmbeddingStrategy swap architecture is already in place.
 
 ──────────────────────────────────────────────────────────────────────────────
 7. TTK CASE STUDY
 ──────────────────────────────────────────────────────────────────────────────
 
-  Network   | held-out mean rank | Top-1 always predicted as
-  ----------|--------------------|--------------------------
-  Generic   | 247.7              | ULK1 (18/21), WNK1 (3/21)
-  Control   | 25.7               | VRK2 (21/21)
-  Cancer    | 112.7              | VRK3 (21/21)
-  Liver FC  | 242.6              | ULK1 (21/21)
+  As discussed in my previous email, TTK has 21 trials in the multi-kinase set.
+  Updated results across all four networks (post-leakage-fix):
 
-  Control dramatically improves TTK's rank (mean 26 vs 248 in generic), despite
-  VRK2 still monopolising top-1 every time. TTK substrates appear stably
-  co-expressed in healthy liver tissue, and the control correlation edges capture
-  that structural proximity effectively. Liver FC provides no improvement over
-  generic for TTK (rank 243 vs 248), suggesting TTK substrate fold-changes are
-  divergent in tumors rather than co-regulated.
+    Network   | Adjusted mean rank | Top-1 always predicted as
+    ----------|--------------------|----------------------------
+    Generic   | 247                | ULK1 (18/21), WNK1 (3/21)
+    Control   | 26                 | VRK2 (21/21)
+    Cancer    | 113                | VRK3 (21/21)
+    Liver FC  | 243                | ULK1 (21/21)
 
-  In your framing: TTK is highly ranked in Control but not in Liver FC or Generic,
-  which makes it a candidate for a control/baseline-specific structural signal
-  rather than a liver cancer-specific one — consistent with its role as a mitotic
-  checkpoint kinase whose activity pattern may be disrupted rather than amplified
-  in tumor tissue.
+  Control dramatically improves TTK's rank (mean 26 vs 247 in generic), despite
+  VRK2 monopolising top-1 every time. TTK substrates appear stably co-expressed
+  in healthy liver tissue, and the control correlation edges capture that
+  structural proximity effectively.
+
+  Liver FC provides no improvement for TTK (rank 243 vs 247), suggesting TTK
+  substrate fold-changes are divergent in tumors rather than co-regulated. This
+  is consistent with TTK's role as a mitotic checkpoint kinase whose activity
+  may be disrupted rather than amplified in tumor tissue.
 
 ──────────────────────────────────────────────────────────────────────────────
 8. MOST IMPROVED AND WORSENED KINASES (LIVER FC vs GENERIC)
 ──────────────────────────────────────────────────────────────────────────────
 
+  These figures use adjusted_held_out_rank from the post-leakage-fix four-network
+  results (comparison regenerated from the current generic and liver FC outputs).
+
   Most improved in Liver FC (all 100% of trials improved):
-    NTRK2    (+311 mean delta, 7 trials)
-    MAPK7    (+307, 9 trials)
-    MAP3K5   (+295, 10 trials)
-    PRKCQ    (+271, 17 trials)
-    MAPKAPK5 (+252, 11 trials)
+
+    Kinase    n   mean delta
+    CSK       6     +241
+    STK24     8     +238
+    STK11    15     +216
+    MAP3K5   10     +177
+    RET      15     +172
+
+  Site-level examples for the top improved kinases (from ranking_shifts.txt):
+
+    Site           True kinase  Generic  Liver FC  Delta
+    HCK-Y411       CSK             400       145   +255
+    SRC-Y419       CSK             398       144   +254
+    SRC-Y530       CSK             403       153   +250
+    SIK3-T221      STK11           365        74   +291
+    BRSK1-T205     STK11           364        75   +289
+    SIK3-T221      STK24           277        25   +252
+    PPP1R14C-T73   STK24           276        25   +251
 
   Most worsened in Liver FC (0% of trials improved):
-    HIPK2    (-227, 25 trials)
-    STK26    (-209, 9 trials)
-    PRKCB    (-184, 61 trials)
-    ATM      (-153, 93 trials)
-    GSK3A    (-146, 61 trials)
+
+    Kinase     n   mean delta
+    PKN1      10     -177
+    MAP3K11    7     -168
+    MAP3K8    23     -156
+    SIK2       5     -155
+    PDK1       5     -149
+
+  Site-level examples for the top worsened kinases (from ranking_shifts.txt):
+
+    Site           True kinase  Generic  Liver FC  Delta
+    CLIP1-S312     PKN1              43       226   -183
+    MEFV-S242      PKN1              45       228   -183
+    PKN1-T774      PKN1              45       228   -183
+    PDHA1-S300     PDK3              80       292   -212
+    PDHA1-S293     PDK3              81       284   -203
+
+  Note: ULK1 is top-1 for 100% of Liver FC trials and 76.5% of Generic trials,
+  so rank improvements are relative movements within the scored list, not gains
+  to rank 1. CSK substrates (Src-family regulatory tyrosines) move from ~rank
+  402 in generic to ~rank 162 in Liver FC. The most worsened kinases (PKN1,
+  MAP3K11, MAP3K8) collapse from low generic ranks (40–170) to rank 220–375
+  in Liver FC.
 
   Full case-study table: outputs_prediction/analysis/ranking_shifts.txt
   Per-kinase top-k table: outputs_prediction/analysis/per_kinase_topk.csv
@@ -229,41 +312,43 @@ What I observed:
 9. ON YOUR TRIAL DEFINITION QUESTION
 ──────────────────────────────────────────────────────────────────────────────
 
-  Your question: "why does NTRK2 have 7 trials and MAPK7 have 9 trials?"
+Your question:
+  "I thought I understood the concept of trial, but then I saw your last result,
+  and I think I did not understand it then. My understanding is that every time
+  you remove an edge to predict, you call it trial. Then what is the meaning of
+  trial per kinase? why ntrk2 has 7 trials and mapk7 has nine trials? is it
+  number of substrates that they have?"
 
-  One trial = one held-out kinase-site edge. The number of trials per kinase
-  equals the number of phosphosites in the frozen multi-kinase evaluation set
-  that have that kinase as one of their annotated kinases. The multi-kinase set
-  requires ≥2 known kinases per site (2,459 such sites), so every trial is a
-  held-out edge from a site where at least one other kinase annotation remains
-  in the training set. NTRK2 has 7 annotated multi-kinase substrates in the
-  dataset; MAPK7 has 9.
+  Yes, exactly. One trial = one held-out kinase-site edge. The number of trials
+  per kinase equals the number of phosphosites in the frozen multi-kinase set
+  that list that kinase as one of their annotated kinases. The multi-kinase set
+  requires ≥2 known kinases per site (2,459 such sites), so every trial has at
+  least one other kinase annotation remaining in training. NTRK2 has 7 annotated
+  multi-kinase substrates in the dataset; MAPK7 has 9.
 
 ──────────────────────────────────────────────────────────────────────────────
 10. DOCUMENTATION AND CODE HYGIENE
 ──────────────────────────────────────────────────────────────────────────────
 
   Updated:
-  - CLAUDE.md               — current run status, worker settings, result numbers
-  - progress_notes.txt      — full technical record including leakage fix, four-
-                              network design, hub bias finding, TTK case study,
-                              timing fix, and next steps
-  - current_state_of_project.txt — complete results table, per-kinase
-                              interpretation guide, all four runs complete
-  - PROJECT_PIPELINE_EXPLANATION.txt — updated to reflect current pipeline
-                              (four-network design, embedding strategy module,
-                              adjusted rank metric, parallel progress reporting)
-  - Memory file updated for future Claude Code sessions
+  - README.md                 — full rewrite reflecting four-network design,
+                                current results, hub bias finding, and correct
+                                pipeline commands
+  - CLAUDE.md                 — current run status, worker settings, result numbers
+  - current_state_of_project.txt — complete results table, all four runs
+  - compare_multi_kinase.py   — now uses adjusted_held_out_rank (primary metric)
+                                instead of legacy held_out_kinase_rank; comparison
+                                file regenerated from post-leakage-fix results
 
   Worker settings (all four run scripts):
-  - n_jobs_outer = 8 (bumped from 6; stalling was caused by missing progress
-    prints, not by worker count)
+  - n_jobs_outer = 8
   - Node2Vec Word2Vec workers = 4
 
-  Progress reporting fixed:
-  - run_in_parallel() now accepts a progress_fn(done, total) callback that fires
-    from inside the as_completed() loop — elapsed time and ETA are now live
-    measurements rather than post-hoc values.
+  Known gap — 50-trial general evaluation not updated:
+  The older 50-trial debug runs (run_generic_model.py, run_baseline_similarity.py)
+  predate the leakage fix and use the unadjusted held_out_kinase_rank metric.
+  Those outputs are stale and are not included in the analysis above. The
+  multi-kinase 6,909-trial set is the current definitive evaluation.
 
 ──────────────────────────────────────────────────────────────────────────────
 SUGGESTED NEXT STEPS (pending your guidance)
@@ -273,23 +358,30 @@ SUGGESTED NEXT STEPS (pending your guidance)
      The modular EmbeddingStrategy ABC is in place. Implementing a degree-
      normalised method (spectral embedding, personalized PageRank, or graph
      contrastive learning with spectral filtering) should resolve the hub bias
-     and make top-1 predictions biologically interpretable. Happy to proceed
-     if you would like to prioritize this.
+     and make top-1 predictions biologically interpretable.
 
   2. Biological validation of most-improved kinases.
-     NTRK2, MAPK7, MAP3K5, PRKCQ are consistently improved across all Liver FC
-     trials. Literature review for liver cancer roles would be a natural next step.
+     CSK, STK24, STK11, MAP3K5, and RET are consistently improved across all
+     Liver FC trials (100% of their trials improved). A literature review for
+     liver cancer roles would be a natural next step.
 
   3. TTK follow-up.
-     The dramatic Control improvement (rank 26) vs Liver FC (rank 243) for TTK
-     warrants further investigation — are TTK substrate fold-changes divergent
+     The dramatic Control improvement (rank 26) vs Liver FC (rank 243) warrants
+     further investigation — are TTK substrate fold-changes genuinely divergent
      in tumor tissue, and if so, is that itself a biologically informative signal?
 
-  4. Abstract and methods writing.
-     The four-network comparison plus the hub bias finding provide a clear and
-     novel story: context-specific correlation edges improve ranking metrics, but
-     the degree sensitivity of node2vec obscures biological top-1 predictions —
-     motivating the methodological contribution of the embedding swap.
+  4. Statistical significance testing.
+     The rank improvements (e.g. Liver FC mean 175.8 vs Generic 190.4) are based
+     on 6,909 paired trials but I have not run a formal test. A Wilcoxon
+     signed-rank test on per-trial adjusted_held_out_rank pairs (Generic vs each
+     other network) would confirm statistical significance before writing the
+     methods section.
+
+  5. KSEA validation (Options 1 & 2 from your 5/23 email).
+     The predicted KSAs and fold-change measurements are both available from the
+     current pipeline. Once the embedding swap resolves the hub bias, implementing
+     the kinase activity score from the Bioinformatics paper and comparing
+     predicted vs actual kinase activities would be a strong validation step.
 
 Best regards,
 [Name]

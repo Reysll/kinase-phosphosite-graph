@@ -8,816 +8,452 @@
 * [Repository Layout](#repository-layout)
 * [Data Inputs](#data-inputs)
 * [Graph Construction Layer](#graph-construction-layer)
-
-  * [`src/builders/kinase_substrate.py`](#srcbuilderskinase_substratepy)
-  * [`src/builders/ppase_substrate.py`](#srcbuildersppase_substratepy)
-  * [`src/main.py`](#srcmainpy)
-  * [`src/liver_network.py`](#srcliver_networkpy)
-  * [`src/run_liver.py`](#srcrun_liverpy)
 * [Prediction and Evaluation Layer](#prediction-and-evaluation-layer)
-
-  * [`src_prediction/run_freeze_folds.py`](#src_predictionrun_freeze_foldspy)
-  * [`src_prediction/pair_features.py`](#src_predictionpair_featurespy)
-  * [`src_prediction/negative_sampling.py`](#src_predictionnegative_samplingpy)
-  * [`src_prediction/model_scoring.py`](#src_predictionmodel_scoringpy)
-  * [`src_prediction/leave_one_out.py`](#src_predictionleave_one_outpy)
-  * [`src_prediction/run_baseline_similarity.py`](#src_predictionrun_baseline_similaritypy)
-  * [`src_prediction/compare_experiments.py`](#src_predictioncompare_experimentspy)
-  * [`src_prediction/relation_filters.py`](#src_predictionrelation_filterspy)
 * [Supporting Helper Files](#supporting-helper-files)
-* [Recent Exploratory Analysis Files](#recent-exploratory-analysis-files)
 * [Outputs](#outputs)
 * [How the Full Pipeline Works](#how-the-full-pipeline-works)
 * [How to Run the Project](#how-to-run-the-project)
-
-  * [1. Build the generic graph](#1-build-the-generic-graph)
-  * [2. Build the liver-specific graph](#2-build-the-liver-specific-graph)
-  * [3. Freeze leave-one-out evaluation cases](#3-freeze-leave-one-out-evaluation-cases)
-  * [4. Run the generic prediction experiment](#4-run-the-generic-prediction-experiment)
-  * [5. Run the liver prediction experiment](#5-run-the-liver-prediction-experiment)
-  * [6. Compare generic vs liver predictions](#6-compare-generic-vs-liver-predictions)
-  * [7. Optional exploratory analysis for multi-kinase sites](#7-optional-exploratory-analysis-for-multi-kinase-sites)
+* [Experimental Results](#experimental-results)
 * [Interpretation of Results](#interpretation-of-results)
 * [Important Notes and Caveats](#important-notes-and-caveats)
 * [Current Scientific Direction](#current-scientific-direction)
 
 ## Overview
 
-This project builds and evaluates a context-aware biological network for kinase-substrate association, or KSA, prediction, with a current application to liver cancer.
+This project builds and evaluates a context-aware biological network for kinase-substrate association (KSA) prediction, with a current application to liver cancer.
 
 The full workflow has two major layers:
 
 1. **Graph construction**
 
    * Build a generic heterogeneous phosphorylation graph from curated public resources.
-   * Extend that graph into a liver-specific graph using liver proteomic and phosphoproteomic data.
+   * Extend that graph into a liver-specific graph using liver proteomic and phosphoproteomic data, adding three types of phosphosite correlation edges.
 
 2. **Prediction and evaluation**
 
-   * Use the graph to rank candidate kinases for phosphosites.
-   * Compare generic versus liver-specific rankings to identify context-dependent changes.
+   * Embed the graph with node2vec (applied once on a PSP-stripped graph to prevent leakage).
+   * Train a logistic regression scorer for kinase-site pairs.
+   * Evaluate all four network variants using leave-one-out on 6,909 frozen multi-kinase trials.
+   * Compare kinase rankings across networks to identify context-dependent changes.
 
-The full pipeline is:
-
-1. Build the generic graph
-2. Build the liver-specific graph
-3. Prepare evaluation inputs
-4. Freeze held-out leave-one-out cases for reproducibility
-5. Run prediction on the generic graph
-6. Run prediction on the liver graph
-7. Compare ranking differences
-8. Inspect biologically interesting changes, especially at sites with multiple reported kinases
+**Current status (2026-05-27):** All four networks complete. Key finding: adding correlation edges improves mean/median rank metrics but introduces severe hub degree bias in node2vec — a single kinase dominates top-1 for all trials in every correlation network. Degree-normalised embedding is the immediate next step.
 
 ## Scientific Motivation
 
-Many existing computational KSA methods work out of context. They often rely on static information such as sequence motifs, structural features, or generic prior knowledge. However, phosphorylation is highly transient and context-dependent. The kinase most relevant to a phosphosite may differ across tissues, disease states, and biological conditions.
+Many existing computational KSA methods work out of context. They rely on static information such as sequence motifs, structural features, or generic prior knowledge. However, phosphorylation is highly transient and context-dependent: the kinase most relevant to a phosphosite may differ across tissues, disease states, and biological conditions.
 
-This project addresses that limitation by augmenting a generic phosphorylation network with liver-specific phosphoproteomic context and then comparing how kinase rankings change.
+This project addresses that limitation by augmenting a generic phosphorylation network with liver-specific phosphoproteomic context and comparing how kinase rankings change across four network variants.
 
-A related background issue is the **streetlight effect**. Well-studied kinases tend to have much more available data, which makes them easier for both biological research and prediction methods to focus on. That remains an important background motivation, but the main current scientific emphasis of the repository is **context-aware prediction**, not bias alone.
-
-The broader long-term goal is to build a framework that can support other disease-specific or tissue-specific contexts beyond liver cancer.
+A related background issue is the **streetlight effect**: well-studied kinases have more available data, making them easier for both biology and prediction methods to focus on. The main current scientific emphasis is **context-aware prediction**, not bias alone.
 
 ## Core Design Choices
 
 ### 1. Only two node types
 
-The graph uses only two main node types:
+The graph uses only two node types:
 
-* `protein`
-* `site`
+* `PROTEIN` — kinases, phosphatases, and all other proteins
+* `SITE` — individual phosphosites
 
 Examples:
 
 * `PROTEIN:AKT1`
 * `PROTEIN:PPP1CA`
-* `PROTEIN:FOXO3`
-* `SITE:FOXO3-T32`
-
-Kinases, phosphatases, and other proteins are all represented as `protein` nodes. Their biological roles are stored as metadata instead of being split into separate node types.
-
-Important protein metadata fields include:
-
-* `is_kinase`
-* `is_phosphatase`
-* `protein_role`
-
-This keeps the graph structure simple while preserving biological interpretability.
-
-### 2. Site-specific modeling
-
-Phosphorylation is modeled at the phosphosite level, not only at the protein level. This means different sites on the same protein are distinct graph nodes.
-
-For example:
-
 * `SITE:FOXO3-T32`
 * `SITE:FOXO3-S253`
 
-This is essential because the prediction target is kinase-to-site association, not just kinase-to-protein association.
+Biological roles are stored as node metadata (`is_kinase`, `is_phosphatase`, `protein_role`) rather than as separate node types. This keeps the graph structure simple while preserving interpretability.
 
-### 3. Generic graph first, context later
+### 2. Site-specific modeling
+
+Phosphorylation is modeled at the phosphosite level. Different sites on the same protein are distinct graph nodes. This is essential because the prediction target is kinase-to-site association, not kinase-to-protein association.
+
+### 3. Generic graph first, context layers second
 
 The project intentionally separates:
 
 * a **generic graph** built from curated public resources
-* a **liver-specific graph** built by augmenting the generic graph with disease context
+* a **liver-specific graph** built by augmenting the generic graph with three correlation edge types derived from the liver proteomics dataset
 
-This separation allows direct comparison between:
+This separation allows direct comparison across a controlled set of four network variants.
 
-* what the context-free graph prioritizes
-* what the liver-specific graph prioritizes
+### 4. Context encoded as edges
 
-### 4. Context is encoded as edges
+Liver context is introduced through additional graph edges rather than only as annotations. This means disease context changes the graph topology itself, directly affecting node2vec embeddings and the learned scorer.
 
-Liver context is not only stored as annotations. It is introduced through additional graph edges, especially phosphosite correlation edges derived from tumor fold-change profiles relative to healthy controls.
+Three correlation edge types are stored in a single liver graph file. Each LOO run script selects the relevant subset via `allowed_relations`:
 
-This means disease context changes the graph topology itself.
+| Network | Edges added | Correlation source |
+|---|---|---|
+| Generic | none | — |
+| Control | `site_corr_ctrl_pos/neg` | raw abundance, 18 healthy samples |
+| Cancer | `site_corr_cancer_pos/neg` | raw abundance, 18 tumor samples |
+| Liver FC | `site_corr_fc_pos/neg` | fold-change (tumor / mean control) |
 
-### 5. Leave-one-out evaluation, not standard k-fold cross-validation
+### 5. Embedding leakage fix
 
-Some files historically use the word `fold`, but the actual evaluation framework is **leave-one-out** on held-out edges.
+`node2vec` runs **once** on a PSP-stripped graph: all PhosphoSitePlus `phosphorylates` edges (the prediction target) are removed before computing embeddings. These edges remain as training labels. This prevents the model from reading the answer indirectly via embedding structure. Non-PSP KSA edges from other resources are kept even if they coincide with a PSP annotation.
 
-A held-out case means:
+### 6. Adjusted held-out rank (primary metric)
 
-1. remove one known kinase-site edge
-2. train on the remaining data
-3. rank candidate kinases for that one held-out site
+For a site with known kinases k1/k2/k3, if k1 is held out and the model scores [k7, k4, k2, k1], the naive rank of k1 is 4. Since k2's edge was not hidden, it should not count against k1. The adjusted metric removes all other known true kinases before measuring the held-out kinase's rank — giving rank 3, not 4.
 
-So the "frozen folds" files are really frozen held-out leave-one-out evaluation cases.
+### 7. Leave-one-out evaluation on multi-kinase sites
+
+The frozen evaluation set covers 6,909 trials across 2,459 sites with two or more known kinases. Multi-kinase sites are used because they allow the adjusted metric to differ meaningfully from the naive metric, and because they are the most informative cases for studying context-dependent kinase prioritisation.
+
+### 8. Modular embedding architecture
+
+`src_prediction/embedding_strategy.py` defines an `EmbeddingStrategy` abstract base class with a single `fit(graph) -> Dict[str, ndarray]` method. `Node2VecStrategy` is the current concrete implementation. To swap the embedding method, implement `EmbeddingStrategy.fit()` and pass the new instance to `run_leave_one_out(embedding_strategy=...)`. No other code changes are needed.
 
 ## Repository Layout
 
-### Graph construction files
+### Graph construction
 
 * `src/builders/kinase_substrate.py`
 * `src/builders/ppase_substrate.py`
 * `src/main.py`
 * `src/liver_network.py`
 * `src/run_liver.py`
+* `src/config.py`, `src/io_utils.py`, `src/ids.py`, `src/normalize.py`
 
-### Prediction files
+### Prediction and evaluation
 
-* `src_prediction/run_freeze_folds.py`
-* `src_prediction/pair_features.py`
-* `src_prediction/negative_sampling.py`
-* `src_prediction/model_scoring.py`
-* `src_prediction/leave_one_out.py`
-* `src_prediction/run_baseline_similarity.py`
-* `src_prediction/compare_experiments.py`
-* `src_prediction/relation_filters.py`
+* `src_prediction/embedding_strategy.py` — `EmbeddingStrategy` ABC + `Node2VecStrategy`
+* `src_prediction/leave_one_out.py` — core LOO evaluation engine
+* `src_prediction/run_freeze_multi_kinase_trials.py` — freeze the 6,909-trial eval set
+* `src_prediction/run_multi_kinase_generic.py` — generic network (no correlation)
+* `src_prediction/run_multi_kinase_control.py` — control network (healthy corr)
+* `src_prediction/run_multi_kinase_cancer.py` — cancer network (tumor corr)
+* `src_prediction/run_multi_kinase_liver.py` — liver FC network (fold-change corr)
+* `src_prediction/analyze_results.py` — four-network side-by-side analysis
+* `src_prediction/compare_multi_kinase.py` — pairwise generic vs liver FC comparison
+* `src_prediction/pair_features.py`, `src_prediction/negative_sampling.py`
+* `src_prediction/model_scoring.py`, `src_prediction/relation_filters.py`
 
-### Supporting helper files
+### Supporting helpers
 
-* `src/config.py`
-* `src/io_utils.py`
-* `src/ids.py`
-* `src/normalize.py`
-* `src_prediction/config.py`
-* `src_prediction/graph_loader.py`
-* `src_prediction/embeddings.py`
-* `src_prediction/metrics.py`
-* `src_prediction/truth_utils.py`
-* `src_prediction/parallel_utils.py`
-* `src_prediction/experiment_utils.py`
+* `src_prediction/config.py`, `src_prediction/graph_loader.py`
+* `src_prediction/embeddings.py`, `src_prediction/metrics.py`
+* `src_prediction/truth_utils.py`, `src_prediction/parallel_utils.py`
+* `src_prediction/experiment_utils.py`, `src_prediction/io_utils.py`
 
-### Recent exploratory analysis files
+### Older / debug scripts (not part of main pipeline)
 
-* `src_prediction/find_multi_kinase_sites.py`
-* `src_prediction/make_multi_kinase_fold_set.py`
-* `src_prediction/make_multi_kinase_fold_set_10.py`
-* `src_prediction/run_generic_multi_kinase.py`
-* `src_prediction/run_liver_multi_kinase.py`
-* `src_prediction/compare_multi_kinase_runs.py`
-* `src_prediction/check_ttk_from_existing_debug_results.py`
-* `src_prediction/count_ttk_substrates_in_graph.py`
-
-These newer files support supervisor-driven follow-up analyses and are not all part of the original core pipeline.
+* `src_prediction/run_generic_model.py`, `src_prediction/run_baseline_similarity.py` — 50-trial debug runs, predate the leakage fix; outputs are stale
+* `src_prediction/find_multi_kinase_sites.py`, `src_prediction/make_multi_kinase_fold_set.py`
+* `src_prediction/compare_experiments.py`, `src_prediction/compare_multi_kinase_runs.py`
 
 ## Data Inputs
 
 ### Core generic graph data
 
-The generic graph integrates multiple curated biological resources, including:
-
-* kinase-substrate associations
-* phosphatase-substrate associations
-* PTMsigDB site-level pathway information
-* MsigDB protein-level pathway information
-* high-confidence protein-protein interaction data
-* PTMcode2 site-site coevolution data
+* `data/raw/Kinase_Substrate_Dataset.tsv` — PhosphoSitePlus KSA edges (human-human, single-site rows only)
+* `data/PPase_protSubtrates_201903.xls` — phosphatase-substrate associations
+* PTMsigDB — site-level pathway co-membership
+* MsigDB — protein-level pathway co-membership
+* PPI — high-confidence protein-protein interactions
+* PTMcode2 — site-site coevolution data
 
 ### Liver-specific data
 
-The liver-specific network uses a liver proteomic and phosphoproteomic Excel dataset with at least:
+* `data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx`
 
-* a protein expression sheet
-* a phosphorylation sheet
+  * protein expression sheet — identifies liver-observed proteins
+  * phosphorylation sheet — identifies liver-observed phosphosites; used to compute fold-change profiles and all three correlation edge types
 
-These sheets are used to:
-
-* identify proteins observed in liver data
-* identify phosphosites observed in liver data
-* compute tumor-relative-to-control fold-change profiles
-* derive context-specific phosphosite correlation edges
+Protein co-expression edges are disabled: the input has only 3 usable rows after preprocessing.
 
 ## Graph Construction Layer
 
 ### `src/builders/kinase_substrate.py`
 
-**Purpose**
-Builds the core graph components from the kinase-substrate dataset.
-
-**Creates**
-
-* protein nodes for kinases
-* protein nodes for substrate proteins
-* site nodes for phosphosites
-* `has_site` edges from substrate protein to phosphosite
-* `phosphorylates` edges from kinase protein to phosphosite
-
-**Why it exists**
-This file defines the main biological supervision signal in the project:
-
-`kinase -> phosphosite`
-
-Without it, there is no known kinase-site relationship to learn from.
-
-**Main function**
-
-* `build_kinase_substrate_graph(path: str)`
-
-**Input**
-
-* `data/raw/Kinase_Substrate_Dataset.tsv`
-
-**Output**
-Two pandas DataFrames:
-
-* `nodes_df`
-* `edges_df`
-
-**Important internal logic**
-
-1. Read the table
-2. Extract kinase, substrate, organism, and site information
-3. Keep only human-human rows
-4. Keep only rows with exactly one phosphosite token
-5. Normalize protein names and site labels
-6. Construct canonical node IDs
-7. Create nodes and edges
-8. Drop duplicates
+Builds protein and site nodes plus `phosphorylates` (kinase→site) and `has_site` (protein→site) edges from the PhosphoSitePlus dataset.
 
 ### `src/builders/ppase_substrate.py`
 
-**Purpose**
-Adds phosphatase-substrate information to the graph.
-
-**Creates**
-
-* phosphatase protein nodes
-* substrate protein nodes
-* phosphosite nodes
-* `has_site` edges
-* `dephosphorylates` edges
-
-**Why it exists**
-Phosphorylation regulation includes both addition and removal of phosphate groups. Adding phosphatase information makes the graph more mechanistic.
-
-**Main function**
-
-* `build_ppase_substrate_graph(path: str)`
-
-**Input**
-
-* `data/PPase_protSubtrates_201903.xls`
+Adds phosphatase protein nodes and `dephosphorylates` edges.
 
 ### `src/main.py`
 
-**Purpose**
-Main entry point for building the generic graph.
+Merges all generic graph components (KSA, phosphatase, PTMsigDB, MsigDB, PPI, PTMcode2) into `outputs/nodes.csv.gz` and `outputs/edges.csv.gz`.
 
-**Combines**
-
-1. kinase-substrate graph
-2. phosphatase-substrate graph
-3. PTMsigDB site-site pathway edges
-4. MsigDB protein-protein pathway edges
-5. PPI edges
-6. PTMcode2 site-site coevolution edges
-
-**Writes**
-
-* `outputs/nodes.csv.gz`
-* `outputs/edges.csv.gz`
-
-**Why it exists**
-Each builder produces one graph component. This file merges everything into one final generic network and adds protein role metadata.
+Generic graph: ~13,318 nodes, ~1.1 million edges.
 
 ### `src/liver_network.py`
 
-**Purpose**
-Builds the liver-specific graph by extending the generic graph with liver cancer data.
+Extends the generic graph with liver-observed proteins and phosphosites and computes all three correlation edge types in a single pass:
 
-**Main idea**
-Start with the generic graph, then:
+1. Detect healthy and tumor columns in the phosphorylation sheet.
+2. Compute healthy mean per phosphosite.
+3. Compute tumor fold-change profiles (tumor / mean control).
+4. Compute pairwise site-site Pearson correlations for each of the three vectors (FC, control raw, cancer raw). Pairs with fewer than 6 overlapping non-NaN measurements are skipped.
+5. Keep edges above the 80th percentile correlation threshold (positive and negative separately).
 
-1. add liver-observed proteins
-2. add liver-observed phosphosites
-3. reconnect those nodes to known resources
-4. add liver-specific phosphosite correlation edges
+All three edge types are stored in a single `outputs/Liver_network_edges.csv.gz`.
 
-**Most important context step**
-Phosphosite fold-change correlation edges are computed from tumor fold-change profiles relative to healthy controls.
-
-**Step-by-step logic**
-
-1. Detect healthy and tumor columns
-2. Compute healthy mean per phosphosite
-3. Compute tumor fold-change profiles
-4. Compute pairwise site-site correlations
-5. Keep only strong positive and strong negative correlations above percentile thresholds
-6. Add context-specific edges such as:
-
-   * `site_corr_fc_pos`
-   * `site_corr_fc_neg`
-
-**Why it matters scientifically**
-This is the step that makes the graph context-aware and liver-cancer-specific.
+Liver graph: ~16,605 nodes, ~2.1 million edges.
 
 ### `src/run_liver.py`
 
-**Purpose**
-Small launcher script for liver graph construction.
-
-**Why it exists**
-It makes experiment-specific liver-network settings explicit and reproducible.
-
-**Typical settings**
-
-* `site_corr_percentile=80.0`
-* `add_protein_fc_corr=False`
+Launcher script for the liver graph builder. Sets `site_corr_percentile=80.0` and `add_protein_fc_corr=False`.
 
 ## Prediction and Evaluation Layer
 
-### `src_prediction/run_freeze_folds.py`
+### `src_prediction/embedding_strategy.py`
 
-**Purpose**
-Creates a fixed set of held-out leave-one-out evaluation cases.
-
-**Why it exists**
-Leave-one-out is expensive. Freezing the held-out cases ensures that experiments are compared on the same evaluation subset.
-
-**Typical output**
-
-* `outputs_prediction/frozen_folds_10.csv.gz`
-
-### `src_prediction/pair_features.py`
-
-**Purpose**
-Converts node embeddings into machine-learning features for kinase-site pairs.
-
-**Feature design**
-Given:
-
-* kinase embedding `k`
-* site embedding `s`
-
-The pair feature vector includes:
-
-1. `k`
-2. `s`
-3. `|k - s|`
-4. `k * s`
-
-### `src_prediction/negative_sampling.py`
-
-**Purpose**
-Creates negative kinase-site examples for supervised training.
-
-**Why it exists**
-The classifier needs both positive and negative examples.
-
-### `src_prediction/model_scoring.py`
-
-**Purpose**
-Trains the supervised scorer and ranks candidate kinases for a site.
-
-**Current model**
-
-* `LogisticRegression`
-
-**Why it exists**
-Earlier ranking was based on cosine similarity between embeddings. The current version uses a learned scoring function because raw similarity did not interpret the added liver context reliably.
+Defines the `EmbeddingStrategy` abstract base class and `Node2VecStrategy` (current implementation: dimensions=32, walk_length=10, num_walks=25, p=q=1 DeepWalk mode). To swap embedding methods, implement `fit(graph) -> Dict[str, ndarray]` and pass the new instance to `run_leave_one_out()`.
 
 ### `src_prediction/leave_one_out.py`
 
-**Purpose**
-Core leave-one-out evaluation engine.
+Core evaluation engine. Per-run (not per-trial):
 
-**Main steps per held-out case**
+1. Strip PSP `phosphorylates` edges from the graph via `_build_embedding_relations()`.
+2. Compute node2vec embeddings once on the stripped graph.
+3. Pre-build the full training feature matrix once.
+4. Pre-build per-site scoring feature matrices once.
 
-1. Remove one known phosphorylation edge
-2. Rebuild the graph view
-3. Recompute node2vec embeddings
-4. Train the logistic regression model
-5. Score all candidate kinases for the held-out site
-6. Record results
+Per trial:
 
-**Important outputs recorded**
+1. Mask out the held-out kinase-site pair from the training matrix.
+2. Fit logistic regression.
+3. Score all 420 candidate kinases for the held-out site.
+4. Record `held_out_kinase_rank`, `adjusted_held_out_rank`, `best_true_kinase_rank`, `top1_predicted_kinase`.
 
-* rank of the specific held-out kinase
-* best rank among all known true kinases for the site
-* top-1 predicted kinase
-* top-1 score
+Parallelised via `ThreadPoolExecutor` (threads share the pre-built numpy arrays; n_jobs_outer=8).
 
-**Why the best-true metric matters**
-A site may have more than one known kinase. This metric makes evaluation more biologically faithful.
+### `src_prediction/run_freeze_multi_kinase_trials.py`
 
-### `src_prediction/run_baseline_similarity.py`
+Freezes the 6,909-trial evaluation set (all edges from sites with ≥2 known kinases) into `outputs_prediction/frozen_trials_multi_kinase.csv.gz`. Run once; all four network experiments use the same frozen set.
 
-**Purpose**
-Main experiment runner, despite the older name.
+### `src_prediction/run_multi_kinase_{generic,control,cancer,liver}.py`
 
-**What it controls**
+Four LOO experiment runners. Each loads the same frozen trials, selects the appropriate `allowed_relations` subset from the liver graph file, and calls `run_leave_one_out()`. Results go to `outputs_prediction/{generic,control,cancer,liver}_multi_kinase/`.
 
-* graph choice: generic or liver
-* whether site-context edges are included
-* whether protein-context edges are included
-* held-out evaluation file
-* node2vec parameters
-* parallelization settings
+### `src_prediction/analyze_results.py`
 
-**What it does**
+Reads all four result sets and produces the full side-by-side analysis in `outputs_prediction/analysis/`:
 
-1. Load graph
-2. Load candidate kinases
-3. Load held-out evaluation cases
-4. Build the allowed relation set
-5. Run leave-one-out evaluation
-6. Summarize metrics
-7. Write outputs
+* `performance_summary.txt` — all three rank metrics across all four networks
+* `top1_frequency_summary.txt` — hub bias table
+* `per_kinase_topk.txt / .csv` — per-kinase top-1/5/10% across all four networks
+* `ttk_deepdive.txt` — TTK case study
+* `ranking_shifts.txt` — most improved and worsened kinases (generic vs liver FC)
 
-### `src_prediction/compare_experiments.py`
+### `src_prediction/compare_multi_kinase.py`
 
-**Purpose**
-Compares generic and liver experiment outputs case by case.
+Merges generic and liver FC result files on `adjusted_held_out_rank`, computes per-trial rank deltas, and writes `comparison_multi_kinase_generic_vs_liver.csv.gz`. This file feeds `analyze_results.py`'s ranking shift analysis.
 
-**What it computes**
+### `src_prediction/pair_features.py`
 
-* whether top-1 changed
-* held-out rank delta
-* best-true rank delta
-* whether liver improved held-out rank
-* whether liver improved best-true rank
+Converts node embeddings into kinase-site pair feature vectors: concatenation of kinase embedding `k`, site embedding `s`, elementwise difference `|k - s|`, and elementwise product `k * s`.
 
-**Why it matters**
-This is the main bridge from prediction results to biological interpretation.
+### `src_prediction/negative_sampling.py`
+
+Samples negative kinase-site pairs (non-true kinases) for supervised logistic regression training.
+
+### `src_prediction/model_scoring.py`
+
+Trains `LogisticRegression(class_weight="balanced", solver="liblinear")` and ranks all candidate kinases for a site by predicted probability.
 
 ### `src_prediction/relation_filters.py`
 
-**Purpose**
-Defines which edge types are allowed in each prediction experiment.
-
-**Current relation groups**
-
-Generic base relations:
-
-* `has_site`
-* `phosphorylates`
-* `dephosphorylates`
-* `site_same_pathway`
-* `protein_same_pathway`
-* `ppi_high_confidence`
-* `site_coevolution`
-
-Site context relations:
-
-* `site_corr_fc_pos`
-* `site_corr_fc_neg`
-
-Protein context relations:
-
-* `protein_corr_fc_pos`
-* `protein_corr_fc_neg`
-
-## Supporting Helper Files
-
-### `src/ids.py`
-
-Creates standardized node IDs.
-
-### `src/normalize.py`
-
-Normalizes protein names and phosphosite labels.
-
-### `src/io_utils.py`
-
-Provides centralized file reading and writing utilities.
-
-### `src_prediction/graph_loader.py`
-
-Loads node and edge tables into the structures needed by the prediction layer.
-
-### `src_prediction/embeddings.py`
-
-Builds graph objects and computes node2vec embeddings.
-
-### `src_prediction/truth_utils.py`
-
-Builds mappings such as:
-
-* site -> all known true kinases
-
-### `src_prediction/parallel_utils.py`
-
-Handles outer parallel execution across held-out cases.
-
-### `src_prediction/metrics.py`
-
-Summarizes case-level results into experiment-level metrics.
-
-### `src_prediction/experiment_utils.py`
-
-Writes results, metrics, and summary text in a standard format.
-
-## Recent Exploratory Analysis Files
-
-These files support newer biological follow-up and debugging.
-
-### `src_prediction/find_multi_kinase_sites.py`
-
-Finds phosphosites with more than one reported kinase.
-
-### `src_prediction/make_multi_kinase_fold_set.py`
-
-Builds a leave-one-out evaluation set restricted to multi-kinase sites.
-
-### `src_prediction/make_multi_kinase_fold_set_10.py`
-
-Builds a small 10-case debug subset from the multi-kinase evaluation set.
-
-### `src_prediction/run_generic_multi_kinase.py`
-
-Runs the generic model on the multi-kinase subset.
-
-### `src_prediction/run_liver_multi_kinase.py`
-
-Runs the liver model on the multi-kinase subset.
-
-### `src_prediction/compare_multi_kinase_runs.py`
-
-Compares generic and liver results specifically for the multi-kinase-site analysis.
-
-### `src_prediction/check_ttk_from_existing_debug_results.py`
-
-Examines TTK behavior in existing generic-vs-liver comparison outputs.
-
-### `src_prediction/count_ttk_substrates_in_graph.py`
-
-Counts known TTK substrate-site edges in the graph.
+Defines `GENERIC_BASE_RELATIONS` and the correlation edge subsets used by each network. Also defines `PSP_KSA_RELATIONS` (the set stripped before embedding).
 
 ## Outputs
 
-### Generic graph outputs
+### Graph outputs
 
-* `outputs/nodes.csv.gz`
-* `outputs/edges.csv.gz`
+* `outputs/nodes.csv.gz` — generic graph nodes
+* `outputs/edges.csv.gz` — generic graph edges
+* `outputs/Liver_network_edges.csv.gz` — liver graph edges (all three correlation types)
 
-### Liver graph outputs
+### Per-network LOO results
 
-Typical liver-network runs write liver-specific node and edge tables under the configured output paths.
+* `outputs_prediction/generic_multi_kinase/results.csv.gz` and `metrics.csv.gz`
+* `outputs_prediction/control_multi_kinase/results.csv.gz` and `metrics.csv.gz`
+* `outputs_prediction/cancer_multi_kinase/results.csv.gz` and `metrics.csv.gz`
+* `outputs_prediction/liver_multi_kinase/results.csv.gz` and `metrics.csv.gz`
 
-### Prediction outputs
+### Analysis outputs
 
-Each experiment typically writes:
-
-* results file
-* metrics file
-* summary text file
-
-### Comparison outputs
-
-Comparison scripts typically write files that summarize:
-
-* changed top-1 predictions
-* rank deltas
-* improved liver cases
-
-### Exploratory outputs
-
-Additional recent outputs include:
-
-* multi-kinase site lists
-* restricted evaluation subsets
-* TTK-specific summaries
-* debug tables for changed liver predictions
+* `outputs_prediction/analysis/performance_summary.txt`
+* `outputs_prediction/analysis/top1_frequency_summary.txt`
+* `outputs_prediction/analysis/per_kinase_topk.txt` and `.csv`
+* `outputs_prediction/analysis/ttk_deepdive.txt`
+* `outputs_prediction/analysis/ranking_shifts.txt`
 
 ## How the Full Pipeline Works
 
 ### Stage 1. Build generic graph
 
-Files:
+`src/main.py` merges all public curated resources into the context-free prior graph.
 
-* `src/builders/kinase_substrate.py`
-* `src/builders/ppase_substrate.py`
-* `src/main.py`
+### Stage 2. Build liver graph
 
-Creates the context-free biological prior graph.
+`src/liver_network.py` extends the generic graph with liver-observed nodes and adds all three correlation edge types in a single pass.
 
-### Stage 2. Build liver-specific graph
+### Stage 3. Freeze evaluation set
 
-Files:
+`src_prediction/run_freeze_multi_kinase_trials.py` creates the reproducible 6,909-trial set. This step is run once; the frozen set is shared across all four experiments.
 
-* `src/liver_network.py`
-* `src/run_liver.py`
+### Stage 4. Run all four LOO experiments
 
-Adds liver-specific proteins, phosphosites, and phosphosite-correlation context.
+`run_multi_kinase_{generic,control,cancer,liver}.py` run independently in any order. Each selects its own `allowed_relations` subset from the single liver graph file.
 
-### Stage 3. Prepare evaluation inputs
+### Stage 5. Regenerate comparison and analysis
 
-File:
-
-* `src_prediction/run_freeze_folds.py`
-
-Creates a reproducible held-out evaluation subset.
-
-### Stage 4. Run trained model on generic graph
-
-Uses the prediction stack on the generic graph.
-
-### Stage 5. Run trained model on liver graph
-
-Uses the same stack on the liver-specific graph.
-
-### Stage 6. Compare generic versus liver
-
-Uses comparison scripts to identify changed kinase rankings.
-
-### Stage 7. Biological follow-up
-
-Current biological follow-up focuses on:
-
-* sites with multiple reported kinases
-* changed top-1 predictions between generic and liver
-* most frequently predicted liver-specific kinases if multi-kinase cases are not yet strong enough
+`compare_multi_kinase.py` must be run before `analyze_results.py` because the ranking shifts analysis reads from the comparison output. Then `analyze_results.py` produces all summary files.
 
 ## How to Run the Project
 
+Always use the project virtual environment:
+
+```
+.venv312/Scripts/python -m <module>
+```
+
 ### 1. Build the generic graph
 
-```bash
-python -m src.main
+```
+.venv312/Scripts/python -m src.main
 ```
 
-Expected main outputs:
+Output: `outputs/nodes.csv.gz`, `outputs/edges.csv.gz`
 
-```text
-outputs/nodes.csv.gz
-outputs/edges.csv.gz
+### 2. Build the liver graph
+
+```
+.venv312/Scripts/python -m src.run_liver
 ```
 
-### 2. Build the liver-specific graph
+Output: `outputs/Liver_network_edges.csv.gz` (contains all three correlation types)
 
-```bash
-python -m src.run_liver
+### 3. Freeze the evaluation set
+
+```
+.venv312/Scripts/python -m src_prediction.run_freeze_multi_kinase_trials
 ```
 
-Expected outputs:
+Output: `outputs_prediction/frozen_trials_multi_kinase.csv.gz`
 
-```text
-liver-specific node and edge tables under the configured output paths
+### 4. Run all four LOO experiments
+
+```
+.venv312/Scripts/python -m src_prediction.run_multi_kinase_generic
+.venv312/Scripts/python -m src_prediction.run_multi_kinase_control
+.venv312/Scripts/python -m src_prediction.run_multi_kinase_cancer
+.venv312/Scripts/python -m src_prediction.run_multi_kinase_liver
 ```
 
-### 3. Freeze leave-one-out evaluation cases
+These can run in any order or in parallel (each writes to its own output directory).
 
-```bash
-python -m src_prediction.run_freeze_folds
+### 5. Regenerate comparison and analysis
+
+```
+.venv312/Scripts/python -m src_prediction.compare_multi_kinase
+.venv312/Scripts/python -m src_prediction.analyze_results
 ```
 
-Expected output:
+Output: `outputs_prediction/analysis/` (all summary files)
 
-```text
-outputs_prediction/frozen_folds_10.csv.gz
-```
+## Experimental Results
 
-### 4. Run the generic prediction experiment
+All four networks evaluated on 6,909 frozen trials, 2,459 multi-kinase sites, 420 candidate kinases.
 
-Edit `src_prediction/run_baseline_similarity.py` so that:
+### Adjusted held-out rank (primary metric — lower is better)
 
-```python
-graph_choice = "generic"
-include_site_corr = False
-include_protein_corr = False
-```
+|  | Generic | Control | Cancer | Liver FC |
+|---|---|---|---|---|
+| Mean rank | 190.4 | 177.7 | 186.0 | **175.8** |
+| Median rank | 188.0 | 166.5 | 174.0 | **165.0** |
+| Top-10% | 1.5% | 1.1% | 1.4% | 1.8% |
+| Top-20% | 2.2% | 1.7% | 2.2% | 2.7% |
 
-Then run:
+Liver FC and Control both outperform Generic. Cancer performs **worse** than Generic — raw tumor abundance correlations add noise rather than signal. Control (healthy co-expression) rivals Liver FC.
 
-```bash
-python -m src_prediction.run_baseline_similarity
-```
+### Hub degree bias (critical finding)
 
-### 5. Run the liver prediction experiment
+| Network | Top-1 monopoly |
+|---|---|
+| Generic | ULK1 76.5%, WNK1 21.0%, ZAP70 2.5% |
+| Control | VRK2 94.8%, YES1 4.8% |
+| Cancer | VRK3 95.5%, VRK2 3.8% |
+| Liver FC | ULK1 **100.0%** of all 6,909 trials |
 
-Edit `src_prediction/run_baseline_similarity.py` so that:
+Adding correlation edges concentrates node2vec embedding mass on a single high-degree kinase, which then dominates top-1 for every trial regardless of biology. The improved mean/median ranks are real (e.g. CSK substrates move from ~rank 402 to ~rank 162 in Liver FC) but the correct kinase never reaches rank 1.
 
-```python
-graph_choice = "liver"
-include_site_corr = True
-include_protein_corr = False
-```
+### Most improved kinases in Liver FC vs Generic (adjusted rank)
 
-Then run:
+| Kinase | Mean delta | Trials | % improved |
+|---|---|---|---|
+| CSK | +241 | 6 | 100% |
+| STK24 | +238 | 8 | 100% |
+| STK11 | +216 | 15 | 100% |
+| MAP3K5 | +177 | 10 | 100% |
+| RET | +172 | 15 | 100% |
 
-```bash
-python -m src_prediction.run_baseline_similarity
-```
+### Most worsened kinases in Liver FC vs Generic
 
-### 6. Compare generic vs liver predictions
+| Kinase | Mean delta | Trials | % improved |
+|---|---|---|---|
+| PKN1 | -177 | 10 | 0% |
+| MAP3K11 | -168 | 7 | 0% |
+| MAP3K8 | -156 | 23 | 0% |
+| SIK2 | -155 | 5 | 0% |
+| PDK1 | -149 | 5 | 0% |
 
-```bash
-python -m src_prediction.compare_experiments
-```
+### TTK case study (21 trials)
 
-This step identifies:
+| Network | Adjusted mean rank | Top-1 always |
+|---|---|---|
+| Generic | 247 | ULK1 (18/21), WNK1 (3/21) |
+| Control | **26** | VRK2 (21/21) |
+| Cancer | 113 | VRK3 (21/21) |
+| Liver FC | 243 | ULK1 (21/21) |
 
-* top-1 changes
-* held-out rank changes
-* best-true rank changes
-* cases where liver improved ranking
-
-### 7. Optional exploratory analysis for multi-kinase sites
-
-Find sites with multiple known kinases:
-
-```bash
-python -m src_prediction.find_multi_kinase_sites
-```
-
-Build the multi-kinase evaluation set:
-
-```bash
-python -m src_prediction.make_multi_kinase_fold_set
-```
-
-Build a small 10-case debug subset:
-
-```bash
-python -m src_prediction.make_multi_kinase_fold_set_10
-```
-
-Run generic multi-kinase experiment:
-
-```bash
-python -m src_prediction.run_generic_multi_kinase
-```
-
-Run liver multi-kinase experiment:
-
-```bash
-python -m src_prediction.run_liver_multi_kinase
-```
-
-Compare multi-kinase runs:
-
-```bash
-python -m src_prediction.compare_multi_kinase_runs
-```
+Control dramatically improves TTK rank (mean 26 vs 248 in generic). Liver FC provides no improvement. TTK substrates are stably co-expressed in healthy liver tissue but show divergent fold-change patterns in tumors.
 
 ## Interpretation of Results
 
-The main scientific question is not only whether a global metric improves. The main question is:
+The main scientific question is:
 
-**Does adding liver context change kinase prioritization in a biologically meaningful way?**
+**Does adding liver context change kinase prioritisation in a biologically meaningful way?**
 
-A typical interpretation pattern is:
+The current answer is: **partially**. Mean and median adjusted ranks improve in Liver FC and Control, meaning the true kinase moves closer to the top of the ranked list. But the degree bias in node2vec prevents any network from placing the correct kinase at rank 1 for the vast majority of trials.
 
-* the generic graph ranks one kinase highly for a site
-* the liver graph ranks a different kinase highly for the same site
-* that changed ranking becomes a biological follow-up question
+The per-kinase interpretation framework (from `per_kinase_topk.csv`):
 
-The strongest future cases are expected to be phosphosites with multiple known kinases, where the generic and liver graphs may prioritize different biologically plausible kinases.
+* High top-k% in all networks → degree/hub bias, not context-specific
+* High top-k% in Liver FC only → context genuinely boosts this kinase
+* High top-k% in Generic only → liver correlation edges dilute this kinase's signal
+
+This table is currently dominated by hub bias and will become biologically interpretable after the embedding swap.
 
 ## Important Notes and Caveats
 
-* `run_baseline_similarity.py` is still named after an earlier cosine-similarity stage, but the current pipeline uses a trained logistic scorer.
-* Some newer multi-kinase analysis scripts are exploratory and may still require technical refinement.
-* A recent broad multi-kinase run exposed a logistic solver limitation for some larger targeted subsets.
-* The term `fold` appears in the code, but the evaluation method is leave-one-out on held-out edges, not standard k-fold cross-validation.
-* Protein fold-change correlation was explored conceptually, but the current working liver configuration uses phosphosite correlation as the main active context layer.
+* **Hub bias is the dominant signal in top-1.** Until a degree-normalised embedding replaces node2vec, top-1 predictions are biologically meaningless. Rank improvement metrics (mean, median, top-10%, top-20%) are valid and show genuine structural improvement.
+
+* **The leakage fix changed the network ranking.** Pre-fix results showed generic and liver FC roughly tied; post-fix, Liver FC consistently outperforms Generic. The pre-fix numbers are scientifically invalid and should not be cited.
+
+* **The 50-trial debug runs are stale.** `run_generic_model.py` and `run_baseline_similarity.py` predate the leakage fix and use the unadjusted `held_out_kinase_rank` metric. Their outputs should not be used.
+
+* **Protein co-expression edges are disabled.** `liver_network.py` has logic for protein correlation edges, but only 3 usable rows remain after preprocessing. Do not re-enable without new data.
+
+* **The comparison file must be regenerated** whenever the generic or liver LOO results are updated. Run `compare_multi_kinase.py` before `analyze_results.py`.
+
+* **Cancer worsens performance.** Raw tumor-sample abundance correlations add noise. This is consistent with the known heterogeneity of tumor phosphoproteomics relative to fold-change normalisation.
+
+* Some files use the word `fold` in their names; the actual evaluation is leave-one-out on held-out edges, not k-fold cross-validation.
 
 ## Current Scientific Direction
 
-The main contribution of the repository in its current form is:
+**Immediate priority:** Swap `Node2VecStrategy` for a degree-normalised embedding via the `EmbeddingStrategy` ABC. Candidate methods: spectral embedding, personalized PageRank, graph contrastive learning with spectral filtering. No other code changes are required.
 
-* **context-aware KSA prediction**
-* **generic vs disease-specific kinase ranking comparison**
-* **biological interpretation of ranking shifts**
+**Biological follow-up (after embedding fix):**
 
-The current biological follow-up strategy is:
+1. Revisit the most-improved kinases (CSK, STK24, STK11, MAP3K5, RET) with biologically valid top-k predictions.
+2. Investigate the TTK case: why does healthy co-expression (rank 26) help so much more than fold-change (rank 243)? Are TTK substrate fold-change patterns genuinely divergent in tumors?
+3. Statistical significance testing: Wilcoxon signed-rank test on per-trial `adjusted_held_out_rank` pairs (Generic vs each network) before writing the methods section.
 
-1. inspect sites with multiple reported kinases
-2. check whether the liver-specific graph prioritizes a different and potentially more liver-relevant kinase
-3. use those cases for downstream biological investigation
-4. in future work, experimentally validate the strongest candidates
-
-If multi-kinase sites do not yield strong enough examples, another strategy is to analyze the most frequently predicted liver-specific kinases and examine their relationship to liver cancer biology.
+**Abstract story:** Four-network comparison reveals hub degree bias in node2vec embeddings. Context-specific correlation edges improve ranking metrics but degree sensitivity of node2vec obscures biological top-1 predictions — motivating the methodological contribution of the embedding swap.

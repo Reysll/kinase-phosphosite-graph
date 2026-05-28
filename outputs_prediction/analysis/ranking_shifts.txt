@@ -5,86 +5,86 @@ delta = generic_rank - liver_rank
   Positive delta -> liver improved ranking (smaller rank = better)
   Negative delta -> liver worsened ranking
 
-Top-20 BIGGEST IMPROVEMENTS in liver_fc  (n_improved = 2,589):
+Top-20 BIGGEST IMPROVEMENTS in liver_fc  (n_improved = 3,908):
 ------------------------------------------------------------------------------------------
-  MLKL-Y376                     true: TYRO3             generic:  411  liver_fc:   15  delta:   +396  top-1: VRK3 -> VRK2
-  AKT1-T308                     true: TYRO3             generic:  407  liver_fc:   14  delta:   +393  top-1: VRK3 -> VRK2
-  ENG-S649                      true: TGFBR1            generic:  409  liver_fc:   34  delta:   +375  top-1: VRK3 -> VRK2
-  ENG-S646                      true: TGFBR1            generic:  409  liver_fc:   36  delta:   +373  top-1: VRK3 -> VRK2
-  TP63-S66                      true: TGFBR1            generic:  409  liver_fc:   36  delta:   +373  top-1: VRK3 -> VRK2
-  TP63-S68                      true: TGFBR1            generic:  407  liver_fc:   37  delta:   +370  top-1: VRK3 -> VRK2
-  MYC-S77                       true: MAPK7             generic:  402  liver_fc:   45  delta:   +357  top-1: VRK3 -> VRK2
-  CDKN1A-S98                    true: MAP3K5            generic:  363  liver_fc:   26  delta:   +337  top-1: VRK3 -> VRK2
-  TH-S19                        true: MAPKAPK5          generic:  380  liver_fc:   50  delta:   +330  top-1: VRK3 -> VRK2
-  TH-S404                       true: MAPKAPK5          generic:  380  liver_fc:   50  delta:   +330  top-1: VRK3 -> VRK2
-  MAP2K3-S218                   true: MAP3K5            generic:  362  liver_fc:   33  delta:   +329  top-1: VRK3 -> VRK2
-  FOS-T232                      true: MAPK7             generic:  371  liver_fc:   43  delta:   +328  top-1: VRK3 -> VRK2
-  TP53-S37                      true: MAPKAPK5          generic:  365  liver_fc:   37  delta:   +328  top-1: VRK1 -> VRK2
-  MAP3K5-T838                   true: MAP3K5            generic:  357  liver_fc:   31  delta:   +326  top-1: VRK3 -> VRK2
-  MAP2K6-S207                   true: MAP3K5            generic:  358  liver_fc:   34  delta:   +324  top-1: VRK3 -> VRK2
-  BAD-S99                       true: PRKCQ             generic:  351  liver_fc:   28  delta:   +323  top-1: VRK3 -> VRK2
-  SHC3-Y218                     true: NTRK2             generic:  380  liver_fc:   63  delta:   +317  top-1: VRK3 -> VRK2
-  ETS1-T38                      true: MAPK7             generic:  367  liver_fc:   51  delta:   +316  top-1: VRK3 -> VRK2
-  MEF2A-T312                    true: MAPK7             generic:  367  liver_fc:   51  delta:   +316  top-1: VRK3 -> VRK2
-  SHC3-Y219                     true: NTRK2             generic:  382  liver_fc:   66  delta:   +316  top-1: VRK3 -> VRK2
+  SIK3-T221                     true: STK11             generic:  365  liver_fc:   74  delta:   +291  top-1: ULK1 -> ULK1
+  BRSK1-T205                    true: STK11             generic:  364  liver_fc:   75  delta:   +289  top-1: ULK1 -> ULK1
+  NUAK1-T211                    true: STK11             generic:  364  liver_fc:   75  delta:   +289  top-1: ULK1 -> ULK1
+  SIK1-T182                     true: STK11             generic:  344  liver_fc:   74  delta:   +270  top-1: ULK1 -> ULK1
+  SET-S9                        true: PIK3CG            generic:  309  liver_fc:   52  delta:   +257  top-1: ULK1 -> ULK1
+  HCK-Y411                      true: CSK               generic:  400  liver_fc:  145  delta:   +255  top-1: WNK1 -> ULK1
+  SRC-Y419                      true: CSK               generic:  398  liver_fc:  144  delta:   +254  top-1: WNK1 -> ULK1
+  SIK3-T221                     true: STK24             generic:  277  liver_fc:   25  delta:   +252  top-1: ULK1 -> ULK1
+  PPP1R14C-T73                  true: STK24             generic:  276  liver_fc:   25  delta:   +251  top-1: ULK1 -> ULK1
+  SIK2-T175                     true: STK24             generic:  281  liver_fc:   30  delta:   +251  top-1: ULK1 -> ULK1
+  SRC-Y530                      true: CSK               generic:  403  liver_fc:  153  delta:   +250  top-1: WNK1 -> ULK1
+  YAP1-S127                     true: STK11             generic:  303  liver_fc:   54  delta:   +249  top-1: ZAP70 -> ULK1
+  RAB8A-T72                     true: STK24             generic:  272  liver_fc:   25  delta:   +247  top-1: ULK1 -> ULK1
+  SIK2-T175                     true: STK11             generic:  313  liver_fc:   67  delta:   +246  top-1: ULK1 -> ULK1
+  LCK-Y505                      true: CSK               generic:  405  liver_fc:  163  delta:   +242  top-1: ULK1 -> ULK1
+  TAOK1-T440                    true: STK24             generic:  267  liver_fc:   25  delta:   +242  top-1: ULK1 -> ULK1
+  SIK1-T182                     true: STK24             generic:  263  liver_fc:   25  delta:   +238  top-1: ULK1 -> ULK1
+  AKT1-Y315                     true: RET               generic:  288  liver_fc:   64  delta:   +224  top-1: ULK1 -> ULK1
+  MAPT-Y29                      true: CSK               generic:  404  liver_fc:  182  delta:   +222  top-1: ULK1 -> ULK1
+  MAPT-Y197                     true: CSK               generic:  403  liver_fc:  182  delta:   +221  top-1: ULK1 -> ULK1
 
-Top-20 BIGGEST WORSENINGS in liver_fc  (n_worsened = 4,320):
+Top-20 BIGGEST WORSENINGS in liver_fc  (n_worsened = 3,001):
 ------------------------------------------------------------------------------------------
-  SLC12A6-T991                  true: WNK1              generic:   17  liver_fc:  403  delta:   -386  top-1: VRK3 -> VRK2
-  WNK1-S382                     true: WNK1              generic:   15  liver_fc:  390  delta:   -375  top-1: WNK4 -> VRK2
-  STK39-S371                    true: WNK1              generic:   44  liver_fc:  413  delta:   -369  top-1: WNK4 -> VRK2
-  PKM-S37                       true: TRIB2             generic:   56  liver_fc:  419  delta:   -363  top-1: VRK3 -> VRK2
-  SLC12A6-T1048                 true: WNK1              generic:   25  liver_fc:  388  delta:   -363  top-1: VRK3 -> VRK2
-  TP53-T55                      true: TAF1              generic:  103  liver_fc:  407  delta:   -304  top-1: VRK1 -> VRK2
-  YWHAQ-S232                    true: BCR               generic:  103  liver_fc:  404  delta:   -301  top-1: VRK3 -> VRK2
-  SIRT1-S27                     true: HIPK2             generic:  102  liver_fc:  400  delta:   -298  top-1: VRK3 -> VRK2
-  PRKAA1-T183                   true: STK26             generic:   43  liver_fc:  339  delta:   -296  top-1: VRK3 -> VRK2
-  YWHAZ-T232                    true: BCR               generic:  115  liver_fc:  410  delta:   -295  top-1: VRK3 -> VRK2
-  NDC80-S165                    true: NEK1              generic:  113  liver_fc:  396  delta:   -283  top-1: VRK3 -> VRK2
-  SIAH2-S28                     true: HIPK2             generic:  133  liver_fc:  409  delta:   -276  top-1: VRK3 -> VRK2
-  AKT1S1-T246                   true: PGK1              generic:   73  liver_fc:  349  delta:   -276  top-1: VRK3 -> VRK2
-  CEBPB-T235                    true: HIPK2             generic:  126  liver_fc:  401  delta:   -275  top-1: VRK1 -> VRK2
-  TP63-T491                     true: HIPK2             generic:  140  liver_fc:  413  delta:   -273  top-1: VRK3 -> VRK2
-  FFAR4-S366                    true: GRK1              generic:   39  liver_fc:  310  delta:   -271  top-1: VRK3 -> VRK2
-  FFAR4-T363                    true: GRK1              generic:   38  liver_fc:  305  delta:   -267  top-1: VRK3 -> VRK2
-  PML-S36                       true: HIPK2             generic:  147  liver_fc:  413  delta:   -266  top-1: VRK3 -> VRK2
-  FFAR4-S373                    true: GRK1              generic:   40  liver_fc:  305  delta:   -265  top-1: VRK3 -> VRK2
-  PPP1R14C-T73                  true: STK26             generic:   80  liver_fc:  344  delta:   -264  top-1: VRK3 -> VRK2
+  EIF2S1-S49                    true: EIF2AK3           generic:  147  liver_fc:  375  delta:   -228  top-1: ULK1 -> ULK1
+  SGK1-T256                     true: PIK3C2A           generic:  115  liver_fc:  332  delta:   -217  top-1: ZAP70 -> ULK1
+  PDHA1-S300                    true: PDK3              generic:   80  liver_fc:  292  delta:   -212  top-1: WNK1 -> ULK1
+  MAPK6-S189                    true: MAPK6             generic:  160  liver_fc:  363  delta:   -203  top-1: ULK1 -> ULK1
+  PDHA1-S293                    true: PDK3              generic:   81  liver_fc:  284  delta:   -203  top-1: WNK1 -> ULK1
+  PDHA2-S298                    true: PDK3              generic:   80  liver_fc:  282  delta:   -202  top-1: ULK1 -> ULK1
+  EIF2S1-S52                    true: EIF2AK3           generic:  158  liver_fc:  359  delta:   -201  top-1: ULK1 -> ULK1
+  PDHA2-S291                    true: PDK3              generic:   81  liver_fc:  280  delta:   -199  top-1: ULK1 -> ULK1
+  DSTN-S3                       true: LIMK2             generic:  131  liver_fc:  325  delta:   -194  top-1: ULK1 -> ULK1
+  CFL1-S3                       true: LIMK2             generic:  123  liver_fc:  313  delta:   -190  top-1: ULK1 -> ULK1
+  CLIP1-S312                    true: PKN1              generic:   43  liver_fc:  226  delta:   -183  top-1: ULK1 -> ULK1
+  MEFV-S242                     true: PKN1              generic:   45  liver_fc:  228  delta:   -183  top-1: ULK1 -> ULK1
+  PKN1-T774                     true: PKN1              generic:   45  liver_fc:  228  delta:   -183  top-1: ULK1 -> ULK1
+  H3C1-T11                      true: PKN1              generic:   47  liver_fc:  229  delta:   -182  top-1: ULK1 -> ULK1
+  MAPT-S320                     true: PKN1              generic:   45  liver_fc:  225  delta:   -180  top-1: ULK1 -> ULK1
+  MAPT-S352                     true: PKN1              generic:   43  liver_fc:  223  delta:   -180  top-1: ULK1 -> ULK1
+  MEFV-S208                     true: PKN1              generic:   44  liver_fc:  224  delta:   -180  top-1: ULK1 -> ULK1
+  MAPT-S258                     true: PKN1              generic:   45  liver_fc:  223  delta:   -178  top-1: ULK1 -> ULK1
+  NCOA3-S857                    true: MAPK6             generic:  174  liver_fc:  349  delta:   -175  top-1: WNK1 -> ULK1
+  MLKL-Y376                     true: MERTK             generic:  131  liver_fc:  306  delta:   -175  top-1: ULK1 -> ULK1
 
 Kinases MOST IMPROVED in liver_fc (min 5 trials, sorted by mean delta):
   Kinase                     n  mean_delta  n_improved  pct_improved
   ----------------------------------------------------------------
-  NTRK2                      7      +310.6           7       100.0%
-  MAPK7                      9      +307.4           9       100.0%
-  MAP3K5                    10      +294.9          10       100.0%
-  PRKCQ                     17      +271.3          17       100.0%
-  CSNK1D                    45      +252.4          45       100.0%
-  MAPK10                    14      +249.3          14       100.0%
-  TGFBR1                     7      +235.1           7       100.0%
-  PTK2                      18      +222.2          18       100.0%
-  MAP2K3                     7      +221.1           7       100.0%
-  IRAK1                     12      +220.0          12       100.0%
-  PRKAB1                    11      +204.9          11       100.0%
-  TAOK1                      6      +191.8           6       100.0%
-  STK38L                     5      +191.0           5       100.0%
-  MST1R                      7      +190.1           7       100.0%
-  BRAF                      13      +186.6          13       100.0%
+  CSK                        6      +240.7           6       100.0%
+  STK24                      8      +237.9           8       100.0%
+  STK11                     15      +215.6          15       100.0%
+  MAP3K5                    10      +177.0          10       100.0%
+  RET                       15      +172.1          15       100.0%
+  MTOR                      41      +164.5          41       100.0%
+  CDK5                      89      +156.2          89       100.0%
+  LYN                       69      +144.9          69       100.0%
+  MAPK7                      9      +143.8           9       100.0%
+  MAP3K14                    8      +131.4           8       100.0%
+  MST1R                      7      +128.4           7       100.0%
+  RPS6KB1                   36      +125.9          36       100.0%
+  STK26                      9      +120.1           9       100.0%
+  PRKD3                      5      +112.2           5       100.0%
+  PBK                        7      +110.3           7       100.0%
 
 Kinases MOST WORSENED in liver_fc (min 5 trials):
   Kinase                     n  mean_delta  n_improved  pct_improved
   ----------------------------------------------------------------
-  HIPK2                     25      -227.0           0         0.0%
-  STK26                      9      -209.1           0         0.0%
-  EEF2K                      5      -205.0           0         0.0%
-  CSK                        6      -193.3           0         0.0%
-  CSNK2A2                   17      -192.2           0         0.0%
-  BRSK1                      7      -190.6           0         0.0%
-  PRKCB                     61      -184.2           0         0.0%
-  GRK5                      16      -161.8           0         0.0%
-  MAP2K1                    13      -161.1           0         0.0%
-  ARAF                       5      -160.0           0         0.0%
-  DAPK3                     14      -159.1           0         0.0%
-  LRRK2                     19      -154.5           0         0.0%
-  ATM                       93      -152.9           0         0.0%
-  EIF2AK2                    9      -151.7           0         0.0%
-  GSK3A                     61      -145.9           3         4.9%
+  PKN1                      10      -176.8           0         0.0%
+  MAP3K11                    7      -167.6           0         0.0%
+  MAP3K8                    23      -156.3           0         0.0%
+  SIK2                       5      -154.6           0         0.0%
+  PDK1                       5      -148.8           0         0.0%
+  MERTK                      8      -137.5           0         0.0%
+  GRK6                       7      -126.6           0         0.0%
+  ROCK1                     39      -124.3           0         0.0%
+  PDK4                       5      -117.8           0         0.0%
+  MARK1                     11      -113.5           0         0.0%
+  CDK12                      5       -98.2           0         0.0%
+  PRKD1                     43       -94.4           0         0.0%
+  IGF1R                     12       -92.0           0         0.0%
+  DYRK1A                    20       -89.7           0         0.0%
+  ROCK2                     16       -82.3           0         0.0%

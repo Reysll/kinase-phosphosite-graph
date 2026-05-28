@@ -190,16 +190,17 @@ the TTK substrate co-regulation pattern.
 SECTION 10. RANKING SHIFTS (GENERIC vs LIVER FC)
 =================================================
 Most improved kinases in Liver FC (mean delta, min 5 trials, all 100% improved):
-  NTRK2 (+311, 7)  MAPK7 (+307, 9)  MAP3K5 (+295, 10)  PRKCQ (+271, 17)
+  CSK (+241, 6)  STK24 (+238, 8)  STK11 (+216, 15)  MAP3K5 (+177, 10)  RET (+172, 15)
 
 Most worsened kinases in Liver FC (0% improved):
-  HIPK2 (-227, 25)  STK26 (-209, 9)  EEF2K (-205, 5)
-  PRKCB (-184, 61)  ATM (-153, 93)
+  PKN1 (-177, 10)  MAP3K11 (-168, 7)  MAP3K8 (-156, 23)
+  SIK2 (-155, 5)   PDK1 (-149, 5)
 
-Note: almost all top-1 predictions in Liver FC are VRK2. The "improvements"
-for NTRK2/MAPK7 are real rank improvements (from ~380 to ~60) but the correct
-kinase never reaches rank 1. The "worsenings" for WNK1/HIPK2 reflect kinases
-that had reasonable generic ranks (~15-150) but collapse to 300-420 in liver FC.
+Note: ULK1 is top-1 for 100% of Liver FC trials. The "improvements" for
+CSK/STK24/STK11 are real rank improvements (from ~400 in generic to rank 25-160
+in liver FC) but the correct kinase never reaches rank 1. The "worsenings" for
+PKN1/MAP3K11/MAP3K8 reflect kinases that had reasonable generic ranks (~40-170)
+but collapse to rank 220-375 in liver FC.
 
 
 SECTION 11. IMMEDIATE NEXT STEPS

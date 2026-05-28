@@ -22,7 +22,7 @@ def main() -> None:
 
     generic = generic.rename(
         columns={
-            "held_out_kinase_rank": "generic_held_out_rank",
+            "adjusted_held_out_rank": "generic_held_out_rank",
             "best_true_kinase_rank": "generic_best_true_rank",
             "top1_predicted_kinase": "generic_top1",
             "top1_score": "generic_top1_score",
@@ -31,7 +31,7 @@ def main() -> None:
 
     liver = liver.rename(
         columns={
-            "held_out_kinase_rank": "liver_held_out_rank",
+            "adjusted_held_out_rank": "liver_held_out_rank",
             "best_true_kinase_rank": "liver_best_true_rank",
             "top1_predicted_kinase": "liver_top1",
             "top1_score": "liver_top1_score",
