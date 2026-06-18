@@ -3,6 +3,8 @@ TTK Deep-Dive — LOO Evaluation across all four networks
 
 TTK (polo-like kinase 4 / Mps1) is a liver-cancer-relevant mitotic kinase.
 
+--- Phase 1: node2vec ---
+
 Generic            (no correlation)
 -----------------------------------
   TTK trials: 21
@@ -39,3 +41,44 @@ Liver FC           (fold-change corr, 80th pct)
   best_true_rank    : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=164.4  median=149
   Top-10 most predicted as top-1 when TTK is the true kinase:
     ULK1                            21×
+
+
+--- Phase 2: spectral ---
+
+Generic spectral   (no correlation)
+-----------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 33.3%  (7/21)  top-5 100.0%  (21/21)  top-10 100.0%  (21/21)  mean=1.7  median=2
+  adjusted_held_out : top-1 33.3%  (7/21)  top-5 100.0%  (21/21)  top-10 100.0%  (21/21)  mean=1.7  median=2
+  best_true_rank    : top-1 33.3%  (7/21)  top-5 100.0%  (21/21)  top-10 100.0%  (21/21)  mean=1.7  median=2
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    IRAK4                           14×
+    TTK                              7× <- TTK correctly predicted
+
+Control spectral   (ctrl raw abundance corr)
+--------------------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=17.0  median=14
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=16.7  median=14
+  best_true_rank    : top-1 19.0%  (4/21)  top-5 19.0%  (4/21)  top-10 19.0%  (4/21)  mean=14.6  median=14
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    CDK1                            11×
+    PIK3R1                          10×
+
+Cancer spectral    (cancer raw abundance corr)
+----------------------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=17.3  median=14
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=17.1  median=14
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 19.0%  (4/21)  top-10 19.0%  (4/21)  mean=14.9  median=14
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    PIK3R1                          21×
+
+Liver FC spectral  (fold-change corr, 80th pct)
+-----------------------------------------------
+  TTK trials: 21
+  held_out_rank     : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=17.3  median=14
+  adjusted_held_out : top-1 0.0%  (0/21)  top-5 0.0%  (0/21)  top-10 0.0%  (0/21)  mean=17.1  median=14
+  best_true_rank    : top-1 0.0%  (0/21)  top-5 19.0%  (4/21)  top-10 19.0%  (4/21)  mean=14.9  median=14
+  Top-10 most predicted as top-1 when TTK is the true kinase:
+    PIK3R1                          21×

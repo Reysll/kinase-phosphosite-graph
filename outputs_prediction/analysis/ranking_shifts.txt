@@ -1,4 +1,4 @@
-Ranking Shift Case Studies — Multi-Kinase LOO (liver FC vs generic)
+Ranking Shift Case Studies — Multi-Kinase LOO (node2vec: liver FC vs generic)
 ==========================================================================================
 
 delta = generic_rank - liver_rank

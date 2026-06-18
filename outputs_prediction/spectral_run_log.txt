@@ -1,0 +1,502 @@
+
+======================================================================
+SPECTRAL RUN 1/4: GENERIC
+======================================================================
+=== Loading generic edges for substrate-count categories ===
+=== Loading generic graph ===
+Graph nodes: 13,318
+Graph edges: 1,095,542
+
+=== Loading evaluation inputs ===
+Candidate kinases: 420
+Multi-kinase LOO trials: 6,909
+
+=== Running leave-one-out: generic, spectral embedding + categories ===
+[leave-one-out] Building embedding graph (excluded relations: {'phosphorylates'})...
+[leave-one-out] Embedding graph: 13,313 nodes, 1,056,634 edges  (1.9s)
+[leave-one-out] Fitting embeddings via SpectralEmbeddingStrategy (once)...
+[leave-one-out] Embeddings ready: 13,313 nodes embedded  (1.7s)
+[leave-one-out] Pre-computing training feature matrix (once)...
+[leave-one-out] Training matrix: 127,397 pairs × 128 features  (0.8s)
+[leave-one-out] Pre-computing scoring features for 2,459 test sites...
+[leave-one-out] Scoring cache ready: 2,459 sites  (3.3s)
+[leave-one-out] 100/6,909 trials  (50.9s elapsed, ETA 3464s)
+[leave-one-out] 200/6,909 trials  (97.4s elapsed, ETA 3268s)
+[leave-one-out] 300/6,909 trials  (144.8s elapsed, ETA 3189s)
+[leave-one-out] 400/6,909 trials  (191.7s elapsed, ETA 3119s)
+[leave-one-out] 500/6,909 trials  (240.5s elapsed, ETA 3083s)
+[leave-one-out] 600/6,909 trials  (286.9s elapsed, ETA 3017s)
+[leave-one-out] 700/6,909 trials  (334.5s elapsed, ETA 2967s)
+[leave-one-out] 800/6,909 trials  (380.8s elapsed, ETA 2908s)
+[leave-one-out] 900/6,909 trials  (428.8s elapsed, ETA 2863s)
+[leave-one-out] 1,000/6,909 trials  (476.3s elapsed, ETA 2814s)
+[leave-one-out] 1,100/6,909 trials  (522.4s elapsed, ETA 2759s)
+[leave-one-out] 1,200/6,909 trials  (570.3s elapsed, ETA 2713s)
+[leave-one-out] 1,300/6,909 trials  (617.1s elapsed, ETA 2663s)
+[leave-one-out] 1,400/6,909 trials  (665.3s elapsed, ETA 2618s)
+[leave-one-out] 1,500/6,909 trials  (711.7s elapsed, ETA 2566s)
+[leave-one-out] 1,600/6,909 trials  (758.0s elapsed, ETA 2515s)
+[leave-one-out] 1,700/6,909 trials  (805.3s elapsed, ETA 2468s)
+[leave-one-out] 1,800/6,909 trials  (850.5s elapsed, ETA 2414s)
+[leave-one-out] 1,900/6,909 trials  (897.1s elapsed, ETA 2365s)
+[leave-one-out] 2,000/6,909 trials  (942.4s elapsed, ETA 2313s)
+[leave-one-out] 2,100/6,909 trials  (989.2s elapsed, ETA 2265s)
+[leave-one-out] 2,200/6,909 trials  (1034.5s elapsed, ETA 2214s)
+[leave-one-out] 2,300/6,909 trials  (1080.3s elapsed, ETA 2165s)
+[leave-one-out] 2,400/6,909 trials  (1126.1s elapsed, ETA 2116s)
+[leave-one-out] 2,500/6,909 trials  (1172.5s elapsed, ETA 2068s)
+[leave-one-out] 2,600/6,909 trials  (1218.3s elapsed, ETA 2019s)
+[leave-one-out] 2,700/6,909 trials  (1264.1s elapsed, ETA 1971s)
+[leave-one-out] 2,800/6,909 trials  (1310.2s elapsed, ETA 1923s)
+[leave-one-out] 2,900/6,909 trials  (1356.6s elapsed, ETA 1875s)
+[leave-one-out] 3,000/6,909 trials  (1403.5s elapsed, ETA 1829s)
+[leave-one-out] 3,100/6,909 trials  (1449.5s elapsed, ETA 1781s)
+[leave-one-out] 3,200/6,909 trials  (1495.4s elapsed, ETA 1733s)
+[leave-one-out] 3,300/6,909 trials  (1540.9s elapsed, ETA 1685s)
+[leave-one-out] 3,400/6,909 trials  (1586.3s elapsed, ETA 1637s)
+[leave-one-out] 3,500/6,909 trials  (1633.4s elapsed, ETA 1591s)
+[leave-one-out] 3,600/6,909 trials  (1678.5s elapsed, ETA 1543s)
+[leave-one-out] 3,700/6,909 trials  (1725.3s elapsed, ETA 1496s)
+[leave-one-out] 3,800/6,909 trials  (1770.6s elapsed, ETA 1449s)
+[leave-one-out] 3,900/6,909 trials  (1817.0s elapsed, ETA 1402s)
+[leave-one-out] 4,000/6,909 trials  (1862.9s elapsed, ETA 1355s)
+[leave-one-out] 4,100/6,909 trials  (1908.3s elapsed, ETA 1307s)
+[leave-one-out] 4,200/6,909 trials  (1953.9s elapsed, ETA 1260s)
+[leave-one-out] 4,300/6,909 trials  (2000.7s elapsed, ETA 1214s)
+[leave-one-out] 4,400/6,909 trials  (2046.0s elapsed, ETA 1167s)
+[leave-one-out] 4,500/6,909 trials  (2091.5s elapsed, ETA 1120s)
+[leave-one-out] 4,600/6,909 trials  (2137.7s elapsed, ETA 1073s)
+[leave-one-out] 4,700/6,909 trials  (2183.3s elapsed, ETA 1026s)
+[leave-one-out] 4,800/6,909 trials  (2229.6s elapsed, ETA 980s)
+[leave-one-out] 4,900/6,909 trials  (2275.8s elapsed, ETA 933s)
+[leave-one-out] 5,000/6,909 trials  (2321.9s elapsed, ETA 886s)
+[leave-one-out] 5,100/6,909 trials  (2368.0s elapsed, ETA 840s)
+[leave-one-out] 5,200/6,909 trials  (2413.7s elapsed, ETA 793s)
+[leave-one-out] 5,300/6,909 trials  (2459.2s elapsed, ETA 747s)
+[leave-one-out] 5,400/6,909 trials  (2505.3s elapsed, ETA 700s)
+[leave-one-out] 5,500/6,909 trials  (2551.1s elapsed, ETA 654s)
+[leave-one-out] 5,600/6,909 trials  (2596.9s elapsed, ETA 607s)
+[leave-one-out] 5,700/6,909 trials  (2643.0s elapsed, ETA 561s)
+[leave-one-out] 5,800/6,909 trials  (2688.9s elapsed, ETA 514s)
+[leave-one-out] 5,900/6,909 trials  (2734.2s elapsed, ETA 468s)
+[leave-one-out] 6,000/6,909 trials  (2780.4s elapsed, ETA 421s)
+[leave-one-out] 6,100/6,909 trials  (2826.3s elapsed, ETA 375s)
+[leave-one-out] 6,200/6,909 trials  (2872.1s elapsed, ETA 328s)
+[leave-one-out] 6,300/6,909 trials  (2917.4s elapsed, ETA 282s)
+[leave-one-out] 6,400/6,909 trials  (2963.0s elapsed, ETA 236s)
+[leave-one-out] 6,500/6,909 trials  (3009.5s elapsed, ETA 189s)
+[leave-one-out] 6,600/6,909 trials  (3055.1s elapsed, ETA 143s)
+[leave-one-out] 6,700/6,909 trials  (3100.4s elapsed, ETA 97s)
+[leave-one-out] 6,800/6,909 trials  (3146.7s elapsed, ETA 50s)
+[leave-one-out] 6,900/6,909 trials  (3193.2s elapsed, ETA 4s)
+[leave-one-out] 6,909/6,909 trials  (3196.7s elapsed, ETA 0s)
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.0017406440382941688
+held_out_top_5_accuracy: 0.07049608355091384
+held_out_top_10_accuracy: 0.09355961705831158
+held_out_top_20_accuracy: 0.10632434000580215
+held_out_n_ranked: 6894.0
+held_out_n_missing_rank: 15.0
+held_out_mean_rank: 128.02364374818683
+held_out_median_rank: 81.0
+adjusted_held_out_top_1_accuracy: 0.0017406440382941688
+adjusted_held_out_top_5_accuracy: 0.07107629823034523
+adjusted_held_out_top_10_accuracy: 0.09355961705831158
+adjusted_held_out_top_20_accuracy: 0.10632434000580215
+adjusted_held_out_n_ranked: 6894.0
+adjusted_held_out_n_missing_rank: 15.0
+adjusted_held_out_mean_rank: 126.55773136060343
+adjusted_held_out_median_rank: 79.0
+best_true_top_1_accuracy: 0.0060790273556231
+best_true_top_5_accuracy: 0.22217397597336808
+best_true_top_10_accuracy: 0.2790563033724128
+best_true_top_20_accuracy: 0.31799102619771313
+best_true_n_ranked: 6909.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 52.253727022723986
+best_true_median_rank: 34.0
+n_trials: 6909.0
+mean_n_true_kinases_per_site: 3.9326964828484585
+
+Wrote: outputs_prediction\generic_multi_kinase_spectral\results.csv.gz
+Wrote: outputs_prediction\generic_multi_kinase_spectral\metrics.csv.gz
+Wrote: outputs_prediction\generic_multi_kinase_spectral\summary.txt
+Done.
+
+======================================================================
+SPECTRAL RUN 2/4: CONTROL
+======================================================================
+=== Loading generic edges for substrate-count categories ===
+=== Loading liver graph ===
+Graph nodes: 16,605
+Graph edges: 4,087,754
+
+=== Loading evaluation inputs ===
+Candidate kinases: 420
+Multi-kinase LOO trials: 6,909
+
+=== Running leave-one-out: control, spectral embedding + categories ===
+[leave-one-out] Building embedding graph (excluded relations: {'phosphorylates'})...
+[leave-one-out] Embedding graph: 17,731 nodes, 2,055,920 edges  (3.6s)
+[leave-one-out] Fitting embeddings via SpectralEmbeddingStrategy (once)...
+[leave-one-out] Embeddings ready: 17,731 nodes embedded  (4.1s)
+[leave-one-out] Pre-computing training feature matrix (once)...
+[leave-one-out] Training matrix: 127,397 pairs × 128 features  (1.1s)
+[leave-one-out] Pre-computing scoring features for 2,459 test sites...
+[leave-one-out] Scoring cache ready: 2,459 sites  (3.2s)
+[leave-one-out] 100/6,909 trials  (40.5s elapsed, ETA 2759s)
+[leave-one-out] 200/6,909 trials  (77.8s elapsed, ETA 2609s)
+[leave-one-out] 300/6,909 trials  (114.5s elapsed, ETA 2523s)
+[leave-one-out] 400/6,909 trials  (151.0s elapsed, ETA 2458s)
+[leave-one-out] 500/6,909 trials  (187.4s elapsed, ETA 2402s)
+[leave-one-out] 600/6,909 trials  (223.7s elapsed, ETA 2352s)
+[leave-one-out] 700/6,909 trials  (260.5s elapsed, ETA 2311s)
+[leave-one-out] 800/6,909 trials  (297.1s elapsed, ETA 2269s)
+[leave-one-out] 900/6,909 trials  (333.4s elapsed, ETA 2226s)
+[leave-one-out] 1,000/6,909 trials  (369.7s elapsed, ETA 2185s)
+[leave-one-out] 1,100/6,909 trials  (405.9s elapsed, ETA 2144s)
+[leave-one-out] 1,200/6,909 trials  (442.8s elapsed, ETA 2107s)
+[leave-one-out] 1,300/6,909 trials  (478.8s elapsed, ETA 2066s)
+[leave-one-out] 1,400/6,909 trials  (515.0s elapsed, ETA 2027s)
+[leave-one-out] 1,500/6,909 trials  (551.4s elapsed, ETA 1988s)
+[leave-one-out] 1,600/6,909 trials  (587.9s elapsed, ETA 1951s)
+[leave-one-out] 1,700/6,909 trials  (624.6s elapsed, ETA 1914s)
+[leave-one-out] 1,800/6,909 trials  (661.3s elapsed, ETA 1877s)
+[leave-one-out] 1,900/6,909 trials  (697.3s elapsed, ETA 1838s)
+[leave-one-out] 2,000/6,909 trials  (733.4s elapsed, ETA 1800s)
+[leave-one-out] 2,100/6,909 trials  (770.2s elapsed, ETA 1764s)
+[leave-one-out] 2,200/6,909 trials  (806.7s elapsed, ETA 1727s)
+[leave-one-out] 2,300/6,909 trials  (843.0s elapsed, ETA 1689s)
+[leave-one-out] 2,400/6,909 trials  (879.4s elapsed, ETA 1652s)
+[leave-one-out] 2,500/6,909 trials  (915.6s elapsed, ETA 1615s)
+[leave-one-out] 2,600/6,909 trials  (952.7s elapsed, ETA 1579s)
+[leave-one-out] 2,700/6,909 trials  (988.7s elapsed, ETA 1541s)
+[leave-one-out] 2,800/6,909 trials  (1025.1s elapsed, ETA 1504s)
+[leave-one-out] 2,900/6,909 trials  (1062.5s elapsed, ETA 1469s)
+[leave-one-out] 3,000/6,909 trials  (1098.9s elapsed, ETA 1432s)
+[leave-one-out] 3,100/6,909 trials  (1135.5s elapsed, ETA 1395s)
+[leave-one-out] 3,200/6,909 trials  (1171.7s elapsed, ETA 1358s)
+[leave-one-out] 3,300/6,909 trials  (1208.2s elapsed, ETA 1321s)
+[leave-one-out] 3,400/6,909 trials  (1245.0s elapsed, ETA 1285s)
+[leave-one-out] 3,500/6,909 trials  (1281.8s elapsed, ETA 1248s)
+[leave-one-out] 3,600/6,909 trials  (1317.7s elapsed, ETA 1211s)
+[leave-one-out] 3,700/6,909 trials  (1353.9s elapsed, ETA 1174s)
+[leave-one-out] 3,800/6,909 trials  (1390.7s elapsed, ETA 1138s)
+[leave-one-out] 3,900/6,909 trials  (1427.2s elapsed, ETA 1101s)
+[leave-one-out] 4,000/6,909 trials  (1463.7s elapsed, ETA 1064s)
+[leave-one-out] 4,100/6,909 trials  (1499.9s elapsed, ETA 1028s)
+[leave-one-out] 4,200/6,909 trials  (1536.6s elapsed, ETA 991s)
+[leave-one-out] 4,300/6,909 trials  (1572.9s elapsed, ETA 954s)
+[leave-one-out] 4,400/6,909 trials  (1609.4s elapsed, ETA 918s)
+[leave-one-out] 4,500/6,909 trials  (1646.3s elapsed, ETA 881s)
+[leave-one-out] 4,600/6,909 trials  (1682.9s elapsed, ETA 845s)
+[leave-one-out] 4,700/6,909 trials  (1719.5s elapsed, ETA 808s)
+[leave-one-out] 4,800/6,909 trials  (1755.7s elapsed, ETA 771s)
+[leave-one-out] 4,900/6,909 trials  (1792.6s elapsed, ETA 735s)
+[leave-one-out] 5,000/6,909 trials  (1829.0s elapsed, ETA 698s)
+[leave-one-out] 5,100/6,909 trials  (1865.3s elapsed, ETA 662s)
+[leave-one-out] 5,200/6,909 trials  (1902.3s elapsed, ETA 625s)
+[leave-one-out] 5,300/6,909 trials  (1938.4s elapsed, ETA 588s)
+[leave-one-out] 5,400/6,909 trials  (1975.0s elapsed, ETA 552s)
+[leave-one-out] 5,500/6,909 trials  (2011.7s elapsed, ETA 515s)
+[leave-one-out] 5,600/6,909 trials  (2048.6s elapsed, ETA 479s)
+[leave-one-out] 5,700/6,909 trials  (2085.0s elapsed, ETA 442s)
+[leave-one-out] 5,800/6,909 trials  (2122.1s elapsed, ETA 406s)
+[leave-one-out] 5,900/6,909 trials  (2158.1s elapsed, ETA 369s)
+[leave-one-out] 6,000/6,909 trials  (2195.3s elapsed, ETA 333s)
+[leave-one-out] 6,100/6,909 trials  (2231.4s elapsed, ETA 296s)
+[leave-one-out] 6,200/6,909 trials  (2267.8s elapsed, ETA 259s)
+[leave-one-out] 6,300/6,909 trials  (2304.6s elapsed, ETA 223s)
+[leave-one-out] 6,400/6,909 trials  (2340.9s elapsed, ETA 186s)
+[leave-one-out] 6,500/6,909 trials  (2377.6s elapsed, ETA 150s)
+[leave-one-out] 6,600/6,909 trials  (2413.8s elapsed, ETA 113s)
+[leave-one-out] 6,700/6,909 trials  (2452.2s elapsed, ETA 76s)
+[leave-one-out] 6,800/6,909 trials  (2488.2s elapsed, ETA 40s)
+[leave-one-out] 6,900/6,909 trials  (2524.8s elapsed, ETA 3s)
+[leave-one-out] 6,909/6,909 trials  (2527.2s elapsed, ETA 0s)
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.027270089933275312
+held_out_top_5_accuracy: 0.08442123585726719
+held_out_top_10_accuracy: 0.10748476936466493
+held_out_top_20_accuracy: 0.22048157818392805
+held_out_n_ranked: 6894.0
+held_out_n_missing_rank: 15.0
+held_out_mean_rank: 106.57252683492892
+held_out_median_rank: 74.0
+adjusted_held_out_top_1_accuracy: 0.02741514360313316
+adjusted_held_out_top_5_accuracy: 0.08442123585726719
+adjusted_held_out_top_10_accuracy: 0.11589788221642007
+adjusted_held_out_top_20_accuracy: 0.22149695387293297
+adjusted_held_out_n_ranked: 6894.0
+adjusted_held_out_n_missing_rank: 15.0
+adjusted_held_out_mean_rank: 105.10719466202495
+adjusted_held_out_median_rank: 74.0
+best_true_top_1_accuracy: 0.07786944565060067
+best_true_top_5_accuracy: 0.27152988855116517
+best_true_top_10_accuracy: 0.31856998118396296
+best_true_top_20_accuracy: 0.5526125343754523
+best_true_n_ranked: 6909.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 40.292082790563036
+best_true_median_rank: 15.0
+n_trials: 6909.0
+mean_n_true_kinases_per_site: 3.9326964828484585
+
+Wrote: outputs_prediction\control_multi_kinase_spectral\results.csv.gz
+Wrote: outputs_prediction\control_multi_kinase_spectral\metrics.csv.gz
+Wrote: outputs_prediction\control_multi_kinase_spectral\summary.txt
+Done.
+
+======================================================================
+SPECTRAL RUN 3/4: CANCER
+======================================================================
+=== Loading generic edges for substrate-count categories ===
+=== Loading liver graph ===
+Graph nodes: 16,605
+Graph edges: 4,087,754
+
+=== Loading evaluation inputs ===
+Candidate kinases: 420
+Multi-kinase LOO trials: 6,909
+
+=== Running leave-one-out: cancer, spectral embedding + categories ===
+[leave-one-out] Building embedding graph (excluded relations: {'phosphorylates'})...
+[leave-one-out] Embedding graph: 17,731 nodes, 2,110,182 edges  (4.3s)
+[leave-one-out] Fitting embeddings via SpectralEmbeddingStrategy (once)...
+[leave-one-out] Embeddings ready: 17,731 nodes embedded  (4.0s)
+[leave-one-out] Pre-computing training feature matrix (once)...
+[leave-one-out] Training matrix: 127,397 pairs × 128 features  (0.8s)
+[leave-one-out] Pre-computing scoring features for 2,459 test sites...
+[leave-one-out] Scoring cache ready: 2,459 sites  (3.2s)
+[leave-one-out] 100/6,909 trials  (40.3s elapsed, ETA 2744s)
+[leave-one-out] 200/6,909 trials  (79.3s elapsed, ETA 2659s)
+[leave-one-out] 300/6,909 trials  (117.1s elapsed, ETA 2581s)
+[leave-one-out] 400/6,909 trials  (155.6s elapsed, ETA 2532s)
+[leave-one-out] 500/6,909 trials  (194.4s elapsed, ETA 2491s)
+[leave-one-out] 600/6,909 trials  (232.4s elapsed, ETA 2444s)
+[leave-one-out] 700/6,909 trials  (270.9s elapsed, ETA 2403s)
+[leave-one-out] 800/6,909 trials  (309.5s elapsed, ETA 2363s)
+[leave-one-out] 900/6,909 trials  (348.0s elapsed, ETA 2324s)
+[leave-one-out] 1,000/6,909 trials  (386.3s elapsed, ETA 2283s)
+[leave-one-out] 1,100/6,909 trials  (425.3s elapsed, ETA 2246s)
+[leave-one-out] 1,200/6,909 trials  (462.9s elapsed, ETA 2202s)
+[leave-one-out] 1,300/6,909 trials  (501.4s elapsed, ETA 2163s)
+[leave-one-out] 1,400/6,909 trials  (540.0s elapsed, ETA 2125s)
+[leave-one-out] 1,500/6,909 trials  (578.3s elapsed, ETA 2085s)
+[leave-one-out] 1,600/6,909 trials  (616.4s elapsed, ETA 2045s)
+[leave-one-out] 1,700/6,909 trials  (655.5s elapsed, ETA 2009s)
+[leave-one-out] 1,800/6,909 trials  (693.7s elapsed, ETA 1969s)
+[leave-one-out] 1,900/6,909 trials  (732.0s elapsed, ETA 1930s)
+[leave-one-out] 2,000/6,909 trials  (770.7s elapsed, ETA 1892s)
+[leave-one-out] 2,100/6,909 trials  (809.2s elapsed, ETA 1853s)
+[leave-one-out] 2,200/6,909 trials  (847.8s elapsed, ETA 1815s)
+[leave-one-out] 2,300/6,909 trials  (886.1s elapsed, ETA 1776s)
+[leave-one-out] 2,400/6,909 trials  (925.1s elapsed, ETA 1738s)
+[leave-one-out] 2,500/6,909 trials  (963.3s elapsed, ETA 1699s)
+[leave-one-out] 2,600/6,909 trials  (1001.8s elapsed, ETA 1660s)
+[leave-one-out] 2,700/6,909 trials  (1040.7s elapsed, ETA 1622s)
+[leave-one-out] 2,800/6,909 trials  (1079.1s elapsed, ETA 1584s)
+[leave-one-out] 2,900/6,909 trials  (1118.1s elapsed, ETA 1546s)
+[leave-one-out] 3,000/6,909 trials  (1156.4s elapsed, ETA 1507s)
+[leave-one-out] 3,100/6,909 trials  (1195.6s elapsed, ETA 1469s)
+[leave-one-out] 3,200/6,909 trials  (1233.8s elapsed, ETA 1430s)
+[leave-one-out] 3,300/6,909 trials  (1272.5s elapsed, ETA 1392s)
+[leave-one-out] 3,400/6,909 trials  (1311.6s elapsed, ETA 1354s)
+[leave-one-out] 3,500/6,909 trials  (1352.8s elapsed, ETA 1318s)
+[leave-one-out] 3,600/6,909 trials  (1393.7s elapsed, ETA 1281s)
+[leave-one-out] 3,700/6,909 trials  (1434.4s elapsed, ETA 1244s)
+[leave-one-out] 3,800/6,909 trials  (1474.8s elapsed, ETA 1207s)
+[leave-one-out] 3,900/6,909 trials  (1516.4s elapsed, ETA 1170s)
+[leave-one-out] 4,000/6,909 trials  (1557.4s elapsed, ETA 1133s)
+[leave-one-out] 4,100/6,909 trials  (1598.7s elapsed, ETA 1095s)
+[leave-one-out] 4,200/6,909 trials  (1639.9s elapsed, ETA 1058s)
+[leave-one-out] 4,300/6,909 trials  (1681.2s elapsed, ETA 1020s)
+[leave-one-out] 4,400/6,909 trials  (1721.9s elapsed, ETA 982s)
+[leave-one-out] 4,500/6,909 trials  (1763.4s elapsed, ETA 944s)
+[leave-one-out] 4,600/6,909 trials  (1804.4s elapsed, ETA 906s)
+[leave-one-out] 4,700/6,909 trials  (1845.4s elapsed, ETA 867s)
+[leave-one-out] 4,800/6,909 trials  (1887.1s elapsed, ETA 829s)
+[leave-one-out] 4,900/6,909 trials  (1928.4s elapsed, ETA 791s)
+[leave-one-out] 5,000/6,909 trials  (1969.6s elapsed, ETA 752s)
+[leave-one-out] 5,100/6,909 trials  (2010.8s elapsed, ETA 713s)
+[leave-one-out] 5,200/6,909 trials  (2052.5s elapsed, ETA 675s)
+[leave-one-out] 5,300/6,909 trials  (2093.4s elapsed, ETA 636s)
+[leave-one-out] 5,400/6,909 trials  (2134.8s elapsed, ETA 597s)
+[leave-one-out] 5,500/6,909 trials  (2175.7s elapsed, ETA 557s)
+[leave-one-out] 5,600/6,909 trials  (2216.9s elapsed, ETA 518s)
+[leave-one-out] 5,700/6,909 trials  (2257.7s elapsed, ETA 479s)
+[leave-one-out] 5,800/6,909 trials  (2298.6s elapsed, ETA 439s)
+[leave-one-out] 5,900/6,909 trials  (2339.6s elapsed, ETA 400s)
+[leave-one-out] 6,000/6,909 trials  (2380.1s elapsed, ETA 361s)
+[leave-one-out] 6,100/6,909 trials  (2421.8s elapsed, ETA 321s)
+[leave-one-out] 6,200/6,909 trials  (2462.5s elapsed, ETA 282s)
+[leave-one-out] 6,300/6,909 trials  (2503.3s elapsed, ETA 242s)
+[leave-one-out] 6,400/6,909 trials  (2544.6s elapsed, ETA 202s)
+[leave-one-out] 6,500/6,909 trials  (2585.3s elapsed, ETA 163s)
+[leave-one-out] 6,600/6,909 trials  (2626.8s elapsed, ETA 123s)
+[leave-one-out] 6,700/6,909 trials  (2668.2s elapsed, ETA 83s)
+[leave-one-out] 6,800/6,909 trials  (2709.3s elapsed, ETA 43s)
+[leave-one-out] 6,900/6,909 trials  (2750.7s elapsed, ETA 4s)
+[leave-one-out] 6,909/6,909 trials  (2753.1s elapsed, ETA 0s)
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.0005802146794313896
+held_out_top_5_accuracy: 0.08442123585726719
+held_out_top_10_accuracy: 0.10748476936466493
+held_out_top_20_accuracy: 0.22019147084421237
+held_out_n_ranked: 6894.0
+held_out_n_missing_rank: 15.0
+held_out_mean_rank: 106.42457209167392
+held_out_median_rank: 75.0
+adjusted_held_out_top_1_accuracy: 0.000725268349289237
+adjusted_held_out_top_5_accuracy: 0.08442123585726719
+adjusted_held_out_top_10_accuracy: 0.11589788221642007
+adjusted_held_out_top_20_accuracy: 0.2209167391935016
+adjusted_held_out_n_ranked: 6894.0
+adjusted_held_out_n_missing_rank: 15.0
+adjusted_held_out_mean_rank: 104.95880475776038
+adjusted_held_out_median_rank: 74.0
+best_true_top_1_accuracy: 0.003763207410623824
+best_true_top_5_accuracy: 0.27152988855116517
+best_true_top_10_accuracy: 0.31856998118396296
+best_true_top_20_accuracy: 0.5517441018960776
+best_true_n_ranked: 6909.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 40.34679403676364
+best_true_median_rank: 15.0
+n_trials: 6909.0
+mean_n_true_kinases_per_site: 3.9326964828484585
+
+Wrote: outputs_prediction\cancer_multi_kinase_spectral\results.csv.gz
+Wrote: outputs_prediction\cancer_multi_kinase_spectral\metrics.csv.gz
+Wrote: outputs_prediction\cancer_multi_kinase_spectral\summary.txt
+Done.
+
+======================================================================
+SPECTRAL RUN 4/4: LIVER FC
+======================================================================
+=== Loading generic edges for substrate-count categories ===
+=== Loading liver graph ===
+Graph nodes: 16,605
+Graph edges: 4,087,754
+
+=== Loading evaluation inputs ===
+Candidate kinases: 420
+Multi-kinase LOO trials: 6,909
+
+=== Running leave-one-out: liver FC, spectral embedding + categories ===
+[leave-one-out] Building embedding graph (excluded relations: {'phosphorylates'})...
+[leave-one-out] Embedding graph: 17,731 nodes, 2,071,441 edges  (4.3s)
+[leave-one-out] Fitting embeddings via SpectralEmbeddingStrategy (once)...
+[leave-one-out] Embeddings ready: 17,731 nodes embedded  (4.5s)
+[leave-one-out] Pre-computing training feature matrix (once)...
+[leave-one-out] Training matrix: 127,397 pairs × 128 features  (1.5s)
+[leave-one-out] Pre-computing scoring features for 2,459 test sites...
+[leave-one-out] Scoring cache ready: 2,459 sites  (3.7s)
+[leave-one-out] 100/6,909 trials  (43.2s elapsed, ETA 2941s)
+[leave-one-out] 200/6,909 trials  (84.1s elapsed, ETA 2821s)
+[leave-one-out] 300/6,909 trials  (125.4s elapsed, ETA 2762s)
+[leave-one-out] 400/6,909 trials  (164.5s elapsed, ETA 2677s)
+[leave-one-out] 500/6,909 trials  (204.4s elapsed, ETA 2621s)
+[leave-one-out] 600/6,909 trials  (243.5s elapsed, ETA 2561s)
+[leave-one-out] 700/6,909 trials  (283.8s elapsed, ETA 2518s)
+[leave-one-out] 800/6,909 trials  (323.3s elapsed, ETA 2469s)
+[leave-one-out] 900/6,909 trials  (363.1s elapsed, ETA 2424s)
+[leave-one-out] 1,000/6,909 trials  (402.4s elapsed, ETA 2378s)
+[leave-one-out] 1,100/6,909 trials  (442.0s elapsed, ETA 2334s)
+[leave-one-out] 1,200/6,909 trials  (481.3s elapsed, ETA 2290s)
+[leave-one-out] 1,300/6,909 trials  (520.6s elapsed, ETA 2246s)
+[leave-one-out] 1,400/6,909 trials  (557.3s elapsed, ETA 2193s)
+[leave-one-out] 1,500/6,909 trials  (594.8s elapsed, ETA 2145s)
+[leave-one-out] 1,600/6,909 trials  (632.5s elapsed, ETA 2099s)
+[leave-one-out] 1,700/6,909 trials  (669.7s elapsed, ETA 2052s)
+[leave-one-out] 1,800/6,909 trials  (706.6s elapsed, ETA 2006s)
+[leave-one-out] 1,900/6,909 trials  (743.8s elapsed, ETA 1961s)
+[leave-one-out] 2,000/6,909 trials  (781.8s elapsed, ETA 1919s)
+[leave-one-out] 2,100/6,909 trials  (818.6s elapsed, ETA 1875s)
+[leave-one-out] 2,200/6,909 trials  (856.4s elapsed, ETA 1833s)
+[leave-one-out] 2,300/6,909 trials  (893.4s elapsed, ETA 1790s)
+[leave-one-out] 2,400/6,909 trials  (929.9s elapsed, ETA 1747s)
+[leave-one-out] 2,500/6,909 trials  (967.5s elapsed, ETA 1706s)
+[leave-one-out] 2,600/6,909 trials  (1005.0s elapsed, ETA 1666s)
+[leave-one-out] 2,700/6,909 trials  (1041.9s elapsed, ETA 1624s)
+[leave-one-out] 2,800/6,909 trials  (1079.9s elapsed, ETA 1585s)
+[leave-one-out] 2,900/6,909 trials  (1117.9s elapsed, ETA 1545s)
+[leave-one-out] 3,000/6,909 trials  (1155.1s elapsed, ETA 1505s)
+[leave-one-out] 3,100/6,909 trials  (1192.1s elapsed, ETA 1465s)
+[leave-one-out] 3,200/6,909 trials  (1229.0s elapsed, ETA 1424s)
+[leave-one-out] 3,300/6,909 trials  (1265.7s elapsed, ETA 1384s)
+[leave-one-out] 3,400/6,909 trials  (1304.4s elapsed, ETA 1346s)
+[leave-one-out] 3,500/6,909 trials  (1343.9s elapsed, ETA 1309s)
+[leave-one-out] 3,600/6,909 trials  (1387.1s elapsed, ETA 1275s)
+[leave-one-out] 3,700/6,909 trials  (1429.0s elapsed, ETA 1239s)
+[leave-one-out] 3,800/6,909 trials  (1470.2s elapsed, ETA 1203s)
+[leave-one-out] 3,900/6,909 trials  (1510.7s elapsed, ETA 1166s)
+[leave-one-out] 4,000/6,909 trials  (1551.8s elapsed, ETA 1129s)
+[leave-one-out] 4,100/6,909 trials  (1593.6s elapsed, ETA 1092s)
+[leave-one-out] 4,200/6,909 trials  (1633.2s elapsed, ETA 1053s)
+[leave-one-out] 4,300/6,909 trials  (1672.8s elapsed, ETA 1015s)
+[leave-one-out] 4,400/6,909 trials  (1712.5s elapsed, ETA 977s)
+[leave-one-out] 4,500/6,909 trials  (1751.2s elapsed, ETA 937s)
+[leave-one-out] 4,600/6,909 trials  (1787.7s elapsed, ETA 897s)
+[leave-one-out] 4,700/6,909 trials  (1825.3s elapsed, ETA 858s)
+[leave-one-out] 4,800/6,909 trials  (1862.2s elapsed, ETA 818s)
+[leave-one-out] 4,900/6,909 trials  (1899.7s elapsed, ETA 779s)
+[leave-one-out] 5,000/6,909 trials  (1936.3s elapsed, ETA 739s)
+[leave-one-out] 5,100/6,909 trials  (1973.3s elapsed, ETA 700s)
+[leave-one-out] 5,200/6,909 trials  (2010.4s elapsed, ETA 661s)
+[leave-one-out] 5,300/6,909 trials  (2048.2s elapsed, ETA 622s)
+[leave-one-out] 5,400/6,909 trials  (2085.2s elapsed, ETA 583s)
+[leave-one-out] 5,500/6,909 trials  (2122.1s elapsed, ETA 544s)
+[leave-one-out] 5,600/6,909 trials  (2158.9s elapsed, ETA 505s)
+[leave-one-out] 5,700/6,909 trials  (2196.0s elapsed, ETA 466s)
+[leave-one-out] 5,800/6,909 trials  (2232.7s elapsed, ETA 427s)
+[leave-one-out] 5,900/6,909 trials  (2269.7s elapsed, ETA 388s)
+[leave-one-out] 6,000/6,909 trials  (2306.9s elapsed, ETA 349s)
+[leave-one-out] 6,100/6,909 trials  (2343.2s elapsed, ETA 311s)
+[leave-one-out] 6,200/6,909 trials  (2380.5s elapsed, ETA 272s)
+[leave-one-out] 6,300/6,909 trials  (2417.3s elapsed, ETA 234s)
+[leave-one-out] 6,400/6,909 trials  (2454.1s elapsed, ETA 195s)
+[leave-one-out] 6,500/6,909 trials  (2490.9s elapsed, ETA 157s)
+[leave-one-out] 6,600/6,909 trials  (2527.7s elapsed, ETA 118s)
+[leave-one-out] 6,700/6,909 trials  (2564.5s elapsed, ETA 80s)
+[leave-one-out] 6,800/6,909 trials  (2601.7s elapsed, ETA 42s)
+[leave-one-out] 6,900/6,909 trials  (2638.2s elapsed, ETA 3s)
+[leave-one-out] 6,909/6,909 trials  (2640.9s elapsed, ETA 0s)
+Baseline node2vec results with multi-true-kinase evaluation
+===========================================================
+held_out_top_1_accuracy: 0.0002901073397156948
+held_out_top_5_accuracy: 0.08442123585726719
+held_out_top_10_accuracy: 0.10748476936466493
+held_out_top_20_accuracy: 0.21830577313606034
+held_out_n_ranked: 6894.0
+held_out_n_missing_rank: 15.0
+held_out_mean_rank: 106.54801276472294
+held_out_median_rank: 75.0
+adjusted_held_out_top_1_accuracy: 0.0004351610095735422
+adjusted_held_out_top_5_accuracy: 0.08442123585726719
+adjusted_held_out_top_10_accuracy: 0.11589788221642007
+adjusted_held_out_top_20_accuracy: 0.22004641717435452
+adjusted_held_out_n_ranked: 6894.0
+adjusted_held_out_n_missing_rank: 15.0
+adjusted_held_out_mean_rank: 105.08268059181897
+adjusted_held_out_median_rank: 74.0
+best_true_top_1_accuracy: 0.003184252424374005
+best_true_top_5_accuracy: 0.27152988855116517
+best_true_top_10_accuracy: 0.31856998118396296
+best_true_top_20_accuracy: 0.5508756694167029
+best_true_n_ranked: 6909.0
+best_true_n_missing_rank: 0.0
+best_true_mean_rank: 40.33926762194239
+best_true_median_rank: 15.0
+n_trials: 6909.0
+mean_n_true_kinases_per_site: 3.9326964828484585
+
+Wrote: outputs_prediction\liver_multi_kinase_spectral\results.csv.gz
+Wrote: outputs_prediction\liver_multi_kinase_spectral\metrics.csv.gz
+Wrote: outputs_prediction\liver_multi_kinase_spectral\summary.txt
+Done.
+
+All four spectral runs complete. Total wall time: 186.3 min

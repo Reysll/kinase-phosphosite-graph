@@ -1,0 +1,42 @@
+Per-Category Rank Breakdown — Spectral Embedding (Phase 2)
+================================================================================
+
+Category thresholds: poor <=5 substrates (n~166), average 5-20 (n~133), rich >20 (n~121).
+adjusted_held_out_rank_in_category: rank among kinases IN THE SAME CATEGORY only.
+adjusted_held_out_rank: global rank (all 420 kinases, co-kinases removed).
+
+Generic spectral   (no correlation)
+-----------------------------------
+  Total trials: 6,909
+  Category         n  global med   cat med   cat top-1   cat top-5  within-cat top-1 kinase
+  ----------------------------------------------------------------------------------------
+  poor           201       231.0      75.0       1.0%       5.0%  TGM2 100%
+  average        836       209.0      62.5       0.7%       4.3%  FGFR2 100%
+  rich         5,872        69.0      33.0       0.2%      10.4%  TTK 93%
+
+Control spectral   (ctrl raw abundance corr)
+--------------------------------------------
+  Total trials: 6,909
+  Category         n  global med   cat med   cat top-1   cat top-5  within-cat top-1 kinase
+  ----------------------------------------------------------------------------------------
+  poor           201       272.0      79.0       1.0%       5.0%  PIK3R1 100%
+  average        836       212.0      61.0       0.4%       4.8%  TGFBR2 100%
+  rich         5,872        53.0      32.0       4.8%      10.2%  CDK1 100%
+
+Cancer spectral    (cancer raw abundance corr)
+----------------------------------------------
+  Total trials: 6,909
+  Category         n  global med   cat med   cat top-1   cat top-5  within-cat top-1 kinase
+  ----------------------------------------------------------------------------------------
+  poor           201       273.5      79.0       1.0%       5.0%  PIK3R1 100%
+  average        836       213.0      61.0       0.4%       4.8%  TGFBR2 100%
+  rich         5,872        53.0      32.0       4.8%      10.2%  CDK1 100%
+
+Liver FC spectral  (fold-change corr, 80th pct)
+-----------------------------------------------
+  Total trials: 6,909
+  Category         n  global med   cat med   cat top-1   cat top-5  within-cat top-1 kinase
+  ----------------------------------------------------------------------------------------
+  poor           201       272.5      79.0       1.0%       5.0%  PIK3R1 100%
+  average        836       212.0      61.0       0.4%       4.8%  TGFBR2 100%
+  rich         5,872        53.0      32.0       4.8%      10.2%  CDK1 100%

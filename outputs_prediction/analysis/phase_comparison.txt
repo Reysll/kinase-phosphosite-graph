@@ -1,0 +1,17 @@
+Phase Comparison — node2vec (Phase 1) vs spectral (Phase 2)
+===============================================================================================
+
+Metric: adjusted_held_out_rank (other co-true kinases removed before ranking).
+
+Network            P1 median   P1 mean   P1 top-20   P2 median   P2 mean   P2 top-20  d_median    %imp
+-----------------------------------------------------------------------------------------------
+  Generic              188.0     190.4       2.2%        79.0     126.6      10.6%    +109.0   58.0%
+  Control              166.5     177.7       1.7%        74.0     105.1      22.1%     +92.5   55.6%
+  Cancer               174.0     186.0       2.2%        74.0     105.0      22.0%    +100.0   57.5%
+  Liver FC             165.0     175.8       2.7%        74.0     105.1      22.0%     +91.0   55.2%
+
+Notes:
+  P1 = Phase 1 (node2vec, DeepWalk mode p=q=1, dimensions=32).
+  P2 = Phase 2 (SpectralEmbeddingStrategy, normalized Laplacian, 32 eigenvectors).
+  d_median = P1_median - P2_median  (positive = P2 improved).
+  %imp = d_median / P1_median x 100.

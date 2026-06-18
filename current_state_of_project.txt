@@ -5,7 +5,7 @@ Project Title
 ==============
 Context-Aware Prediction of Kinase-Substrate Associations in Liver Cancer
 
-Last updated: 2026-05-27 (all four networks complete, analysis regenerated)
+Last updated: 2026-06-17 (Phase 2 complete — all four spectral networks done, 6,909 trials each)
 
 HOW TO USE THIS FILE
 =====================
@@ -51,31 +51,66 @@ Minimum sample count: >=6 (all three types have 18 samples -- satisfied).
 Protein co-expression: DISABLED (only 3 usable rows after preprocessing).
 
 
-SECTION 3. NODE2VEC + PREDICTION MODEL
-========================================
-Status: Completed.
+SECTION 3. PREDICTION MODEL — CURRENT DESIGN
+=============================================
+Two strategies implemented under the EmbeddingStrategy ABC:
 
-Key design decisions:
-  - node2vec runs ONCE on a PSP-stripped graph (LEAKAGE FIX)
-    PSP 'phosphorylates' edges removed from embedding graph; kept as labels only.
-    Non-PSP KSA edges from other sources kept even if they duplicate a PSP edge.
-  - Training matrix, scoring cache built ONCE; each trial is LR mask + fit only.
+  Node2VecStrategy (original):
+    DeepWalk mode (p=q=1), dimensions=32, walk_length=10, num_walks=25.
+    Suffers from degree-based hub bias — high-connectivity nodes dominate
+    all top-1 predictions regardless of biology.
+
+  SpectralEmbeddingStrategy (new, Phase 2):
+    Normalized Laplacian: L = I - D^{-1/2} A D^{-1/2}.
+    Degree-normalizing by construction: high-degree nodes penalized.
+    directed=False (symmetric Laplacian required).
+    scipy ARPACK eigsh, 32 eigenvectors, ~4 s on liver graph.
+    Implemented instead of GCL (Dr. Ayati's suggestion) because spectral
+    achieves the same degree-normalization with a closed-form solution.
+    GCL still swappable via EmbeddingStrategy.fit() if needed.
+
+Key design decisions (unchanged from Phase 1):
+  - Embedding runs ONCE on PSP-stripped graph (leakage fix).
+    PSP 'phosphorylates' edges removed from embedding; kept as training labels.
+  - Training matrix, scoring cache built ONCE; each trial is LR mask + fit.
   - ThreadPoolExecutor (threads share memory), n_jobs_outer=8.
 
-Embedding: Node2VecStrategy (modular ABC; swap by implementing EmbeddingStrategy.fit)
-  dimensions=32, walk_length=10, num_walks=25, workers=4, p=q=1 (DeepWalk mode)
-
 Primary metric: adjusted_held_out_rank
-  Other known true co-kinases for the site are REMOVED from the scored list
-  before measuring the held-out kinase's rank.
-  e.g. site has k1/k2/k3, k1 held out -> scored: [k7, k4, k2, k1]
-       drop k2 -> [k7, k4, k1]   adjusted rank of k1 = 3 (not 4).
-
-Progress reporting: progress_fn callback fires inside as_completed loop in
-  parallel_utils.py, so elapsed/ETA are live measurements (not post-hoc).
+  Other known true co-kinases removed from scored list before ranking
+  the held-out kinase. e.g. site has k1/k2/k3, k1 held out:
+  scored [k7, k4, k2, k1] -> drop k2 -> [k7, k4, k1] -> rank of k1 = 3.
 
 
-SECTION 4. DATASET OVERVIEW
+SECTION 4. CATEGORY-BASED RANKING (PHASE 2, OPTION 2)
+=======================================================
+Motivation (Dr. Ayati): poor kinases (few substrates) should not compete
+against rich ones (hundreds of substrates) in a single ranked list.
+
+Implementation (kinase_categories.py + leave_one_out.py):
+  Substrate counts from FULL generic PSP edges (pre-filter, not eval subset).
+  Thresholds: poor <= 5 (166 kinases), average 5-20 (133), rich > 20 (121).
+  Each site now returns one top-1 prediction per category.
+
+  Key additional output columns:
+    held_out_kinase_category          -- category of the held-out kinase
+    adjusted_held_out_rank_in_category -- rank within category (not 420)
+    top1_poor / top1_average / top1_rich
+
+  Hub kinase placement:
+    VRK3 (1 substrate)  -> poor
+    VRK2 (15 substrates)-> average
+    ULK1 (77 substrates)-> rich
+  Cross-category wall confirmed working: within-category hubs are different
+  kinases (WNK2, TGFBR2, YES1) from the global hub (ULK1). However,
+  within-category hub bias still exists — that is what spectral targets.
+
+Design decision: pre-filter counts
+  Dr. Ayati left open "before or after multi-kinase filtering". We use counts
+  from the full generic graph because richness reflects global PSP annotation,
+  not eval-set membership.
+
+
+SECTION 5. DATASET OVERVIEW
 =============================
 Total positive edges:          14,596
 Unique sites:                  10,146
@@ -85,7 +120,7 @@ Edges from multi-kinase sites:  6,909  <- frozen trial set
 Unique candidate kinases:         420
 
 
-SECTION 5. FOUR-NETWORK EXPERIMENTAL DESIGN
+SECTION 6. FOUR-NETWORK EXPERIMENTAL DESIGN
 =============================================
 Four LOO experiments, all using the same 6,909 frozen multi-kinase trials:
 
@@ -96,27 +131,13 @@ Four LOO experiments, all using the same 6,909 frozen multi-kinase trials:
   Cancer     | + tumor sample raw corr edges          | run_multi_kinase_cancer.py
   Liver FC   | + fold-change corr edges               | run_multi_kinase_liver.py
 
-Analysis script: src_prediction/analyze_results.py
-  Produces: performance_summary.txt, top1_frequency_summary.txt,
-            per_kinase_topk.txt/.csv, ttk_deepdive.txt, ranking_shifts.txt
-  All in: outputs_prediction/analysis/
+Phase 2 adds two new configurations (spectral embedding + category ranking):
+  Spectral scripts: run_multi_kinase_{generic,control,cancer,liver}_spectral.py
+  These write to: outputs_prediction/{network}_multi_kinase_spectral/
 
 
-SECTION 6. CURRENT RUN STATUS (2026-05-27)
-============================================
-ALL FOUR RUNS COMPLETE. All analysis files regenerated.
-
-  Experiment           | Status     | Notes
-  ---------------------+------------+-------------------------------------------
-  generic_multi_kinase | COMPLETED  | Post-leakage-fix
-  control_multi_kinase | COMPLETED  | Healthy-sample raw abundance correlations
-  cancer_multi_kinase  | COMPLETED  | Tumor-sample raw abundance correlations
-  liver_multi_kinase   | COMPLETED  | Fold-change correlations (tumor/ctrl mean)
-  analyze_results      | COMPLETED  | outputs_prediction/analysis/ -- all fresh
-
-
-SECTION 7. EXPERIMENTAL RESULTS (6,909 trials, post-leakage-fix, 420 candidates)
-==================================================================================
+SECTION 7. PHASE 1 RESULTS — NODE2VEC, 6,909 TRIALS (complete, 2026-05-27)
+===========================================================================
 
 Adjusted held-out rank (PRIMARY -- other co-kinases dropped before scoring):
 
@@ -135,96 +156,173 @@ Best-true rank (best rank achieved by ANY known true kinase for the site):
                         Generic   Control   Cancer    Liver FC
   mean rank:            114.6     103.2     117.0     108.6
   median rank:           78.0      80.0     116.0      83.0
-  top-10:                4.4%      3.8%      4.7%      4.6%
-  top-20:                8.4%      6.0%      7.0%      8.7%
-
-Key result summary:
-  - Liver FC and Control BOTH outperform Generic on adjusted_held_out rank.
-  - Cancer performs WORSE than Generic -- raw tumor correlations add noise.
-  - Control (healthy samples) rivals Liver FC: stable healthy co-expression
-    captures structural signal nearly as well as fold-change patterns.
-  - All top-k accuracies are low; the signal is in rank improvement, not top-1.
 
 
-SECTION 8. HUB BIAS FINDING -- CRITICAL
-=========================================
-The top-1 kinase frequency reveals a severe degree bias in all correlation networks:
+SECTION 8. HUB BIAS — PHASE 1 FINDING AND PHASE 2 MITIGATION
+==============================================================
+Phase 1 node2vec top-1 monopoly (6,909 trials):
 
-  Network     | Top-1 monopoly (% of all 6,909 trials)
+  Network     | Hub kinase (% trials)
   ------------+--------------------------------------------------
   Generic     | ULK1 76.5%, WNK1 21.0%, ZAP70 2.5%
   Control     | VRK2 94.8%, YES1 4.8%
   Cancer      | VRK3 95.5%, VRK2 3.8%
-  Liver FC    | ULK1 100.0% -- every single trial
+  Liver FC    | ULK1 100.0%
 
-Adding correlation edges makes specific kinases so highly connected in the
-embedding graph that node2vec concentrates embedding mass on them, and they
-dominate top-1 predictions for ALL sites regardless of biology.
+Phase 2 smoke test (50 trials, liver FC):
 
-The improved mean/median ranks reflect the true kinase moving from rank 300+ to
-rank 50-100 -- not reaching rank 1. The hub kinase still wins top-1 everywhere.
+  Configuration           | adj. median rank | top-20 acc | top-1 hub
+  ------------------------+------------------+------------+-----------------
+  Node2Vec (Phase 1)      |     165.0        |   2.7%     | ULK1 100%
+  Spectral (Phase 2)      |      74.0        |  22.0%     | PIK3R1 100%
 
-This confirms the supervisor's prediction about node2vec degree sensitivity.
-Fix: swap Node2VecStrategy for a degree-normalised embedding via the
-EmbeddingStrategy ABC (no other code changes needed).
+Full 6,909-trial spectral results (all four networks):
+
+                    Generic  Control  Cancer   Liver FC
+  adj mean rank:    126.6    105.1    105.0    105.1     <- lower = better
+  adj median rank:   79.0     74.0     74.0     74.0
+  adj top-1:          0.2%     2.7%     0.1%     0.0%
+  adj top-5:          7.1%     8.4%     8.4%     8.4%
+  adj top-10:         9.4%    11.6%    11.6%    11.6%
+  adj top-20:        10.6%    22.1%    22.1%    22.0%
+
+  best-true median:  34.0     15.0     15.0     15.0
+  best-true top-20:  31.8%    55.3%    55.2%    55.1%
+
+Comparison vs Phase 1 node2vec (adjusted median rank):
+  Generic:  188 → 79   (-58%)    Control: 167 → 74   (-56%)
+  Cancer:   174 → 74   (-57%)    Liver:   165 → 74   (-55%)
+
+Key spectral findings:
+  1. Dramatic across-the-board improvement over node2vec.
+  2. Control, Cancer, and Liver FC are nearly IDENTICAL under spectral
+     (median rank 74 for all three). With node2vec, Liver FC was best
+     and Cancer was worst. The correlation TYPE (healthy/tumor/FC) no
+     longer differentiates once degree bias is removed.
+  3. Generic is now clearly the weakest (median 79 vs 74 for the other
+     three), confirming correlation edges genuinely add structural signal.
+  4. Control has the highest top-1 accuracy (2.7% vs ~0% for Cancer and
+     Liver FC). Healthy co-expression correlations produce the most
+     decisive top-1 predictions.
+  5. Hub bias persists but changes character: hub kinases shift from
+     VRK family (biologically questionable) to CDK1 and PIK3R1 (both
+     central cancer pathway nodes). Control splits CDK1/PIK3R1 (57%/43%)
+     — the most distributed top-1 we have seen.
+
+Top-1 global monopoly by network (spectral):
+  Generic:  TTK 92.9%, IRAK4 7.1%
+  Control:  CDK1 57.1%, PIK3R1 42.9%   <- most distributed, biologically plausible
+  Cancer:   PIK3R1 99.3%, CDK1 0.7%
+  Liver FC: PIK3R1 100.0%
+
+Per-category analysis (liver spectral, 6,909 trials):
+  Category | n trials | adj median rank | top-1 in cat | within-cat top-1 hub
+  ---------+----------+-----------------+--------------+---------------------
+  poor     |   201    |      79         |   1.0%       | PIK3R1 100%
+  average  |   836    |      61         |   0.4%       | TGFBR2 100%
+  rich     |  5872    |      32         |   4.8%       | CDK1 100%
+
+  Note: within-category hub bias is still 100% concentrated (each category
+  has one dominant kinase). Categories reduce cross-category unfairness but
+  do not eliminate the embedding-level hub bias.
 
 
 SECTION 9. TTK CASE STUDY
 ===========================
-TTK (Mps1, mitotic kinase, liver-cancer relevant), 21 LOO trials:
+TTK (Mps1, mitotic kinase), 21 LOO trials.
+Dr. Ayati context (2026-06-17): TTK is over-expressed in liver cancer
+and activates AKT to promote disease progression. Our results do not
+show FC correlation capturing this -- consistent with TTK activity
+operating through a pathway-level mechanism not visible as cohesive
+substrate fold-change co-variation.
 
-  Network     | held_out mean rank | top-1 always
-  ------------+--------------------+---------------
-  Generic     | 247.7              | ULK1
-  Control     | 25.7               | VRK2
-  Cancer      | 112.7              | VRK3
-  Liver FC    | 242.6              | ULK1
+Phase 1 node2vec results (adj. median rank):
+  Network     | adj. median rank | top-1 always
+  ------------+------------------+---------------
+  Generic     |     245          | ULK1
+  Control     |      25          | VRK2
+  Cancer      |     111          | VRK3
+  Liver FC    |     239          | ULK1
 
-Control dramatically improves TTK rank (mean 25 vs 248 in generic) despite
-VRK2 winning top-1 every time. Liver FC does NOT help TTK (243 vs 248).
-Interpretation: TTK substrates are stably co-expressed in healthy liver tissue
-but show divergent fold-change patterns in tumors, so FC edges do not capture
-the TTK substrate co-regulation pattern.
+Phase 2 spectral results (adj. median rank, within-rich rank):
+  Network     | adj. median rank | adj. cat rank | top-1 (global)
+  ------------+------------------+---------------+----------------
+  Generic     |       2          |      2        | IRAK4 (14 trials), TTK (7 trials)
+  Control     |      14          |     10        | CDK1
+  Cancer      |      14          |     10        | PIK3R1
+  Liver FC    |      14          |     10        | PIK3R1
+
+KEY FINDING (Phase 2, spectral):
+  The GENERIC spectral graph ranks TTK at global median rank 2 out of 420.
+  Every trial is either rank 1 (7 trials: non-TTK substrates, top-1=TTK)
+  or rank 2 (14 trials: TTK autophosphorylation sites, top-1=IRAK4).
+  TTK's structural position in the PPI/pathway graph is already informative.
+
+  The correlation networks (control/cancer/liver FC) WORSEN TTK from rank 2
+  to rank 14. Adding correlation edges shifts the embedding so that PIK3R1
+  (liver hub) or CDK1 (control hub) dominate, pushing TTK down.
+
+  Interpretation: TTK's liver cancer role (activating AKT) operates through
+  a pathway-level mechanism NOT visible as cohesive substrate fold-change
+  co-variation. The pathway structure alone (generic graph) captures TTK's
+  substrate relationships better than any correlation-based addition.
 
 
-SECTION 10. RANKING SHIFTS (GENERIC vs LIVER FC)
-=================================================
-Most improved kinases in Liver FC (mean delta, min 5 trials, all 100% improved):
-  CSK (+241, 6)  STK24 (+238, 8)  STK11 (+216, 15)  MAP3K5 (+177, 10)  RET (+172, 15)
+SECTION 10. RANKING SHIFTS (NODE2VEC, GENERIC vs LIVER FC)
+============================================================
+Most improved kinases in Liver FC:
+  CSK (+241, n=6)   STK24 (+238, n=8)   STK11 (+216, n=15)
+  MAP3K5 (+177, n=10)  RET (+172, n=15)
 
-Most worsened kinases in Liver FC (0% improved):
-  PKN1 (-177, 10)  MAP3K11 (-168, 7)  MAP3K8 (-156, 23)
-  SIK2 (-155, 5)   PDK1 (-149, 5)
+Most worsened kinases in Liver FC:
+  PKN1 (-177, n=10)  MAP3K11 (-168, n=7)  MAP3K8 (-156, n=23)
+  SIK2 (-155, n=5)   PDK1 (-149, n=5)
 
-Note: ULK1 is top-1 for 100% of Liver FC trials. The "improvements" for
-CSK/STK24/STK11 are real rank improvements (from ~400 in generic to rank 25-160
-in liver FC) but the correct kinase never reaches rank 1. The "worsenings" for
-PKN1/MAP3K11/MAP3K8 reflect kinases that had reasonable generic ranks (~40-170)
-but collapse to rank 220-375 in liver FC.
+Note: ULK1 is top-1 for 100% of Liver FC trials. Rank improvements for
+CSK/STK24 are real (from ~400 to rank 25-160) but those kinases never
+reach rank 1. Phase 2 full-run will re-derive these shifts under spectral.
 
 
-SECTION 11. IMMEDIATE NEXT STEPS
-==================================
+SECTION 11. PHASE 2 RUN STATUS
+================================
 
-1. ADDRESS HUB BIAS (PRIORITY)
-   Swap Node2VecStrategy for a degree-normalised embedding.
-   EmbeddingStrategy ABC is in place -- implement fit() and pass to run_leave_one_out().
-   Candidate methods: spectral embedding, personalized PageRank,
-   graph contrastive learning with spectral filtering.
+  Configuration                   | Network    | Status
+  --------------------------------+------------+------------------
+  spectral + categories (1+2)     | Generic    | COMPLETED
+  spectral + categories (1+2)     | Control    | COMPLETED
+  spectral + categories (1+2)     | Cancer     | COMPLETED
+  spectral + categories (1+2)     | Liver FC   | COMPLETED
 
-2. BIOLOGICAL VALIDATION
-   Most improved in Liver FC: NTRK2, MAPK7, MAP3K5, PRKCQ, MAPKAPK5.
-   Most worsened: HIPK2, STK26, PRKCB, ATM.
-   Literature search for liver cancer roles.
+Scripts: run_multi_kinase_{generic,control,cancer,liver}_spectral.py
+Output:  outputs_prediction/{network}_multi_kinase_spectral/results.csv.gz
+Total wall time: 186 min (3.1 hours) for all four networks.
 
-3. TTK FOLLOW-UP
-   Why does healthy co-expression (rank 25) work so much better than FC (rank 243)?
-   Investigate TTK substrate fold-change patterns in the liver dataset.
 
-4. ABSTRACT WRITING
-   Story: four-network comparison reveals hub degree bias in node2vec embeddings;
-   correlation edges improve rank metrics but not top-1 biology; modular
-   architecture enables embedding swap to fix this.
+SECTION 12. NEXT STEPS
+=======================
+Last updated: 2026-06-18
 
-5. FULL EVALUATION (LINUX CLUSTER)
-   Run all 14,596 positive edges with use_threads=False, n_jobs_outer=N_CORES.
+COMPLETED this round:
+  [x] analyze_results.py extended to 8 analyses (phase_comparison.txt,
+      category_ranks.txt, ranking_shifts_spectral.txt; TTK covers both phases)
+  [x] KSEA implemented — Wiredja 2017 formula (score = (s_bar - p_bar) / (m * delta)),
+      PSP substrate sets + LOO top-1 predicted substrate sets, BH FDR correction
+  [x] TTK case study updated with Phase 2 spectral results (Section 9 above)
+  [x] Email sent to Dr. Ayati (2026-06-18) — Phase 2 results, category analysis,
+      KSEA findings, and three open questions
+
+PENDING — awaiting Dr. Ayati's response:
+  1. KSEA formula: m in denominator penalizes large substrate sets. CDK1 (n=61)
+     scores 0.004 despite consistent upregulation. Is this intended?
+  2. Full inference pass: LOO top-1 sets are hub-dominated. A separate pass
+     scoring all 420 kinases against all liver phosphosites is needed for a
+     meaningful PSP vs predicted-substrate KSEA comparison.
+  3. TTK spectral finding: generic spectral median rank 2; any correlation edges
+     worsen to rank 14. Dr. Ayati's interpretation?
+
+POTENTIAL NEXT STEPS:
+  - Full inference pass for richer KSEA substrate sets (pending approval).
+  - KSEA formula adjustment if supervisor prefers z-score variant.
+  - Biological interpretation: CDK1/CSNK2A1 top PSP-KSEA candidates in liver FC.
+  - Abstract / manuscript: spectral + category ranking as methodological
+    contribution; TTK finding as biological validation case study.

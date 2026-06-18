@@ -28,26 +28,55 @@ All commands run from the **project root**:
 | Freeze LOO trial set (multi-kinase) | `.venv312/Scripts/python -m src_prediction.run_freeze_multi_kinase_trials` |
 | Run generic LOO (50-trial debug) | `.venv312/Scripts/python -m src_prediction.run_generic_model` |
 | Run liver FC LOO (50-trial debug) | `.venv312/Scripts/python -m src_prediction.run_baseline_similarity` |
-| Run generic multi-kinase (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_generic` |
-| Run liver FC multi-kinase (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_liver` |
-| Run control multi-kinase (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_control` |
-| Run cancer multi-kinase (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_cancer` |
+| Run generic multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_generic` |
+| Run liver FC multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_liver` |
+| Run control multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_control` |
+| Run cancer multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_cancer` |
+| **Run all 4 — spectral + categories (Phase 2)** | `.venv312/Scripts/python -m src_prediction.run_all_spectral` |
+| Smoke test: node2vec + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.run_test_categorized` |
+| Smoke test: spectral + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.run_test_spectral` |
 | Compare generic vs liver FC | `.venv312/Scripts/python -m src_prediction.compare_multi_kinase` |
-| Run all supervisor analyses (4 networks) | `.venv312/Scripts/python -m src_prediction.analyze_results` |
+| Run all supervisor analyses (8 networks: node2vec + spectral) | `.venv312/Scripts/python -m src_prediction.analyze_results` |
+| Run KSEA (kinase activity enrichment) | `.venv312/Scripts/python -m src_prediction.run_ksea` |
 
 **Full pipeline order** (start fresh):
 1. Build generic graph
-2. Build liver graph ← now embeds all 3 correlation types in one file
+2. Build liver graph ← embeds all 3 correlation types in one file
 3. Freeze trial set
-4. Run all four LOO experiments (generic, control, cancer, liver FC)
-5. Compare + analyze
+4. Run Phase 1 (node2vec): run_multi_kinase_{generic,control,cancer,liver}
+5. Run Phase 2 (spectral): run_all_spectral  ← adds category columns to results
+6. Analyze: analyze_results.py  ← 8-network comparison (Phase 1 + Phase 2)
+7. KSEA: run_ksea.py  ← kinase activity enrichment on liver FC dataset
 
-**Analysis outputs** go to `outputs_prediction/analysis/`:
-- `performance_summary.txt` — all four networks side-by-side (held-out, adjusted, best-true)
-- `top1_frequency_summary.txt` — most predicted kinases per network
-- `per_kinase_topk.txt` / `.csv` — per-kinase top-1/5/10% across all networks
-- `ttk_deepdive.txt` — TTK case study
-- `ranking_shifts.txt` — biggest rank improvements/worsenings (generic vs liver FC)
+**Phase 2 output columns** (spectral results, in addition to all Phase 1 columns):
+- `held_out_kinase_category` — poor / average / rich (PSP substrate count)
+- `adjusted_held_out_rank_in_category` — rank within category (denom ~120-166, not 420)
+- `top1_poor` / `top1_average` / `top1_rich` — top-1 kinase within each category
+
+**Analysis outputs** go to `outputs_prediction/analysis/` (8 networks: Phase 1 + Phase 2):
+- `performance_summary.txt` — four node2vec networks side-by-side
+- `top1_frequency_summary.txt` — most predicted kinases per network (node2vec)
+- `per_kinase_topk.txt` / `.csv` — per-kinase top-1/5/10% across all networks (node2vec)
+- `ttk_deepdive.txt` — TTK case study (node2vec + spectral)
+- `ranking_shifts.txt` — rank improvements/worsenings node2vec generic vs liver FC
+- `phase_comparison.txt` — Phase 1 vs Phase 2 median rank / top-20 / improvement%
+- `category_ranks.txt` — per-category (poor/average/rich) breakdown (spectral)
+- `ranking_shifts_spectral.txt` — rank improvements/worsenings spectral generic vs liver FC
+
+**KSEA outputs** go to `outputs_prediction/ksea/`:
+- `ksea_psp.csv` — KSEA scores using known PSP substrates
+- `ksea_generic_spectral.csv` — KSEA using generic spectral top-1 predictions
+- `ksea_liver_spectral.csv` — KSEA using liver FC spectral top-1 predictions
+- `ksea_three_way_comparison.csv` — merged PSP vs generic vs liver scores
+- `ksea_comparison.txt` — human-readable report
+
+**KSEA formula (Wiredja et al. 2017):** score = (s_bar - p_bar) / (m * delta).
+m in denominator penalizes kinases with many substrates. No significant hits after BH-FDR
+(adj_p ~0.5 throughout) — dataset underpowered for this formula. Top-ranked: MAPK12
+(n=3, score=1.08), CDKL5 (n=3, score=1.05) — few substrates with very high FC.
+CDK1 (n=61) and CSNK2A1 (n=35) penalized by large m despite consistent upregulation.
+Predicted-substrate KSEA is dominated by hub kinases (TTK/PIK3R1) — uninformative.
+For richer KSEA: need a "predict all" inference pass over all liver phosphosites.
 
 ## Data layout
 
@@ -96,24 +125,35 @@ All node IDs follow:
 - Frozen LOO trial set (multi-kinase): 6,909 trials across 2,459 multi-kinase sites
 - n_jobs_outer: 8 (ThreadPoolExecutor); Node2Vec Word2Vec workers: 4
 
-## Current run status (2026-05-27)
+## Current run status (2026-06-17)
 
-All four networks complete. Analysis regenerated.
+**Phase 1 complete** — node2vec, 6,909 trials each:
 
-| Experiment | adjusted median rank |
+| Experiment | adj median rank |
 |---|---|
 | generic_multi_kinase | 188.0 |
 | control_multi_kinase | 166.5 |
 | cancer_multi_kinase | 174.0 |
-| liver_multi_kinase | 165.0 ← best |
+| liver_multi_kinase | 165.0 |
 
-**Critical finding:** Adding correlation edges causes severe hub bias in node2vec.
-In Liver FC, ULK1 is predicted top-1 for 100% of 6,909 trials. In Control, VRK2
-for 94.8%. Cancer: VRK3 for 95.5%. The improved rank METRICS are real but top-1
-predictions are biologically meaningless due to degree concentration.
+**Phase 2 complete** — SpectralEmbeddingStrategy + category ranking, 6,909 trials each:
 
-**Next priority:** Swap `Node2VecStrategy` for a degree-normalised embedding via
-the `EmbeddingStrategy` ABC (no other code changes needed).
+| Experiment | adj median rank | adj top-20 | global top-1 hub |
+|---|---|---|---|
+| generic_multi_kinase_spectral | 79.0 | 10.6% | TTK 92.9% |
+| control_multi_kinase_spectral | 74.0 | 22.1% | CDK1 57% / PIK3R1 43% |
+| cancer_multi_kinase_spectral | 74.0 | 22.1% | PIK3R1 99.3% |
+| liver_multi_kinase_spectral | 74.0 | 22.0% | PIK3R1 100% |
+
+**Key Phase 2 findings:**
+- Spectral halves median rank vs node2vec across all networks (~57% improvement).
+- Under spectral, Control = Cancer = Liver FC (all median 74). Correlation TYPE no longer
+  differentiates — the signal is in having correlation edges, not in which type.
+- Control is unique: top-1 splits CDK1/PIK3R1 (57%/43%) — most biologically plausible.
+- Hub bias persists (within-category: PIK3R1→poor, TGFBR2→average, CDK1→rich at 100%),
+  but hub kinases shifted from VRK family to cancer-relevant nodes (CDK1, PI3K, TGF-β).
+
+**Next priority:** Draft email to Dr. Ayati with Phase 2 results + KSEA findings. Then consider a "predict all" inference pass for richer KSEA substrate sets.
 
 ## Progress tracking
 

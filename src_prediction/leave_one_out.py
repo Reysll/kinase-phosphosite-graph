@@ -38,6 +38,11 @@ class TrialTask:
     site_score_kinase_ids: List[str]
     site_to_true_kinases: Dict[str, List[str]]
     candidate_kinase_ids: List[str]
+    # Optional category map: kinase_node_id -> 'poor' | 'average' | 'rich'.
+    # When provided, _run_single_trial also computes within-category ranks and
+    # per-category top-1 predictions (Option 2). None disables this (default,
+    # backward-compatible).
+    kinase_categories: Optional[Dict[str, str]] = None
 
 
 def _prepare_trials(
@@ -103,6 +108,25 @@ def _compute_adjusted_held_out_rank(
     return int(hit[0] + 1)
 
 
+def _split_scored_by_category(
+    scored: pd.DataFrame,
+    kinase_categories: Dict[str, str],
+) -> Dict[str, pd.DataFrame]:
+    """
+    Split a scored candidate DataFrame into per-category sub-DataFrames.
+
+    Each sub-DataFrame preserves the original score ordering (highest-score
+    first within the category). Using frozenset membership avoids the Python
+    lambda-closure bug that would occur with a loop variable captured by
+    reference inside a lambda.
+    """
+    result = {}
+    for cat in ("poor", "average", "rich"):
+        cat_kinases = frozenset(k for k, c in kinase_categories.items() if c == cat)
+        result[cat] = scored[scored["kinase_node_id"].isin(cat_kinases)].reset_index(drop=True)
+    return result
+
+
 def _run_single_trial(task: TrialTask) -> dict:
     trial_row = task.trial_row
     trial_index = int(trial_row["trial_index"])
@@ -157,6 +181,44 @@ def _run_single_trial(task: TrialTask) -> dict:
     top1_pred = scored.iloc[0]["kinase_node_id"] if not scored.empty else None
     top1_score = float(scored.iloc[0]["score"]) if not scored.empty else np.nan
 
+    # --- Category-based ranking (Option 2) ---
+    # When kinase_categories is provided, additionally rank each candidate only
+    # against others in the same substrate-count tier. This prevents rich kinases
+    # (hundreds of PSP substrates) from outranking poor ones purely due to data
+    # density. Each site therefore gets one top-1 prediction per category.
+    #
+    # Design: adjusted_held_out_rank_in_category mirrors the global
+    # adjusted_held_out_rank logic — other true kinases in the SAME category as
+    # the held-out kinase are dropped before measuring its within-category rank.
+    # Co-kinases in OTHER categories are irrelevant here because they don't
+    # appear in the held-out kinase's category list.
+    held_out_category: Optional[str] = None
+    adjusted_rank_in_category: Optional[int] = None
+    top1_poor: Optional[str] = None
+    top1_average: Optional[str] = None
+    top1_rich: Optional[str] = None
+
+    if task.kinase_categories and not scored.empty:
+        held_out_category = task.kinase_categories.get(true_kinase, "poor")
+        cat_dfs = _split_scored_by_category(scored, task.kinase_categories)
+
+        top1_poor = cat_dfs["poor"].iloc[0]["kinase_node_id"] if not cat_dfs["poor"].empty else None
+        top1_average = (
+            cat_dfs["average"].iloc[0]["kinase_node_id"] if not cat_dfs["average"].empty else None
+        )
+        top1_rich = cat_dfs["rich"].iloc[0]["kinase_node_id"] if not cat_dfs["rich"].empty else None
+
+        # Rank held-out kinase within its own category, adjusting for co-kinases
+        # in the same category only.
+        other_true_in_same_cat = [
+            k
+            for k in other_true_kinases
+            if task.kinase_categories.get(k, "poor") == held_out_category
+        ]
+        adjusted_rank_in_category = _compute_adjusted_held_out_rank(
+            cat_dfs[held_out_category], true_kinase, other_true_in_same_cat
+        )
+
     return {
         "trial_index": trial_index,
         "true_kinase_node_id": true_kinase,
@@ -174,6 +236,12 @@ def _run_single_trial(task: TrialTask) -> dict:
         "true_kinase_embedding_present": int(
             true_kinase in {k for k in task.site_score_kinase_ids}
         ),
+        # Category columns — None when kinase_categories not provided
+        "held_out_kinase_category": held_out_category,
+        "adjusted_held_out_rank_in_category": adjusted_rank_in_category,
+        "top1_poor": top1_poor,
+        "top1_average": top1_average,
+        "top1_rich": top1_rich,
     }
 
 
@@ -276,6 +344,10 @@ def run_leave_one_out(
     n_jobs_outer: int = 1,
     max_negatives_per_site: int = 50,
     use_threads: bool = True,
+    # Option 2: when provided, each trial also produces within-category ranks
+    # and per-category top-1 predictions. Build this map with
+    # kinase_categories.assign_kinase_categories() before calling.
+    kinase_categories: Optional[Dict[str, str]] = None,
     # Legacy keyword kept for scripts that pass node2vec_params= by name
     node2vec_params: Optional[EmbeddingStrategy] = None,
 ) -> pd.DataFrame:
@@ -285,12 +357,16 @@ def run_leave_one_out(
     Parameters
     ----------
     embedding_strategy : EmbeddingStrategy
-        Any concrete EmbeddingStrategy (e.g. Node2VecStrategy).
-        PSP 'phosphorylates' edges are removed from the graph before calling
-        strategy.fit() to prevent embedding leakage of the prediction target.
+        Any concrete EmbeddingStrategy (e.g. Node2VecStrategy or
+        SpectralEmbeddingStrategy). PSP 'phosphorylates' edges are removed from
+        the graph before calling strategy.fit() to prevent leakage.
     allowed_relations : optional set of str
         Which edge relation types to include in the graph.  None = all.
         PSP KSA edges are additionally excluded at embedding time regardless.
+    kinase_categories : optional dict
+        Maps kinase_node_id -> 'poor' | 'average' | 'rich'. When provided,
+        results include adjusted_held_out_rank_in_category and top1_{poor,
+        average,rich} columns (Option 2). None = backward-compatible behaviour.
     """
     # Support old callers that pass node2vec_params= kwarg
     if node2vec_params is not None and not isinstance(node2vec_params, EmbeddingStrategy):
@@ -376,6 +452,7 @@ def run_leave_one_out(
                 site_score_kinase_ids=score_data[1] if score_data else [],
                 site_to_true_kinases=site_to_true_kinases,
                 candidate_kinase_ids=candidate_kinase_ids,
+                kinase_categories=kinase_categories,
             )
         )
 
