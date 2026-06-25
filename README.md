@@ -316,7 +316,7 @@ Always use the project virtual environment:
 ### 1. Build the generic graph
 
 ```
-.venv312/Scripts/python -m src.main
+.venv312/Scripts/python -m src.runners.main
 ```
 
 Output: `outputs/nodes.csv.gz`, `outputs/edges.csv.gz`
@@ -324,7 +324,7 @@ Output: `outputs/nodes.csv.gz`, `outputs/edges.csv.gz`
 ### 2. Build the liver graph
 
 ```
-.venv312/Scripts/python -m src.run_liver
+.venv312/Scripts/python -m src.runners.run_liver
 ```
 
 Output: `outputs/Liver_network_edges.csv.gz` (contains all three correlation types)
@@ -332,7 +332,7 @@ Output: `outputs/Liver_network_edges.csv.gz` (contains all three correlation typ
 ### 3. Freeze the evaluation set
 
 ```
-.venv312/Scripts/python -m src_prediction.run_freeze_multi_kinase_trials
+.venv312/Scripts/python -m src_prediction.runners.run_freeze_multi_kinase_trials
 ```
 
 Output: `outputs_prediction/frozen_trials_multi_kinase.csv.gz`
@@ -340,10 +340,10 @@ Output: `outputs_prediction/frozen_trials_multi_kinase.csv.gz`
 ### 4. Run all four LOO experiments
 
 ```
-.venv312/Scripts/python -m src_prediction.run_multi_kinase_generic
-.venv312/Scripts/python -m src_prediction.run_multi_kinase_control
-.venv312/Scripts/python -m src_prediction.run_multi_kinase_cancer
-.venv312/Scripts/python -m src_prediction.run_multi_kinase_liver
+.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_generic
+.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_control
+.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_cancer
+.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_liver
 ```
 
 These can run in any order or in parallel (each writes to its own output directory).
@@ -351,8 +351,8 @@ These can run in any order or in parallel (each writes to its own output directo
 ### 5. Regenerate comparison and analysis
 
 ```
-.venv312/Scripts/python -m src_prediction.compare_multi_kinase
-.venv312/Scripts/python -m src_prediction.analyze_results
+.venv312/Scripts/python -m src_prediction.analysis.compare_multi_kinase
+.venv312/Scripts/python -m src_prediction.analysis.analyze_results
 ```
 
 Output: `outputs_prediction/analysis/` (all summary files)

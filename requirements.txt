@@ -5,6 +5,8 @@ node2vec
 gensim
 scipy
 scikit-learn
+seaborn
+matplotlib
 tqdm
 xlrd==2.0.1
 openpyxl

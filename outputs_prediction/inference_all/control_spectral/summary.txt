@@ -1,0 +1,28 @@
+Inference-all summary -- network=control, embedding=spectral
+============================================================
+Target sites (FC-valid): 3,228
+Sites with >=1 scored kinase: 3,228 (100.0%)
+Total (kinase, site) pairs scored: 1,339,620
+Pairs that are known true KSAs (own-edge masked): 736
+
+Per-kinase average rank (top 20 by lowest mean rank):
+  PROTEIN:PIK3R1        mean=1.5  median=1  n=3228
+  PROTEIN:CDK1          mean=1.5  median=2  n=3228
+  PROTEIN:EGFR          mean=3.3  median=3  n=3228
+  PROTEIN:PRKCA         mean=3.7  median=4  n=3228
+  PROTEIN:SGK1          mean=5.0  median=5  n=3228
+  PROTEIN:TTK           mean=6.1  median=6  n=3228
+  PROTEIN:MET           mean=7.5  median=7  n=3228
+  PROTEIN:TGM2          mean=7.5  median=8  n=3228
+  PROTEIN:TGFBR2        mean=9.2  median=9  n=3228
+  PROTEIN:PRKCB         mean=10.4  median=11  n=3228
+  PROTEIN:FYN           mean=10.4  median=10  n=3228
+  PROTEIN:MAPK1         mean=12.1  median=12  n=3228
+  PROTEIN:PDGFRA        mean=13.3  median=13  n=3228
+  PROTEIN:AURKA         mean=13.7  median=14  n=3228
+  PROTEIN:AKT1          mean=15.0  median=15  n=3228
+  PROTEIN:PRKCD         mean=16.7  median=16  n=3228
+  PROTEIN:PIK3CD        mean=17.2  median=18  n=3228
+  PROTEIN:IGF1R         mean=17.8  median=17  n=3228
+  PROTEIN:FGFR2         mean=18.7  median=20  n=3228
+  PROTEIN:MAPK14        mean=20.4  median=19  n=3228

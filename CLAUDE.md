@@ -9,6 +9,43 @@ Research project building a heterogeneous graph network (HGN) for context-aware 
 - **`src/`** — graph construction (generic HGN + liver extension)
 - **`src_prediction/`** — leave-one-out evaluation, node2vec embeddings, logistic regression scoring
 
+Both trees are organized into functional subpackages (reorganized 2026-06-25):
+
+```
+src/
+├── core/        config, io_utils, ids, normalize
+├── graph/       liver_network, preprocess, sanity_checks
+├── builders/    per-dataset edge builders (kinase_substrate, ppi, ptmsigdb, msigdb, ptmcode2, ppase_substrate)
+└── runners/     main.py (generic graph), run_liver.py (liver graph)
+
+src_prediction/
+├── core/        config, io_utils, graph_loader, parallel_utils, relation_filters, experiment_utils, metrics
+├── embeddings/  embeddings.py, embedding_strategy.py
+├── data_prep/   evaluation_set, truth_utils, negative_sampling, pair_features, kinase_categories,
+│                trial_sampling, find_multi_kinase_sites
+├── engine/      leave_one_out.py (LOO trial engine), inference_all.py (predict-all engine),
+│                model_scoring.py, scoring.py
+├── analysis/    analyze_results, compare_multi_kinase, ksea, run_ksea, build_rank_heatmap, build_rank_ks_test
+├── runners/     every run_*.py entry point invoked via `python -m`
+└── [root]       9 confirmed-dead/legacy files, intentionally left flat and unmoved — see
+                 "Dead/legacy code" below. Do not import from these.
+```
+
+**Dead/legacy code** (flat at `src_prediction/` root, NOT in any subpackage — confirmed
+unused 2026-06-25 by checking whether their inputs/outputs exist): `compare_experiments.py`,
+`compare_multi_kinase_runs.py`, `run_generic_model.py`, `run_baseline_similarity.py`,
+`run_generic_multi_kinase.py` (pre-leakage-fix duplicate of `runners/run_multi_kinase_generic.py`
+— reads a frozen-trials file that no longer exists), `run_liver_multi_kinase.py` (empty stub),
+`make_multi_kinase_fold_set.py`, `make_multi_kinase_fold_set_10.py`, `migrate_trial_index.py`.
+Their internal imports still use the old flat `src_prediction.X` paths and will fail if run —
+left as-is rather than fixed or deleted, pending a decision on whether to remove them.
+
+**`src/runners/run_liver.py` is not import-safe** — it calls `run(...)` unconditionally at
+module level (no `if __name__ == "__main__":` guard), so `import src.runners.run_liver` executes
+the full liver-graph build pipeline as a side effect. This is pre-existing behavior (the file is
+only ever meant to be run via `python -m src.runners.run_liver`), not introduced by the 2026-06-25
+reorg — don't `import` it directly in scripts or smoke tests.
+
 ## Python environment
 
 **Always use `.venv312/Scripts/python`** (Python 3.12.7), not bare `python`. The `.venv312/` virtual environment holds all dependencies.
@@ -23,30 +60,38 @@ All commands run from the **project root**:
 
 | Task | Command |
 |---|---|
-| Build generic graph | `.venv312/Scripts/python -m src.main` |
-| Build liver graph (all 3 corr types) | `.venv312/Scripts/python -m src.run_liver` |
-| Freeze LOO trial set (multi-kinase) | `.venv312/Scripts/python -m src_prediction.run_freeze_multi_kinase_trials` |
-| Run generic LOO (50-trial debug) | `.venv312/Scripts/python -m src_prediction.run_generic_model` |
-| Run liver FC LOO (50-trial debug) | `.venv312/Scripts/python -m src_prediction.run_baseline_similarity` |
-| Run generic multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_generic` |
-| Run liver FC multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_liver` |
-| Run control multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_control` |
-| Run cancer multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.run_multi_kinase_cancer` |
-| **Run all 4 — spectral + categories (Phase 2)** | `.venv312/Scripts/python -m src_prediction.run_all_spectral` |
-| Smoke test: node2vec + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.run_test_categorized` |
-| Smoke test: spectral + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.run_test_spectral` |
-| Compare generic vs liver FC | `.venv312/Scripts/python -m src_prediction.compare_multi_kinase` |
-| Run all supervisor analyses (8 networks: node2vec + spectral) | `.venv312/Scripts/python -m src_prediction.analyze_results` |
-| Run KSEA (kinase activity enrichment) | `.venv312/Scripts/python -m src_prediction.run_ksea` |
+| Build generic graph | `.venv312/Scripts/python -m src.runners.main` |
+| Build liver graph (all 3 corr types) | `.venv312/Scripts/python -m src.runners.run_liver` |
+| Freeze LOO trial set (multi-kinase) | `.venv312/Scripts/python -m src_prediction.runners.run_freeze_multi_kinase_trials` |
+| Run generic multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_generic` |
+| Run liver FC multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_liver` |
+| Run control multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_control` |
+| Run cancer multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_cancer` |
+| **Run all 4 — spectral + categories (Phase 2)** | `.venv312/Scripts/python -m src_prediction.runners.run_all_spectral` |
+| Smoke test: node2vec + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_test_categorized` |
+| Smoke test: spectral + categories (50 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_test_spectral` |
+| Compare generic vs liver FC | `.venv312/Scripts/python -m src_prediction.analysis.compare_multi_kinase` |
+| Run all supervisor analyses (8 networks: node2vec + spectral) | `.venv312/Scripts/python -m src_prediction.analysis.analyze_results` |
+| Run KSEA (kinase activity enrichment) | `.venv312/Scripts/python -m src_prediction.analysis.run_ksea` |
+| **Run predict-all inference pass (Phase 3, 12 combos)** | `.venv312/Scripts/python -m src_prediction.runners.run_inference_all` |
+| Result 1: kinase x network rank heatmap/clustergram | `.venv312/Scripts/python -m src_prediction.analysis.build_rank_heatmap` |
+| Result 2: per-kinase rank-distribution KS-test | `.venv312/Scripts/python -m src_prediction.analysis.build_rank_ks_test` |
 
 **Full pipeline order** (start fresh):
 1. Build generic graph
 2. Build liver graph ← embeds all 3 correlation types in one file
 3. Freeze trial set
-4. Run Phase 1 (node2vec): run_multi_kinase_{generic,control,cancer,liver}
-5. Run Phase 2 (spectral): run_all_spectral  ← adds category columns to results
-6. Analyze: analyze_results.py  ← 8-network comparison (Phase 1 + Phase 2)
-7. KSEA: run_ksea.py  ← kinase activity enrichment on liver FC dataset
+4. Run Phase 1 (node2vec): runners.run_multi_kinase_{generic,control,cancer,liver}
+5. Run Phase 2 (spectral): runners.run_all_spectral  ← adds category columns to results
+6. Analyze: analysis.analyze_results  ← 8-network comparison (Phase 1 + Phase 2)
+7. KSEA: analysis.run_ksea  ← kinase activity enrichment on liver FC dataset
+8. Run Phase 3 (predict-all): runners.run_inference_all  ← 4 networks x 3 embeddings, no LOO holdout
+9. Result 1 + 2: analysis.build_rank_heatmap, analysis.build_rank_ks_test ← consume Phase 3 output
+
+Note: the two 50-trial debug commands previously listed here (`run_generic_model`,
+`run_baseline_similarity`) were confirmed dead/stale during the 2026-06-25 reorg — see the
+"Dead/legacy code" list above. They predate the embedding-leakage fix and their results are
+invalid; use the Phase 1 multi-kinase runners instead.
 
 **Phase 2 output columns** (spectral results, in addition to all Phase 1 columns):
 - `held_out_kinase_category` — poor / average / rich (PSP substrate count)
@@ -70,13 +115,46 @@ All commands run from the **project root**:
 - `ksea_three_way_comparison.csv` — merged PSP vs generic vs liver scores
 - `ksea_comparison.txt` — human-readable report
 
-**KSEA formula (Wiredja et al. 2017):** score = (s_bar - p_bar) / (m * delta).
-m in denominator penalizes kinases with many substrates. No significant hits after BH-FDR
-(adj_p ~0.5 throughout) — dataset underpowered for this formula. Top-ranked: MAPK12
-(n=3, score=1.08), CDKL5 (n=3, score=1.05) — few substrates with very high FC.
-CDK1 (n=61) and CSNK2A1 (n=35) penalized by large m despite consistent upregulation.
-Predicted-substrate KSEA is dominated by hub kinases (TTK/PIK3R1) — uninformative.
-For richer KSEA: need a "predict all" inference pass over all liver phosphosites.
+**KSEA formula (Wiredja et al. 2017):** score = (s_bar - p_bar) * sqrt(m) / delta.
+sqrt(m) is in the NUMERATOR (fixed 2026-06-23 — an earlier version had m in the
+denominator, which penalized large substrate sets; the correct formula rewards
+them via lower SEM). With the fix: 17/64 scoreable kinases reach adj_p < 0.05
+(was 0/64 before). Top UP-regulated: MAPK12, CDKL5, MAPK13, CSNK2A1. Top
+DOWN-regulated: PRKACA, PRKD1, PRKCD, RPS6KA1, PAK1, PRKG1, RPS6KA3, PRKG2.
+None of these 12 kinases ever reach top-1/5/10 in the LOO results — hub bias
+crowds them out. Predicted-substrate KSEA (using LOO top-1 predictions) is
+dominated by hub kinases (TTK/PIK3R1) — uninformative for that comparison.
+See outputs_prediction/ksea/ksea_comparison.txt for the full report.
+
+**Phase 3 — predict-all inference pass** (`inference_all.py` + `run_inference_all.py`,
+built 2026-06-24/25): scores every (candidate kinase, site) pair across the
+3,228 FC-valid liver sites, for all 4 networks x 3 embeddings (node2vec,
+spectral, concat) — no LOO holdout. Needed because LOO only ever evaluates the
+kinase that was actually held out, on the 2,459 multi-kinase sites; it cannot
+produce every kinase's rank at every site (needed for the heatmap/KS-test
+below). Leakage avoided via two-tier scoring: known true (kinase, site) edges
+are scored by a model with ONLY that edge masked (~736 such edges, restricted
+to the 3,228 sites); everything else is scored by one global model trained on
+all known edges (nothing to leak for a pair that was never a positive label).
+"generic" uses the small GENERIC_NODES/EDGES file (matches existing LOO
+scripts) and only covers 391/3,228 (12%) of sites — its site population is
+essentially PSP-annotated sites, a different population than the broader
+liver-proteomics-detected set. Do NOT swap "generic" to the LIVER graph
+restricted to base relations to try to fix this — that fragments the liver
+site population into many disconnected protein-site components (sites whose
+only edges are the correlation ones being stripped out), which breaks
+SpectralEmbeddingStrategy's eigensolver (near-zero eigenvalue multiplicity).
+Output: `outputs_prediction/inference_all/{network}_{embedding}/ranks.csv.gz`
+(long format: site_node_id, kinase_node_id, score, rank_in_site, is_true_kinase).
+
+**Result 2 KS-test caveat:** most kinases' `rank_in_site` is nearly CONSTANT
+across all 3,228 sites within one network (hub bias — a kinase's own
+embedding dominates its score far more than the site's does), so even a
+1-rank shift between networks gives `ks_statistic` ~= 1.0 trivially.
+`build_rank_ks_test.py` reports each kinase's within-network rank std-dev and
+an `informative` flag (std_rank > 1.0 in at least one network); only
+informative + significant kinases are listed in the summary's highlight list,
+though the per-pair CSVs keep every kinase so degenerate cases stay visible.
 
 ## Data layout
 
@@ -96,9 +174,9 @@ All node IDs follow:
 
 ## Critical architectural decisions
 
-**node2vec runs once, on a PSP-stripped graph.** `leave_one_out.py` builds the embedding graph with all `phosphorylates` edges removed (these are the PhosphoSitePlus KSA edges = the prediction target). Embeddings are therefore blind to kinase-substrate relationships and only reflect structural/pathway context. Each trial re-trains logistic regression using the full KSA edges as labels. Do not move embedding computation inside the trial loop.
+**node2vec runs once, on a PSP-stripped graph.** `src_prediction/engine/leave_one_out.py` builds the embedding graph with all `phosphorylates` edges removed (these are the PhosphoSitePlus KSA edges = the prediction target). Embeddings are therefore blind to kinase-substrate relationships and only reflect structural/pathway context. Each trial re-trains logistic regression using the full KSA edges as labels. Do not move embedding computation inside the trial loop.
 
-**Embedding strategy is modular.** `src_prediction/embedding_strategy.py` defines `EmbeddingStrategy` (ABC) and `Node2VecStrategy` (current). To swap in graph contrastive learning or spectral methods, implement `EmbeddingStrategy.fit(graph) -> Dict[str, np.ndarray]` and pass the new strategy to `run_leave_one_out(embedding_strategy=...)`.
+**Embedding strategy is modular.** `src_prediction/embeddings/embedding_strategy.py` defines `EmbeddingStrategy` (ABC), `Node2VecStrategy`, `SpectralEmbeddingStrategy`, and `ConcatEmbeddingStrategy` (concatenates the two — built 2026-06-25 since spectral fixes the GLOBAL hub bias but not the WITHIN-CATEGORY bias). To swap in a new method, implement `EmbeddingStrategy.fit(graph) -> Dict[str, np.ndarray]` and pass the new strategy to `run_leave_one_out(embedding_strategy=...)` or `run_inference_all(embedding_strategy=...)`. `ConcatEmbeddingStrategy.directed=True`: node2vec is fit on the directed graph it's given directly; spectral gets an explicit `.to_undirected()` copy, since each sub-strategy needs its own appropriately-directed graph rather than sharing one.
 
 **Four networks, one liver graph file.** `Liver_network_edges.csv.gz` now contains all three correlation edge types. LOO run scripts select which type via `allowed_relations`. No need to rebuild the graph per experiment.
 
@@ -125,7 +203,7 @@ All node IDs follow:
 - Frozen LOO trial set (multi-kinase): 6,909 trials across 2,459 multi-kinase sites
 - n_jobs_outer: 8 (ThreadPoolExecutor); Node2Vec Word2Vec workers: 4
 
-## Current run status (2026-06-17)
+## Current run status (last updated 2026-06-25)
 
 **Phase 1 complete** — node2vec, 6,909 trials each:
 
@@ -153,7 +231,18 @@ All node IDs follow:
 - Hub bias persists (within-category: PIK3R1→poor, TGFBR2→average, CDK1→rich at 100%),
   but hub kinases shifted from VRK family to cancer-relevant nodes (CDK1, PI3K, TGF-β).
 
-**Next priority:** Draft email to Dr. Ayati with Phase 2 results + KSEA findings. Then consider a "predict all" inference pass for richer KSEA substrate sets.
+**Phase 3 complete (2026-06-25)** — predict-all inference pass, 4 networks x 3 embeddings = 12 combos, 3,228 FC-valid sites, ~736 own-edge-masked trials per combo (much cheaper than the 6,909-trial LOO runs — full sweep took ~30 min total):
+
+| Network | Site coverage | Notes |
+|---|---|---|
+| generic | 391/3,228 (12%) | small GENERIC graph file; PSP-annotated sites only |
+| control | 3,228/3,228 (100%) | |
+| cancer | 3,228/3,228 (100%) | |
+| liver_fc | 3,228/3,228 (100%) | |
+
+Result 1 (heatmap/clustergram) confirms the documented spectral finding visually: column dendrogram clusters cancer+liver_fc tightest, control next, generic as the clear outlier branch. Result 2 (KS-test) surfaced a new finding (see caveat above) — most kinases' ranks are network-invariant baselines, not site-varying; only the `informative`-flagged subset (~260-410/415 depending on embedding) is a meaningful distributional-shift candidate list.
+
+**Next priority:** Send Result 1 (clustergrams) and Result 2 (KS-test, both pairs: control-vs-liver_fc and cancer-vs-control) to Dr. Ayati. Open questions for her: (1) does the generic-graph site-coverage gap (12%) need addressing, or is it an acceptable/expected asymmetry; (2) which KS-test pair she finds more informative now that both exist; (3) interpretation of the `informative`-flag caveat.
 
 ## Progress tracking
 

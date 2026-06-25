@@ -7,9 +7,9 @@ from typing import List, Optional, Set, Tuple
 
 import pandas as pd
 
-from src.ids import site_id
-from src.normalize import normalize_protein, normalize_site
-from src.config import MAX_SITE_CLIQUE
+from src.core.ids import site_id
+from src.core.normalize import normalize_protein, normalize_site
+from src.core.config import MAX_SITE_CLIQUE
 
 
 # Matches examples like:

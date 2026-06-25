@@ -1,0 +1,28 @@
+Inference-all summary -- network=cancer, embedding=concat
+============================================================
+Target sites (FC-valid): 3,228
+Sites with >=1 scored kinase: 3,228 (100.0%)
+Total (kinase, site) pairs scored: 1,339,620
+Pairs that are known true KSAs (own-edge masked): 736
+
+Per-kinase average rank (top 20 by lowest mean rank):
+  PROTEIN:YES1          mean=1.0  median=1  n=3228
+  PROTEIN:VRK2          mean=2.3  median=2  n=3228
+  PROTEIN:SRC           mean=3.2  median=3  n=3228
+  PROTEIN:ULK2          mean=4.3  median=4  n=3228
+  PROTEIN:ZAP70         mean=4.7  median=5  n=3228
+  PROTEIN:SYK           mean=6.1  median=6  n=3228
+  PROTEIN:ULK3          mean=8.4  median=7  n=3228
+  PROTEIN:RET           mean=9.0  median=9  n=3228
+  PROTEIN:UHMK1         mean=9.7  median=9  n=3228
+  PROTEIN:TYK2          mean=11.3  median=11  n=3228
+  PROTEIN:TRIB2         mean=11.5  median=12  n=3228
+  PROTEIN:RAF1          mean=11.6  median=12  n=3228
+  PROTEIN:VRK3          mean=12.6  median=12  n=3228
+  PROTEIN:PIK3CG        mean=13.5  median=14  n=3228
+  PROTEIN:TTK           mean=16.1  median=16  n=3228
+  PROTEIN:PIK3CA        mean=17.5  median=17  n=3228
+  PROTEIN:RPS6KB2       mean=17.9  median=18  n=3228
+  PROTEIN:TXK           mean=18.0  median=18  n=3228
+  PROTEIN:PIK3R1        mean=19.0  median=19  n=3228
+  PROTEIN:WNK2          mean=19.7  median=20  n=3228

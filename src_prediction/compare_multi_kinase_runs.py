@@ -16,7 +16,9 @@ def find_results_file(keyword: str) -> Path:
         matches = sorted(OUTPUT_DIR.rglob(f"*{keyword}*.csv.gz"))
 
     # remove obvious non-results files if possible
-    matches = [m for m in matches if "metrics" not in m.name.lower() and "comparison" not in m.name.lower()]
+    matches = [
+        m for m in matches if "metrics" not in m.name.lower() and "comparison" not in m.name.lower()
+    ]
 
     if not matches:
         raise FileNotFoundError(f"Could not find results file for keyword: {keyword}")
@@ -58,7 +60,7 @@ def main() -> None:
     )
 
     keep_generic = [
-        "fold_index",
+        "trial_index",
         "true_kinase_node_id",
         "site_node_id",
         "held_out_relation",
@@ -74,7 +76,7 @@ def main() -> None:
     ]
 
     keep_liver = [
-        "fold_index",
+        "trial_index",
         "true_kinase_node_id",
         "site_node_id",
         "held_out_relation",
@@ -94,13 +96,17 @@ def main() -> None:
 
     compare = generic.merge(
         liver,
-        on=["fold_index", "true_kinase_node_id", "site_node_id"],
+        on=["trial_index", "true_kinase_node_id", "site_node_id"],
         how="inner",
         suffixes=("", "_dup"),
     )
 
-    compare["held_out_rank_delta"] = compare["generic_held_out_rank"] - compare["liver_held_out_rank"]
-    compare["best_true_rank_delta"] = compare["generic_best_true_rank"] - compare["liver_best_true_rank"]
+    compare["held_out_rank_delta"] = (
+        compare["generic_held_out_rank"] - compare["liver_held_out_rank"]
+    )
+    compare["best_true_rank_delta"] = (
+        compare["generic_best_true_rank"] - compare["liver_best_true_rank"]
+    )
     compare["top1_changed"] = compare["generic_top1"] != compare["liver_top1"]
     compare["held_out_improved_in_liver"] = compare["held_out_rank_delta"] > 0
     compare["best_true_improved_in_liver"] = compare["best_true_rank_delta"] > 0
@@ -121,15 +127,16 @@ def main() -> None:
 
     compare.to_csv(all_out, index=False, compression="gzip")
     compare[compare["top1_changed"]].to_csv(changed_out, index=False, compression="gzip")
-    compare[compare["held_out_improved_in_liver"]].to_csv(improved_out, index=False, compression="gzip")
+    compare[compare["held_out_improved_in_liver"]].to_csv(
+        improved_out, index=False, compression="gzip"
+    )
 
     strongest = compare[
-        compare["top1_changed"] &
-        (compare["generic_top1_is_known_true"] | compare["liver_top1_is_known_true"])
+        compare["top1_changed"]
+        & (compare["generic_top1_is_known_true"] | compare["liver_top1_is_known_true"])
     ].copy()
     strongest = strongest.sort_values(
-        ["best_true_rank_delta", "held_out_rank_delta"],
-        ascending=[False, False]
+        ["best_true_rank_delta", "held_out_rank_delta"], ascending=[False, False]
     )
     strongest.to_csv(strongest_out, index=False, compression="gzip")
 

@@ -38,3 +38,42 @@ This is a master's-level research project building a heterogeneous graph network
 - Candidate kinases: ~500 (from generic graph)
 - Positive LOO edges (liver sites): see prep_summary.txt
 - TTK has 68 substrates in the graph
+
+**Current active pipeline (as of 2026-06-25) — supersedes item 3's debug-era description above for current work:**
+
+4. `src_prediction/` — Phase 1: multi-kinase node2vec LOO
+   - Embedding leakage fix: PSP `phosphorylates` edges stripped from the graph before fitting node2vec; kept as training labels
+   - Four networks (generic / control / cancer / liver FC) selected via `allowed_relations` on a single liver graph file — no rebuild per experiment
+   - Entry: `run_multi_kinase_{generic,control,cancer,liver}.py`
+   - Trial set: 6,909 multi-kinase trials (sites with 2+ known PSP kinases), frozen via `run_freeze_multi_kinase_trials.py`
+   - Primary metric: `adjusted_held_out_rank` (other known true co-kinases dropped from the scored list before ranking)
+
+5. Phase 2: spectral embedding + category ranking
+   - `SpectralEmbeddingStrategy` (normalized graph Laplacian, degree-normalizing) added to address node2vec's hub bias (VRK family dominated top-1 in Phase 1)
+   - Category-based ranking: kinases split into poor / average / rich by PSP substrate count, ranked only within their own category
+   - Entry: `run_all_spectral.py` (runs all 4 networks)
+   - Finding: spectral halves median rank vs node2vec, but hub bias persists at the category level (one kinase still wins ~100% within each category)
+
+6. Phase 3 (2026-06-25): predict-all inference pass
+   - Generalizes LOO from "evaluate only the held-out edge on multi-kinase sites" to "score every (candidate kinase, site) pair" — needed because LOO can't produce a full kinase x site rank matrix
+   - Leakage avoided via two-tier scoring: known true edges get their own edge masked before scoring; everything else uses one global model (nothing to leak for a pair that was never a positive label)
+   - `ConcatEmbeddingStrategy` added (concatenates node2vec + spectral vectors) as a third embedding option alongside the two from Phase 1/2
+   - Scope: 3,228 FC-valid liver sites x ~420 candidate kinases x 4 networks x 3 embeddings = 12 combos
+   - Entry: `run_inference_all.py`
+   - Caveat: "generic" network only covers 391/3,228 (12%) of FC-valid sites (its graph is essentially PSP-annotated sites, a much smaller population than the broader liver-proteomics-detected set the other three networks cover at 100%)
+
+7. Result 1 + Result 2 (consume Phase 3 output)
+   - Result 1: average rank per kinase per network, clustergram (`build_rank_heatmap.py`) — one per embedding strategy
+   - Result 2: per-kinase rank-distribution KS-test between two networks (`build_rank_ks_test.py`), run for both control-vs-liver_fc and cancer-vs-control
+   - Caveat found while building Result 2: most kinases' rank is nearly constant across all sites within one network (hub bias), so a naive KS-test over-reports "significant" kinases — fixed by flagging kinases whose rank std-dev shows they actually vary by site (`informative` column)
+
+8. KSEA (kinase activity enrichment, on the liver FC proteomics dataset directly, independent of LOO/inference-all)
+   - Formula (Wiredja et al. 2017): `score = (s_bar - p_bar) * sqrt(m) / delta` — sqrt(m) in the numerator rewards (not penalizes) larger substrate sets
+   - Entry: `run_ksea.py`
+   - 17/64 scoreable kinases reach significance after the 2026-06-23 formula fix (an earlier version had `m` in the denominator instead, which penalized large substrate sets)
+
+**Directory structure (reorganized 2026-06-25):** both `src/` and `src_prediction/` are split into functional subpackages — `core/` (config, io_utils, and other shared infra), `embeddings/` (`src_prediction` only — embeddings.py, embedding_strategy.py), `data_prep/` (`src_prediction` only — eval set / trial / negative-sampling helpers), `engine/` (`src_prediction` only — leave_one_out.py, inference_all.py), `analysis/` (`src_prediction` only — analyze_results.py, ksea.py, build_rank_heatmap.py, build_rank_ks_test.py, etc.), `runners/` (every `run_*.py` entry point in both trees, plus `main.py`/`run_liver.py` in `src/`). `src/builders/` already existed as its own subpackage and was left untouched. All `python -m` commands now use the longer dotted path, e.g. `python -m src_prediction.runners.run_multi_kinase_generic`.
+
+**Legacy/dead code (intentionally kept, not removed or moved):** nine files sit flat at the root of `src_prediction/`, confirmed unused during the 2026-06-25 reorg but preserved in case they're useful as reference later — `compare_experiments.py`, `compare_multi_kinase_runs.py`, `run_generic_model.py`, `run_baseline_similarity.py` (the original LOO debug scripts referenced in item 3 above — predate the embedding-leakage fix, results invalid), `run_generic_multi_kinase.py` (pre-leakage-fix duplicate of the active `run_multi_kinase_generic.py`), `run_liver_multi_kinase.py` (empty stub), `make_multi_kinase_fold_set.py`, `make_multi_kinase_fold_set_10.py`, `migrate_trial_index.py`. Their internal imports still use the old pre-reorg flat paths and will raise `ImportError` if run — that's expected, since they were already non-functional before the reorg too.
+
+**Updated key scale numbers (2026-06-25):** candidate kinases is actually **420** (the item-3-era "~500" above was an early rough estimate, kept as-is per the no-removal note); 2,459 multi-kinase sites (2+ known PSP kinases) → 6,909 multi-kinase LOO trials; 3,228 phosphosites have valid liver FC data (the scope for Phase 3 / KSEA, a different and stricter filter than the 10,146/13,410 liver-site counts above).

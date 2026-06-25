@@ -6,9 +6,9 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from src.io_utils import read_table
-from src.normalize import normalize_protein, normalize_site
-from src.ids import protein_id, site_id
+from src.core.io_utils import read_table
+from src.core.normalize import normalize_protein, normalize_site
+from src.core.ids import protein_id, site_id
 
 
 _SITE_PATTERN = re.compile(r"(SER|THR|TYR|S|T|Y)[\s\-]*([0-9]+)", re.IGNORECASE)

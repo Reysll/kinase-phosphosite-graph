@@ -1,0 +1,28 @@
+Inference-all summary -- network=liver_fc, embedding=node2vec
+============================================================
+Target sites (FC-valid): 3,228
+Sites with >=1 scored kinase: 3,228 (100.0%)
+Total (kinase, site) pairs scored: 1,339,620
+Pairs that are known true KSAs (own-edge masked): 736
+
+Per-kinase average rank (top 20 by lowest mean rank):
+  PROTEIN:ULK3          mean=1.2  median=1  n=3228
+  PROTEIN:WNK4          mean=2.2  median=2  n=3228
+  PROTEIN:VRK3          mean=2.6  median=3  n=3228
+  PROTEIN:YES1          mean=4.5  median=4  n=3228
+  PROTEIN:ZAP70         mean=4.6  median=5  n=3228
+  PROTEIN:TYK2          mean=5.9  median=6  n=3228
+  PROTEIN:ULK2          mean=7.3  median=7  n=3228
+  PROTEIN:VRK2          mean=8.2  median=8  n=3228
+  PROTEIN:WNK2          mean=9.7  median=9  n=3228
+  PROTEIN:SYK           mean=10.2  median=10  n=3228
+  PROTEIN:TEC           mean=10.4  median=11  n=3228
+  PROTEIN:TGFBR2        mean=11.4  median=12  n=3228
+  PROTEIN:STYK1         mean=13.5  median=13  n=3228
+  PROTEIN:UHMK1         mean=14.2  median=14  n=3228
+  PROTEIN:PRKCB         mean=15.1  median=15  n=3228
+  PROTEIN:SGK1          mean=15.2  median=15  n=3228
+  PROTEIN:RPS6KA2       mean=17.8  median=17  n=3228
+  PROTEIN:TEK           mean=19.0  median=18  n=3228
+  PROTEIN:MTOR          mean=20.2  median=20  n=3228
+  PROTEIN:PRKCA         mean=21.5  median=21  n=3228

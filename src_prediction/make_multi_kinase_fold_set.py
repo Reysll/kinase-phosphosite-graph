@@ -67,8 +67,7 @@ def main() -> None:
         raise ValueError(f"Missing required columns: {missing}")
 
     df = df[
-        df["KIN_ORGANISM"].str.lower().eq("human")
-        & df["SUB_ORGANISM"].str.lower().eq("human")
+        df["KIN_ORGANISM"].str.lower().eq("human") & df["SUB_ORGANISM"].str.lower().eq("human")
     ].copy()
 
     df = df[df["SUB_MOD_RSD"].map(is_single_site)].copy()
@@ -87,22 +86,22 @@ def main() -> None:
 
     df = df.drop_duplicates(subset=["kinase_node_id", "site_node_id"])
 
-    folds = df[["kinase_node_id", "site_node_id"]].copy()
-    folds.insert(0, "fold_index", range(1, len(folds) + 1))
-    folds["held_out_relation"] = "phosphorylates"
+    trials = df[["kinase_node_id", "site_node_id"]].copy()
+    trials.insert(0, "trial_index", range(1, len(trials) + 1))
+    trials["held_out_relation"] = "phosphorylates"
 
-    folds = folds[["fold_index", "kinase_node_id", "site_node_id", "held_out_relation"]]
+    trials = trials[["trial_index", "kinase_node_id", "site_node_id", "held_out_relation"]]
 
-    out_path = OUTPUT_DIR / "frozen_folds_multi_kinase_sites.csv.gz"
-    folds.to_csv(out_path, index=False, compression="gzip")
+    out_path = OUTPUT_DIR / "frozen_trials_multi_kinase_sites.csv.gz"
+    trials.to_csv(out_path, index=False, compression="gzip")
 
     print()
-    print(f"Multi-kinase kinase-site pairs written: {len(folds):,}")
-    print(f"Unique multi-kinase sites included: {folds['site_node_id'].nunique():,}")
+    print(f"Multi-kinase kinase-site pairs written: {len(trials):,}")
+    print(f"Unique multi-kinase sites included: {trials['site_node_id'].nunique():,}")
     print(f"Wrote: {out_path}")
     print()
     print("Preview:")
-    print(folds.head(10).to_string(index=False))
+    print(trials.head(10).to_string(index=False))
 
 
 if __name__ == "__main__":

@@ -5,7 +5,10 @@ Project Title
 ==============
 Context-Aware Prediction of Kinase-Substrate Associations in Liver Cancer
 
-Last updated: 2026-06-17 (Phase 2 complete — all four spectral networks done, 6,909 trials each)
+Last updated: 2026-06-25 (Phase 3 "predict-all" inference pass built and run
+across all 4 networks x 3 embeddings; Result 1 heatmap/clustergram and
+Result 2 KS-test built; email_reply.txt sent, no response yet — see Section
+12 and new Section 13)
 
 HOW TO USE THIS FILE
 =====================
@@ -305,24 +308,151 @@ Last updated: 2026-06-18
 COMPLETED this round:
   [x] analyze_results.py extended to 8 analyses (phase_comparison.txt,
       category_ranks.txt, ranking_shifts_spectral.txt; TTK covers both phases)
-  [x] KSEA implemented — Wiredja 2017 formula (score = (s_bar - p_bar) / (m * delta)),
-      PSP substrate sets + LOO top-1 predicted substrate sets, BH FDR correction
+  [x] KSEA implemented — Wiredja 2017 formula, PSP substrate sets + LOO top-1
+      predicted substrate sets, BH FDR correction
+  [x] (2026-06-23) KSEA FORMULA BUG FOUND AND FIXED: was using
+      score = (s_bar - p_bar) / (m * delta) — m in the denominator, which
+      penalizes large substrate sets. Correct Wiredja 2017 formula is
+      score = (s_bar - p_bar) * sqrt(m) / delta — sqrt(m) in the numerator,
+      which rewards (not penalizes) substrate-set size via lower SEM.
+      Fixed in src_prediction/ksea.py + run_ksea.py, rerun. Now 17/64
+      scoreable kinases reach adj_p < 0.05 (was 0/64 before the fix).
+      Top UP (significant): MAPK12, CDKL5, MAPK13, CSNK2A1 (TBK1 borderline).
+      Top DOWN (significant): PRKACA, PRKD1, PRKCD, RPS6KA1, PAK1, PRKG1,
+      RPS6KA3, PRKG2. None of these 12 kinases ever reach top-1/5/10 in the
+      node2vec LOO results (hub bias crowds them out); down-regulated ones
+      rank surprisingly well structurally (e.g. PRKACA median rank 37/420
+      generic), up-regulated ones rank poorly (e.g. CSNK2A1 ~270/420).
+      THESE CHANGES ARE UNCOMMITTED — ask Salvador before committing.
+  [x] (2026-06-23) Drafted full reply to Dr. Ayati's Phase 2 response
+      (email_reply.txt, finalized/formatted, ready to send). Covers: agreed
+      to build a ConcatEmbeddingStrategy (spectral+node2vec, 48 or 64 dims);
+      confirmed spectral does NOT fix within-category hub bias (PIK3R1/
+      TGFBR2/CDK1 each 100% within their category); reported the KSEA fix
+      above; clarified the "inference pass" vs LOO distinction; clarified
+      3,228 (FC-valid KSEA sites) vs 6,909 (LOO edge-trials) are different,
+      non-overlapping filters, not a methodology bug; proposed a plan for
+      her two new requested analyses (Result 1: kinase x network average-
+      rank clustergram; Result 2: per-kinase rank-distribution KS-test
+      between two networks).
   [x] TTK case study updated with Phase 2 spectral results (Section 9 above)
   [x] Email sent to Dr. Ayati (2026-06-18) — Phase 2 results, category analysis,
       KSEA findings, and three open questions
 
-PENDING — awaiting Dr. Ayati's response:
-  1. KSEA formula: m in denominator penalizes large substrate sets. CDK1 (n=61)
-     scores 0.004 despite consistent upregulation. Is this intended?
-  2. Full inference pass: LOO top-1 sets are hub-dominated. A separate pass
-     scoring all 420 kinases against all liver phosphosites is needed for a
-     meaningful PSP vs predicted-substrate KSEA comparison.
-  3. TTK spectral finding: generic spectral median rank 2; any correlation edges
-     worsen to rank 14. Dr. Ayati's interpretation?
+RESOLVED 2026-06-24/25 (Salvador decided without waiting for Dr. Ayati's reply):
+  a. Result 2 KS-test: run BOTH pairs (control-vs-liver_fc AND cancer-vs-
+     control), send both, let her pick. See Section 13.
+  b. Result 1 heatmap: cancer included as a 4th column, as already planned.
+  KSEA formula fix: cleared to use for all necessary tests going forward
+  (no longer gated on asking first). Still uncommitted to git pending a
+  combined commit with the rest of this round's changes.
 
-POTENTIAL NEXT STEPS:
-  - Full inference pass for richer KSEA substrate sets (pending approval).
-  - KSEA formula adjustment if supervisor prefers z-score variant.
-  - Biological interpretation: CDK1/CSNK2A1 top PSP-KSEA candidates in liver FC.
-  - Abstract / manuscript: spectral + category ranking as methodological
-    contribution; TTK finding as biological validation case study.
+Items 1-7 from the previous handoff (ConcatEmbeddingStrategy, predict-all
+inference pass, Result 1, Result 2, CLAUDE.md update) are COMPLETE — see
+Section 13 for what was built and the results.
+
+
+SECTION 13. PHASE 3 — PREDICT-ALL INFERENCE PASS, RESULT 1, RESULT 2 (2026-06-25)
+====================================================================================
+
+13.1 ConcatEmbeddingStrategy
+-----------------------------
+Added to src_prediction/embedding_strategy.py. Concatenates a Node2VecStrategy
+vector and a SpectralEmbeddingStrategy vector per node (32+32=64 dims with
+both at default dimensions). directed=True: node2vec fits on the directed
+graph it's handed directly (matching its standalone behaviour exactly);
+spectral gets an explicit graph.to_undirected() copy, since each sub-strategy
+needs its own appropriately-directed graph per Dr. Ayati's note, rather than
+assuming one shared graph works for both.
+
+13.2 Predict-all inference pass (src_prediction/inference_all.py + run_inference_all.py)
+-------------------------------------------------------------------------------------------
+Generalizes LOO from "evaluate only the held-out edge, only on multi-kinase
+sites" to "score every (candidate kinase, target site) pair" — needed because
+LOO structurally cannot produce a full kinase x site rank matrix.
+
+Two-tier scoring to avoid leakage without an LOO-style trial per site:
+  - Known true (kinase, site) edges (736 of them, after restricting the full
+    14,596-edge liver-positive set to the 3,228 FC-valid sites): scored by a
+    model with ONLY that one edge masked. Other true edges, including other
+    co-kinases at the same site, stay in training.
+  - Every other (kinase, site) pair: scored by ONE global model trained on
+    all 736 true edges, nothing held out (there's nothing to leak for a pair
+    that was never a positive training label).
+Reuses leave_one_out.py's _build_training_matrix/_build_scoring_cache
+unchanged; only the masking/assembly logic is new.
+
+Network graph source: "generic" uses GENERIC_NODES/GENERIC_EDGES (matches the
+existing LOO scripts), NOT the liver graph restricted to base relations.
+Tried the latter first — it fragments the liver graph into many disconnected
+2-node protein-site components (liver-only sites whose only edges are the
+correlation ones being stripped), which hangs SpectralEmbeddingStrategy's
+ARPACK eigensolver (near-zero eigenvalue multiplicity blows up under
+unshifted "SM" mode). Reverted to the GENERIC file; confirmed working.
+Consequence: "generic" only covers 391/3,228 (12%) of FC-valid sites — a
+real, reportable asymmetry (its site population is essentially PSP-annotated
+sites, much smaller than the broader liver-proteomics-detected set the other
+three networks cover at 100%), not a bug.
+
+Full 12-combo sweep (4 networks x 3 embeddings) ran in ~30 min total — far
+cheaper than the Phase 1/2 LOO runs (186 min for 4 networks) because each
+combo only needs 736 masked trials instead of 6,909.
+Output: outputs_prediction/inference_all/{network}_{embedding}/ranks.csv.gz
+(site_node_id, kinase_node_id, score, rank_in_site, is_true_kinase) +
+summary.txt per combo.
+
+13.3 Result 1 — kinase x network rank heatmap/clustergram (build_rank_heatmap.py)
+-------------------------------------------------------------------------------------
+Mean rank_in_site per kinase per network, one clustergram per embedding
+(seaborn.clustermap; added seaborn + matplotlib to requirements.txt).
+415/420 candidate kinases have complete data across all four networks for
+every embedding (5 lack an embedding somewhere, excluded from clustering).
+
+Spectral clustergram confirms the documented finding visually: the column
+dendrogram clusters Cancer + Liver FC tightest, Control joins next, Generic
+is the clear outlier branch — matching "under spectral, control=cancer=
+liver_fc, generic is the weakest" from Section 8.
+
+Outputs: outputs_prediction/analysis/rank_heatmap_{node2vec,spectral,concat}.{png,csv},
+rank_heatmap_summary.txt.
+
+13.4 Result 2 — per-kinase rank-distribution KS-test (build_rank_ks_test.py)
+---------------------------------------------------------------------------
+Two network pairs x three embeddings = 6 KS-test runs (scipy.stats.ks_2samp,
+BH-FDR corrected):
+  1. control vs liver_fc   (Dr. Ayati's original request)
+  2. cancer vs control     (Salvador's "cleaner healthy-vs-disease" alternative)
+
+CRITICAL FINDING during this build: most kinases' rank_in_site is nearly
+CONSTANT across all 3,228 sites within one network (e.g. CDK20 under
+control_spectral is rank 349 at literally every single site, zero variance).
+This is the existing hub bias showing up in a new way — for non-true-kinase
+pairs, a kinase's own embedding dominates its score far more than the site's
+embedding does, so its rank barely depends on which site is being scored.
+A KS-test on two such near-degenerate (point-mass-like) distributions that
+differ by even one rank position gives ks_statistic ~= 1.0 trivially, which
+is why a naive run flagged 412-414/415 kinases as "significant" — true in
+the strict statistical sense, but not a meaningful biological finding.
+
+Fix: every kinase's within-network rank std-dev is now reported
+(std_rank_{network}), and an `informative` flag marks kinases where at least
+one side has std_rank > 1.0 (rank genuinely varies by site). The summary's
+highlighted list is restricted to informative + significant kinases; full
+per-pair CSVs keep every kinase (informative and not) so degenerate cases
+stay visible rather than hidden.
+
+Informative-kinase counts (of 415 tested), by embedding:
+  node2vec: ~408-410/415 informative — node2vec's local walk structure
+    produces more site-varying scores even for non-hub kinases.
+  spectral: ~263-264/415 informative — spectral's global community structure
+    is much more degenerate; most kinases get a fixed per-network baseline.
+  concat:   ~409/415 informative — node2vec's local signal dominates the
+    informativeness even when concatenated with spectral.
+
+Outputs: outputs_prediction/analysis/ks_test_{pair}_{embedding}.csv (all
+kinases, all columns) and ks_test_summary.txt (informative+significant
+highlights per pair/embedding).
+
+13.5 Dependencies added
+------------------------
+seaborn, matplotlib added to requirements.txt (installed in .venv312).

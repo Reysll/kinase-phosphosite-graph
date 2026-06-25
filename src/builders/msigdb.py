@@ -6,9 +6,9 @@ from typing import List, Set, Tuple
 
 import pandas as pd
 
-from src.ids import protein_id
-from src.normalize import normalize_protein
-from src.config import MAX_PROTEIN_CLIQUE
+from src.core.ids import protein_id
+from src.core.normalize import normalize_protein
+from src.core.config import MAX_PROTEIN_CLIQUE
 
 
 def _parse_geneset_line(line: str) -> List[str]:

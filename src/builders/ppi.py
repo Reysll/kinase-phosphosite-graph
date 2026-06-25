@@ -6,8 +6,8 @@ from typing import Dict, Set, Tuple, List
 
 import pandas as pd
 
-from src.io_utils import read_table
-from src.ids import protein_id
+from src.core.io_utils import read_table
+from src.core.ids import protein_id
 
 
 def _build_ensp_to_gene_map(map_path: str) -> Tuple[Dict[str, str], Dict[str, int]]:

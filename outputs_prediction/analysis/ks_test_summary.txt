@@ -1,0 +1,123 @@
+Result 2 -- Per-Kinase Rank-Distribution KS-Test
+======================================================================
+
+scipy.stats.ks_2samp on each kinase's rank_in_site distribution across
+the 3,228 FC-valid sites, comparing two networks. BH-FDR corrected
+across kinases. Kinases need >= 30 scored sites per side.
+
+CAVEAT: most kinases' rank_in_site is nearly constant across all sites
+within one network (hub bias -- the kinase's own embedding dominates
+its score far more than the site's does), so a 1-rank shift between
+networks gives ks_statistic ~= 1.0 trivially. 'Significant' below is
+restricted to kinases flagged `informative` (std_rank > 1.0
+in at least one network -- i.e. its rank genuinely varies by site).
+Full per-pair CSVs include ALL kinases (informative and not) with
+std_rank columns so the degenerate cases stay visible.
+
+--- control vs liver_fc -- node2vec ---
+Kinases tested: 415   Significant (adj_p < 0.05): 414   Informative (rank varies by site): 410   Significant AND informative: 410
+  ALK             ks=1.000  adj_p=0.00e+00  median control=396 (std=2.1)  median liver_fc=307 (std=6.1)  (better in liver_fc)
+  ALPK3           ks=1.000  adj_p=0.00e+00  median control=401 (std=1.2)  median liver_fc=367 (std=6.3)  (better in liver_fc)
+  BCR             ks=1.000  adj_p=0.00e+00  median control=378 (std=3.8)  median liver_fc=289 (std=8.1)  (better in liver_fc)
+  BMP2K           ks=1.000  adj_p=0.00e+00  median control=379 (std=6.1)  median liver_fc=280 (std=7.2)  (better in liver_fc)
+  BRSK2           ks=1.000  adj_p=0.00e+00  median control=407 (std=0.9)  median liver_fc=329 (std=10.0)  (better in liver_fc)
+  CAMK4           ks=1.000  adj_p=0.00e+00  median control=366 (std=5.8)  median liver_fc=294 (std=8.5)  (better in liver_fc)
+  CAMKK1          ks=1.000  adj_p=0.00e+00  median control=308 (std=8.2)  median liver_fc=401 (std=1.9)  (better in control)
+  CDC42BPA        ks=1.000  adj_p=0.00e+00  median control=376 (std=4.4)  median liver_fc=284 (std=8.9)  (better in liver_fc)
+  CDK13           ks=1.000  adj_p=0.00e+00  median control=352 (std=5.5)  median liver_fc=237 (std=7.6)  (better in liver_fc)
+  CDK18           ks=1.000  adj_p=0.00e+00  median control=279 (std=10.8)  median liver_fc=405 (std=1.9)  (better in control)
+  CDK19           ks=1.000  adj_p=0.00e+00  median control=266 (std=16.6)  median liver_fc=385 (std=3.4)  (better in control)
+  CDK20           ks=1.000  adj_p=0.00e+00  median control=355 (std=5.5)  median liver_fc=403 (std=1.5)  (better in control)
+  CDK7            ks=1.000  adj_p=0.00e+00  median control=367 (std=6.5)  median liver_fc=216 (std=7.6)  (better in liver_fc)
+  CDKL2           ks=1.000  adj_p=0.00e+00  median control=391 (std=3.3)  median liver_fc=325 (std=9.9)  (better in liver_fc)
+  CHEK2           ks=1.000  adj_p=0.00e+00  median control=205 (std=11.8)  median liver_fc=312 (std=8.4)  (better in control)
+
+--- control vs liver_fc -- spectral ---
+Kinases tested: 415   Significant (adj_p < 0.05): 379   Informative (rank varies by site): 263   Significant AND informative: 263
+  TRPM7           ks=1.000  adj_p=0.00e+00  median control=367 (std=3.0)  median liver_fc=286 (std=6.3)  (better in liver_fc)
+  RIPK1           ks=0.996  adj_p=0.00e+00  median control=175 (std=6.9)  median liver_fc=86 (std=9.7)  (better in liver_fc)
+  IRAK4           ks=0.995  adj_p=0.00e+00  median control=308 (std=4.8)  median liver_fc=203 (std=15.2)  (better in liver_fc)
+  RIPK3           ks=0.992  adj_p=0.00e+00  median control=280 (std=0.0)  median liver_fc=254 (std=4.6)  (better in liver_fc)
+  NEK6            ks=0.989  adj_p=0.00e+00  median control=286 (std=0.3)  median liver_fc=289 (std=1.1)  (better in control)
+  MLKL            ks=0.989  adj_p=0.00e+00  median control=340 (std=0.0)  median liver_fc=318 (std=3.5)  (better in liver_fc)
+  ABL2            ks=0.982  adj_p=0.00e+00  median control=279 (std=1.1)  median liver_fc=281 (std=0.7)  (better in control)
+  STYK1           ks=0.958  adj_p=0.00e+00  median control=302 (std=0.8)  median liver_fc=305 (std=1.0)  (better in control)
+  CSNK1G2         ks=0.958  adj_p=0.00e+00  median control=301 (std=0.9)  median liver_fc=304 (std=1.0)  (better in control)
+  MAP2K6          ks=0.954  adj_p=0.00e+00  median control=147 (std=0.7)  median liver_fc=152 (std=1.4)  (better in control)
+  MAP4K5          ks=0.950  adj_p=0.00e+00  median control=245 (std=0.6)  median liver_fc=251 (std=1.6)  (better in control)
+  CSNK2B          ks=0.948  adj_p=0.00e+00  median control=244 (std=0.6)  median liver_fc=249 (std=1.5)  (better in control)
+  ROR1            ks=0.947  adj_p=0.00e+00  median control=276 (std=0.7)  median liver_fc=279 (std=1.0)  (better in control)
+  FRK             ks=0.943  adj_p=0.00e+00  median control=274 (std=1.2)  median liver_fc=277 (std=1.3)  (better in control)
+  GRK6            ks=0.936  adj_p=0.00e+00  median control=271 (std=0.6)  median liver_fc=273 (std=1.0)  (better in control)
+
+--- control vs liver_fc -- concat ---
+Kinases tested: 415   Significant (adj_p < 0.05): 414   Informative (rank varies by site): 409   Significant AND informative: 409
+  ABL1            ks=1.000  adj_p=0.00e+00  median control=408 (std=2.8)  median liver_fc=384 (std=3.4)  (better in liver_fc)
+  ADCK5           ks=1.000  adj_p=0.00e+00  median control=313 (std=5.9)  median liver_fc=402 (std=1.1)  (better in control)
+  BLVRA           ks=1.000  adj_p=0.00e+00  median control=311 (std=8.3)  median liver_fc=390 (std=2.9)  (better in control)
+  CAMK1G          ks=1.000  adj_p=0.00e+00  median control=385 (std=7.8)  median liver_fc=305 (std=5.0)  (better in liver_fc)
+  CAMK4           ks=1.000  adj_p=0.00e+00  median control=392 (std=2.1)  median liver_fc=315 (std=9.0)  (better in liver_fc)
+  CAMKK1          ks=1.000  adj_p=0.00e+00  median control=320 (std=12.7)  median liver_fc=398 (std=1.8)  (better in control)
+  CDK18           ks=1.000  adj_p=0.00e+00  median control=283 (std=6.7)  median liver_fc=375 (std=6.0)  (better in control)
+  CDK20           ks=1.000  adj_p=0.00e+00  median control=311 (std=9.2)  median liver_fc=398 (std=2.4)  (better in control)
+  CDK9            ks=1.000  adj_p=0.00e+00  median control=408 (std=1.3)  median liver_fc=318 (std=7.7)  (better in liver_fc)
+  CERT1           ks=1.000  adj_p=0.00e+00  median control=402 (std=1.4)  median liver_fc=377 (std=4.0)  (better in liver_fc)
+  CHUK            ks=1.000  adj_p=0.00e+00  median control=361 (std=7.5)  median liver_fc=246 (std=6.9)  (better in liver_fc)
+  CILK1           ks=1.000  adj_p=0.00e+00  median control=411 (std=0.1)  median liver_fc=388 (std=4.0)  (better in liver_fc)
+  CIT             ks=1.000  adj_p=0.00e+00  median control=385 (std=5.0)  median liver_fc=227 (std=12.4)  (better in liver_fc)
+  CLK2            ks=1.000  adj_p=0.00e+00  median control=396 (std=2.4)  median liver_fc=256 (std=4.6)  (better in liver_fc)
+  CSNK1A1         ks=1.000  adj_p=0.00e+00  median control=335 (std=8.2)  median liver_fc=235 (std=8.0)  (better in liver_fc)
+
+--- cancer vs control -- node2vec ---
+Kinases tested: 415   Significant (adj_p < 0.05): 412   Informative (rank varies by site): 408   Significant AND informative: 408
+  ABL1            ks=1.000  adj_p=0.00e+00  median cancer=338 (std=9.3)  median control=409 (std=0.4)  (better in cancer)
+  AURKC           ks=1.000  adj_p=0.00e+00  median cancer=336 (std=8.5)  median control=386 (std=2.8)  (better in cancer)
+  BLK             ks=1.000  adj_p=0.00e+00  median cancer=344 (std=8.1)  median control=295 (std=8.8)  (better in control)
+  BRSK2           ks=1.000  adj_p=0.00e+00  median cancer=369 (std=6.3)  median control=407 (std=0.9)  (better in cancer)
+  CAMK1           ks=1.000  adj_p=0.00e+00  median cancer=373 (std=6.0)  median control=278 (std=9.0)  (better in control)
+  CAMK1G          ks=1.000  adj_p=0.00e+00  median cancer=244 (std=8.2)  median control=379 (std=8.5)  (better in cancer)
+  CAMKK1          ks=1.000  adj_p=0.00e+00  median cancer=388 (std=3.4)  median control=308 (std=8.2)  (better in control)
+  CDK12           ks=1.000  adj_p=0.00e+00  median cancer=406 (std=0.7)  median control=347 (std=8.6)  (better in control)
+  CDK18           ks=1.000  adj_p=0.00e+00  median cancer=403 (std=1.4)  median control=279 (std=10.8)  (better in control)
+  CDK19           ks=1.000  adj_p=0.00e+00  median cancer=391 (std=2.6)  median control=266 (std=16.6)  (better in control)
+  CDK3            ks=1.000  adj_p=0.00e+00  median cancer=331 (std=6.7)  median control=260 (std=10.0)  (better in control)
+  CDK6            ks=1.000  adj_p=0.00e+00  median cancer=161 (std=6.4)  median control=330 (std=7.4)  (better in cancer)
+  CDK9            ks=1.000  adj_p=0.00e+00  median cancer=227 (std=13.1)  median control=397 (std=3.8)  (better in cancer)
+  CDKL2           ks=1.000  adj_p=0.00e+00  median cancer=341 (std=7.7)  median control=391 (std=3.3)  (better in cancer)
+  CHUK            ks=1.000  adj_p=0.00e+00  median cancer=278 (std=11.1)  median control=371 (std=5.8)  (better in cancer)
+
+--- cancer vs control -- spectral ---
+Kinases tested: 415   Significant (adj_p < 0.05): 380   Informative (rank varies by site): 264   Significant AND informative: 264
+  RIPK1           ks=1.000  adj_p=0.00e+00  median cancer=59 (std=5.3)  median control=175 (std=6.9)  (better in cancer)
+  TRPM7           ks=1.000  adj_p=0.00e+00  median cancer=295 (std=4.9)  median control=367 (std=3.0)  (better in cancer)
+  IRAK4           ks=1.000  adj_p=0.00e+00  median cancer=87 (std=13.1)  median control=308 (std=4.8)  (better in cancer)
+  MLKL            ks=0.998  adj_p=0.00e+00  median cancer=307 (std=2.8)  median control=340 (std=0.0)  (better in cancer)
+  ABL2            ks=0.994  adj_p=0.00e+00  median cancer=282 (std=0.6)  median control=279 (std=1.1)  (better in control)
+  RIPK3           ks=0.994  adj_p=0.00e+00  median cancer=241 (std=4.2)  median control=280 (std=0.0)  (better in cancer)
+  MAP2K6          ks=0.982  adj_p=0.00e+00  median cancer=153 (std=1.4)  median control=147 (std=0.7)  (better in control)
+  PIP4K2A         ks=0.956  adj_p=0.00e+00  median cancer=254 (std=1.6)  median control=248 (std=0.7)  (better in control)
+  MAP4K5          ks=0.955  adj_p=0.00e+00  median cancer=252 (std=1.7)  median control=245 (std=0.6)  (better in control)
+  STYK1           ks=0.955  adj_p=0.00e+00  median cancer=305 (std=1.0)  median control=302 (std=0.8)  (better in control)
+  PASK            ks=0.950  adj_p=0.00e+00  median cancer=314 (std=0.7)  median control=312 (std=1.3)  (better in control)
+  CSNK2B          ks=0.950  adj_p=0.00e+00  median cancer=249 (std=1.6)  median control=244 (std=0.6)  (better in control)
+  FRK             ks=0.945  adj_p=0.00e+00  median cancer=277 (std=1.1)  median control=274 (std=1.2)  (better in control)
+  MAP3K12         ks=0.945  adj_p=0.00e+00  median cancer=309 (std=1.0)  median control=306 (std=0.9)  (better in control)
+  PIK3C2A         ks=0.945  adj_p=0.00e+00  median cancer=310 (std=1.1)  median control=307 (std=0.9)  (better in control)
+
+--- cancer vs control -- concat ---
+Kinases tested: 415   Significant (adj_p < 0.05): 414   Informative (rank varies by site): 409   Significant AND informative: 409
+  ABL1            ks=1.000  adj_p=0.00e+00  median cancer=342 (std=7.7)  median control=408 (std=2.8)  (better in cancer)
+  BCR             ks=1.000  adj_p=0.00e+00  median cancer=397 (std=3.5)  median control=280 (std=11.5)  (better in control)
+  CDC42BPB        ks=1.000  adj_p=0.00e+00  median cancer=390 (std=2.2)  median control=302 (std=9.4)  (better in control)
+  CDK13           ks=1.000  adj_p=0.00e+00  median cancer=186 (std=4.7)  median control=332 (std=9.7)  (better in cancer)
+  CDK18           ks=1.000  adj_p=0.00e+00  median cancer=394 (std=3.4)  median control=283 (std=6.7)  (better in control)
+  CDK3            ks=1.000  adj_p=0.00e+00  median cancer=374 (std=3.4)  median control=240 (std=23.5)  (better in control)
+  CDK6            ks=1.000  adj_p=0.00e+00  median cancer=143 (std=5.7)  median control=296 (std=6.5)  (better in cancer)
+  CDK9            ks=1.000  adj_p=0.00e+00  median cancer=274 (std=8.2)  median control=408 (std=1.3)  (better in cancer)
+  CDKL2           ks=1.000  adj_p=0.00e+00  median cancer=267 (std=7.1)  median control=373 (std=5.9)  (better in cancer)
+  CKB             ks=1.000  adj_p=0.00e+00  median cancer=403 (std=2.1)  median control=264 (std=8.0)  (better in control)
+  CLK1            ks=1.000  adj_p=0.00e+00  median cancer=390 (std=2.4)  median control=218 (std=10.0)  (better in control)
+  CLK2            ks=1.000  adj_p=0.00e+00  median cancer=257 (std=8.5)  median control=396 (std=2.4)  (better in cancer)
+  CSNK1A1         ks=1.000  adj_p=0.00e+00  median cancer=234 (std=6.3)  median control=335 (std=8.2)  (better in cancer)
+  DYRK1A          ks=1.000  adj_p=0.00e+00  median cancer=229 (std=8.9)  median control=355 (std=18.6)  (better in cancer)
+  EEF2K           ks=1.000  adj_p=0.00e+00  median cancer=346 (std=11.0)  median control=219 (std=15.9)  (better in control)

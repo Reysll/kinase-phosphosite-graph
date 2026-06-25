@@ -1,4 +1,4 @@
-Comparison: generic model vs liver model — full multi-kinase LOO (80% fold-change site correlation)
+Comparison: generic model vs liver model — full multi-kinase LOO (node2vec, 80% fold-change site correlation)
 ====================================================================================================
 LOO trials compared:             6,909
 Candidate kinases:               415
