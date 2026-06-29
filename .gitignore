@@ -1,5 +1,13 @@
 # Virtual environment (project-specific, not .venv)
 .venv312/
+cluster_venv/
+
+# Cluster job outputs (never commit — rsync back locally when needed)
+cluster_results/
+cluster_logs/
+
+# Email drafts (local only — not part of the codebase)
+email*.txt
 
 # Source data files (large; regenerate from raw sources)
 data/raw/

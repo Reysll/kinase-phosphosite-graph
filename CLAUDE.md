@@ -62,7 +62,8 @@ All commands run from the **project root**:
 |---|---|
 | Build generic graph | `.venv312/Scripts/python -m src.runners.main` |
 | Build liver graph (all 3 corr types) | `.venv312/Scripts/python -m src.runners.run_liver` |
-| Freeze LOO trial set (multi-kinase) | `.venv312/Scripts/python -m src_prediction.runners.run_freeze_multi_kinase_trials` |
+| Freeze LOO trial set (multi-kinase only) | `.venv312/Scripts/python -m src_prediction.runners.run_freeze_multi_kinase_trials` |
+| Freeze LOO trial set (all sites, for cluster run) | `.venv312/Scripts/python -m src_prediction.runners.run_freeze_all_trials` |
 | Run generic multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_generic` |
 | Run liver FC multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_liver` |
 | Run control multi-kinase — node2vec (6,909 trials) | `.venv312/Scripts/python -m src_prediction.runners.run_multi_kinase_control` |
@@ -76,6 +77,11 @@ All commands run from the **project root**:
 | **Run predict-all inference pass (Phase 3, 12 combos)** | `.venv312/Scripts/python -m src_prediction.runners.run_inference_all` |
 | Result 1: kinase x network rank heatmap/clustergram | `.venv312/Scripts/python -m src_prediction.analysis.build_rank_heatmap` |
 | Result 2: per-kinase rank-distribution KS-test | `.venv312/Scripts/python -m src_prediction.analysis.build_rank_ks_test` |
+| **Spotlight plot: necroptosis cluster delta scatter** | `.venv312/Scripts/python -m src_prediction.analysis.build_spotlight_plot` |
+| KS-test volcano plots (4 combos: 2 pairs × spectral/node2vec) | `.venv312/Scripts/python -m src_prediction.analysis.build_ks_volcano` |
+| KSEA vs LOO rank scatter (hub-bias disconnect figure) | `.venv312/Scripts/python -m src_prediction.analysis.build_ksea_scatter` |
+| **Cluster: setup environment (run once on login node)** | `bash scripts/cluster/setup_env.sh` |
+| **Cluster: submit full pipeline (LOO + inference + analysis)** | `bash scripts/cluster/submit_all.sh` |
 
 **Full pipeline order** (start fresh):
 1. Build generic graph
@@ -147,6 +153,14 @@ SpectralEmbeddingStrategy's eigensolver (near-zero eigenvalue multiplicity).
 Output: `outputs_prediction/inference_all/{network}_{embedding}/ranks.csv.gz`
 (long format: site_node_id, kinase_node_id, score, rank_in_site, is_true_kinase).
 
+**Result 1 output files** (`build_rank_heatmap.py`, updated 2026-06-25):
+`rank_heatmap_{embedding}.csv` (all 415 kinases x 4 networks, absolute mean
+rank, `informative` column), `rank_heatmap_{embedding}.png` (clustermap,
+informative kinases only), `rank_heatmap_delta_{embedding}.csv`/`.png` (delta
+vs Control for Cancer/Liver FC, informative kinases only, diverging colormap
+centered at 0), `rank_heatmap_summary.txt` (coverage + hub-bias caveats, top
+kinases by absolute rank and by delta, both directions).
+
 **Result 2 KS-test caveat:** most kinases' `rank_in_site` is nearly CONSTANT
 across all 3,228 sites within one network (hub bias — a kinase's own
 embedding dominates its score far more than the site's does), so even a
@@ -155,6 +169,24 @@ embedding dominates its score far more than the site's does), so even a
 an `informative` flag (std_rank > 1.0 in at least one network); only
 informative + significant kinases are listed in the summary's highlight list,
 though the per-pair CSVs keep every kinase so degenerate cases stay visible.
+
+**Result 1 heatmap fix (2026-06-25):** the original absolute-mean-rank
+clustermap suffered the same hub-bias degeneracy as Result 2 — checking
+`rank_heatmap_spectral.csv` showed Control/Cancer/Liver FC columns were
+nearly identical per kinase (e.g. TSSK4: 414.0/414.0/414.0), so the
+"Cancer+Liver FC cluster tightest" finding mostly just restated that Generic
+is structurally different, not a liver-cancer-specific signal. Fixed in
+`build_rank_heatmap.py` two ways: (1) clustermaps are now restricted to
+`informative` kinases (same std_rank > 1.0 definition as Result 2, computed
+over control/cancer/liver_fc only — generic's 391-site sample isn't
+comparable); the full CSVs still list every kinase with an `informative`
+column. (2) Added delta tables/plots — `rank_heatmap_delta_{embedding}.{csv,png}`
+— computing `mean_rank[disease] - mean_rank[Control]` for Cancer and Liver FC
+(per Dr. Ayati's Option 2 framing in `email_thread.txt`: score = score_disease
+− score_control). Negative delta = kinase ranks better under the disease
+network = gained predicted relevance; this cancels the hub-dominated absolute
+baseline and isolates the actual network-dependent shift. Generic is excluded
+from delta pairs (coverage asymmetry would conflate with the network effect).
 
 ## Data layout
 
@@ -240,9 +272,29 @@ All node IDs follow:
 | cancer | 3,228/3,228 (100%) | |
 | liver_fc | 3,228/3,228 (100%) | |
 
-Result 1 (heatmap/clustergram) confirms the documented spectral finding visually: column dendrogram clusters cancer+liver_fc tightest, control next, generic as the clear outlier branch. Result 2 (KS-test) surfaced a new finding (see caveat above) — most kinases' ranks are network-invariant baselines, not site-varying; only the `informative`-flagged subset (~260-410/415 depending on embedding) is a meaningful distributional-shift candidate list.
+Result 1's original absolute-rank clustergram mostly just confirmed Generic is structurally different from the other three networks — see "Result 1 heatmap fix" above for why that finding was hub-bias noise, not a liver-cancer-specific signal. Result 2 (KS-test) surfaced the same hub-bias issue independently — most kinases' ranks are network-invariant baselines, not site-varying; only the `informative`-flagged subset (~260-410/415 depending on embedding) is a meaningful distributional-shift candidate list.
 
-**Next priority:** Send Result 1 (clustergrams) and Result 2 (KS-test, both pairs: control-vs-liver_fc and cancer-vs-control) to Dr. Ayati. Open questions for her: (1) does the generic-graph site-coverage gap (12%) need addressing, or is it an acceptable/expected asymmetry; (2) which KS-test pair she finds more informative now that both exist; (3) interpretation of the `informative`-flag caveat.
+**Result 1 re-run with delta + informative filter (2026-06-25):** under spectral
+(the embedding least dominated by hub bias — 271/415 informative kinases),
+the delta-vs-Control tables surfaced a biologically coherent cluster:
+**IRAK4, RIPK1, RIPK3, TRPM7, MLKL** all gain predicted relevance (most
+negative delta) in BOTH Cancer-vs-Control and Liver-FC-vs-Control. RIPK1/
+RIPK3/MLKL are the core necroptosis pathway kinases, and IRAK4 is a TLR/IL-1R
+innate-immune kinase — a plausible disease-relevant cluster, worth raising
+with Dr. Ayati as a candidate finding (not yet validated against
+literature/PSP independently). node2vec and concat deltas are still
+wide-swinging (±200-400) even after the informative filter — spectral remains
+the more trustworthy embedding for this comparison, consistent with Phase 2.
+
+**Next priority:** Send the updated Result 1 (delta clustergrams +
+`rank_heatmap_summary.txt`'s gained/lost-relevance lists) and Result 2
+(KS-test, both pairs: control-vs-liver_fc and cancer-vs-control) to Dr. Ayati.
+Open questions for her: (1) does the generic-graph site-coverage gap (12%)
+need addressing, or is it an acceptable/expected asymmetry; (2) which
+KS-test pair she finds more informative now that both exist; (3) is the
+IRAK4/RIPK1/RIPK3/TRPM7/MLKL necroptosis/innate-immune cluster worth pursuing
+as a candidate finding, or is it itself another hub-bias artifact specific
+to the spectral embedding.
 
 ## Progress tracking
 

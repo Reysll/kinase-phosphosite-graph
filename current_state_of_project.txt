@@ -456,3 +456,59 @@ highlights per pair/embedding).
 13.5 Dependencies added
 ------------------------
 seaborn, matplotlib added to requirements.txt (installed in .venv312).
+
+13.6 Result 1 fix — informative filter + delta-vs-Control tables (2026-06-25)
+-------------------------------------------------------------------------------------
+Prompted by the question "are the heatmaps meaningful?" Answer: only partly.
+Checking rank_heatmap_spectral.csv directly showed Control/Cancer/Liver FC
+columns were nearly IDENTICAL per kinase (e.g. TSSK4: 414.0/414.0/414.0;
+column-level mean=208.0, std~119.9 for all four network columns). This is the
+same hub-bias degeneracy already documented in 13.4 for Result 2 — a
+kinase's mean rank is close to a fixed per-kinase baseline regardless of
+network, because the global model's score is dominated by the kinase's own
+embedding far more than the site's. The original clustergram's headline
+finding ("Cancer+Liver FC cluster tightest, Control next, Generic the
+outlier") was therefore mostly just restating "Generic is structurally
+different" — not a liver-cancer-specific signal, and not the question Dr.
+Ayati actually wants answered (Option 2 framing in email_thread.txt: is the
+DISEASE network different from the CONTROL network, kinase by kinase?).
+
+Two fixes applied to build_rank_heatmap.py:
+  1. Clustermaps now restricted to "informative" kinases — same std_rank > 1.0
+     definition as Result 2's `informative` flag (Section 13.4), computed
+     over control/cancer/liver_fc only (generic's 391/3,228-site sample isn't
+     comparable to the other three's full coverage, so it's excluded from
+     this check). The full CSVs still list every kinase, with a new
+     `informative` column, so nothing is hidden — just not plotted.
+  2. New delta tables: rank_heatmap_delta_{embedding}.{csv,png}. delta =
+     mean_rank[disease network] - mean_rank[Control], for Cancer and Liver FC
+     vs Control. Negative delta = kinase ranks BETTER (more confidently
+     predicted) under the disease network than under Control = "gained
+     predicted relevance". This cancels the hub-dominated absolute baseline
+     and isolates the actual network-dependent shift. Generic is excluded
+     from delta pairs entirely (not just from plotting) — its coverage
+     asymmetry would conflate with the real network effect. Diverging
+     colormap (RdBu_r, centered at 0, symmetric vmin/vmax) used for the delta
+     clustermaps so gains and losses are visually distinguishable.
+
+Informative-kinase counts after the fix (of 415), matching Section 13.4's
+KS-test numbers almost exactly (same definition, same threshold):
+  node2vec: 411/415 informative
+  spectral: 271/415 informative — the most hub-bias-resistant of the three
+  concat:   410/415 informative
+
+FINDING (spectral, informative-only, delta vs Control): IRAK4, RIPK1, RIPK3,
+TRPM7, and MLKL all show the most negative delta (most-gained predicted
+relevance) in BOTH Cancer-vs-Control and Liver-FC-vs-Control. RIPK1/RIPK3/
+MLKL are the core necroptosis pathway kinases; IRAK4 is a TLR/IL-1R
+innate-immune kinase. This is a biologically coherent cluster and a plausible
+disease-relevant candidate finding — flagged for Dr. Ayati, not yet validated
+against literature or PSP independently. By contrast, node2vec and concat
+deltas remain wide-swinging (delta magnitudes of 200-400 rank positions) even
+after the informative filter, reinforcing Section 8's conclusion that
+spectral is the more trustworthy embedding for cross-network comparison.
+
+Outputs (in addition to the existing rank_heatmap_{embedding}.{csv,png}):
+  rank_heatmap_delta_{node2vec,spectral,concat}.{csv,png}
+rank_heatmap_summary.txt now also reports informative-kinase counts and the
+top-10 gained/lost-relevance kinases per delta column per embedding.

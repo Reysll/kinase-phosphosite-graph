@@ -12,43 +12,152 @@ population, much smaller than the broader liver-proteomics-detected
 set covered by control/cancer/liver FC (100% each). Generic's average
 ranks below are over that smaller 391-site subset.
 
+HUB-BIAS CAVEAT: most kinases' mean rank is close to a fixed
+per-kinase baseline regardless of network (same degeneracy as
+build_rank_ks_test.py's `informative` flag). Clustermaps below are
+restricted to 'informative' kinases (std_rank > 1.0 in at
+least one of control/cancer/liver_fc) -- the full CSVs still list every
+kinase, with an `informative` column, so nothing is hidden.
+
+DELTA TABLES: delta = mean_rank[disease] - mean_rank[Control], for
+Cancer and Liver FC vs Control (per Dr. Ayati's Option 2 framing:
+score = score_disease - score_control). Negative = kinase ranks
+BETTER (more confidently predicted) under the disease network --
+i.e. gained predicted relevance. Generic is excluded from delta pairs
+(coverage asymmetry would conflate with the network effect).
+
 --- node2vec ---
 Kinases with data in >=1 network: 415
-Kinases with complete data in ALL networks (used for clustering): 415
+Informative kinases (std_rank > 1.0): 411 / 415
+Informative kinases with complete data in ALL networks (plotted): 411
 
-Top 10 by lowest mean rank in Liver FC:
+Top 10 by lowest mean rank in Liver FC (informative only):
   ULK3            Generic=24.5  Control=110.9  Cancer=6.7  Liver FC=1.2
   WNK4            Generic=8.7  Control=70.8  Cancer=25.5  Liver FC=2.2
   VRK3            Generic=4.4  Control=4.5  Cancer=12.3  Liver FC=2.6
-  YES1            Generic=4.2  Control=2.7  Cancer=1.3  Liver FC=4.5
-  ZAP70           Generic=3.9  Control=2.3  Cancer=1.8  Liver FC=4.6
   TYK2            Generic=23.9  Control=39.3  Cancer=3.4  Liver FC=5.9
   ULK2            Generic=15.9  Control=9.6  Cancer=3.6  Liver FC=7.3
   VRK2            Generic=3.3  Control=7.0  Cancer=7.2  Liver FC=8.2
   WNK2            Generic=15.1  Control=353.5  Cancer=26.8  Liver FC=9.7
   SYK             Generic=135.0  Control=129.8  Cancer=16.9  Liver FC=10.2
+  TEC             Generic=32.7  Control=65.6  Cancer=104.8  Liver FC=10.4
+  TGFBR2          Generic=56.5  Control=66.5  Cancer=212.4  Liver FC=11.4
+
+Delta vs Control (informative kinases only) -- node2vec:
+  Most GAINED relevance (Cancer - Control, most negative delta):
+    WNK2            delta=-326.7
+    STK4            delta=-267.4
+    SRC             delta=-242.4
+    ULK1            delta=-223.9
+    NTRK1           delta=-222.4
+    RET             delta=-221.3
+    TTBK1           delta=-219.7
+    ERBB2           delta=-209.2
+    IKBKB           delta=-200.1
+    MAPKAPK3        delta=-187.4
+  Most LOST relevance (Cancer - Control, most positive delta):
+    PASK            delta=+160.3
+    MAPK9           delta=+160.9
+    HIPK1           delta=+164.2
+    STK3            delta=+174.2
+    PRPF4B          delta=+203.9
+    MAP2K5          delta=+205.5
+    MAP3K8          delta=+220.6
+    PDGFRB          delta=+248.2
+    PDGFRA          delta=+276.3
+    WNK1            delta=+386.5
+  Most GAINED relevance (Liver FC - Control, most negative delta):
+    WNK2            delta=-343.8
+    STK16           delta=-306.4
+    MAPKAPK5        delta=-291.7
+    SRMS            delta=-264.7
+    PRKAA2          delta=-247.7
+    EPHB3           delta=-230.9
+    DYRK4           delta=-228.7
+    STK38L          delta=-224.2
+    ULK1            delta=-187.5
+    MAP3K12         delta=-183.9
+  Most LOST relevance (Liver FC - Control, most positive delta):
+    SIK2            delta=+207.0
+    NEK2            delta=+209.6
+    PDK2            delta=+215.6
+    NEK1            delta=+219.2
+    SRPK1           delta=+219.2
+    MAK             delta=+227.2
+    HSPA5           delta=+230.6
+    EPHA7           delta=+232.0
+    PASK            delta=+263.1
+    WNK1            delta=+396.6
 
 --- spectral ---
 Kinases with data in >=1 network: 415
-Kinases with complete data in ALL networks (used for clustering): 415
+Informative kinases (std_rank > 1.0): 271 / 415
+Informative kinases with complete data in ALL networks (plotted): 271
 
-Top 10 by lowest mean rank in Liver FC:
-  PIK3R1          Generic=10.7  Control=1.5  Cancer=1.1  Liver FC=1.2
-  EGFR            Generic=73.9  Control=3.3  Cancer=2.2  Liver FC=2.1
-  CDK1            Generic=7.7  Control=1.5  Cancer=2.7  Liver FC=2.7
-  PRKCA           Generic=8.6  Control=3.7  Cancer=4.0  Liver FC=4.1
-  SGK1            Generic=6.9  Control=5.0  Cancer=4.9  Liver FC=4.8
-  MET             Generic=16.5  Control=7.5  Cancer=6.5  Liver FC=6.6
+Top 10 by lowest mean rank in Liver FC (informative only):
   TTK             Generic=2.1  Control=6.1  Cancer=6.9  Liver FC=6.6
   TGFBR2          Generic=16.5  Control=9.2  Cancer=8.5  Liver FC=8.5
-  TGM2            Generic=4.4  Control=7.5  Cancer=9.0  Liver FC=9.2
-  FYN             Generic=31.2  Control=10.4  Cancer=9.3  Liver FC=9.3
+  AURKA           Generic=98.5  Control=13.7  Cancer=12.0  Liver FC=12.1
+  PRKCD           Generic=86.4  Control=16.7  Cancer=15.4  Liver FC=15.4
+  MAPK14          Generic=22.7  Control=20.4  Cancer=19.4  Liver FC=19.4
+  FGFR2           Generic=11.0  Control=18.7  Cancer=20.0  Liver FC=20.0
+  MYLK            Generic=9.4  Control=21.2  Cancer=21.6  Liver FC=21.6
+  PLK1            Generic=38.8  Control=28.3  Cancer=26.2  Liver FC=26.2
+  PAK1            Generic=45.8  Control=30.2  Cancer=28.6  Liver FC=28.5
+  PLK2            Generic=14.1  Control=26.9  Cancer=28.8  Liver FC=28.8
+
+Delta vs Control (informative kinases only) -- spectral:
+  Most GAINED relevance (Cancer - Control, most negative delta):
+    IRAK4           delta=-221.8
+    RIPK1           delta=-119.5
+    TRPM7           delta=-72.7
+    RIPK3           delta=-37.6
+    MLKL            delta=-32.4
+    EEF2K           delta=-11.4
+    BUB1            delta=-10.3
+    STK11           delta=-10.2
+    INSR            delta=-10.0
+    SRC             delta=-9.6
+  Most LOST relevance (Cancer - Control, most positive delta):
+    PRKDC           delta=+5.7
+    MAP2K6          delta=+5.8
+    CDK19           delta=+5.8
+    PDK1            delta=+5.8
+    CDC7            delta=+5.9
+    CSNK2A2         delta=+6.0
+    MAP4K5          delta=+6.2
+    CASK            delta=+6.3
+    CDK14           delta=+6.3
+    CSNK1A1         delta=+8.0
+  Most GAINED relevance (Liver FC - Control, most negative delta):
+    IRAK4           delta=-103.8
+    RIPK1           delta=-90.8
+    TRPM7           delta=-81.0
+    RIPK3           delta=-24.7
+    MLKL            delta=-21.5
+    SRC             delta=-12.9
+    EEF2K           delta=-12.8
+    STK11           delta=-10.7
+    MAPK7           delta=-10.7
+    INSR            delta=-10.4
+  Most LOST relevance (Liver FC - Control, most positive delta):
+    PLK3            delta=+5.1
+    ULK2            delta=+5.1
+    PDK1            delta=+5.2
+    PRKDC           delta=+5.3
+    MAP4K5          delta=+5.3
+    CDK14           delta=+5.5
+    AXL             delta=+5.6
+    CDK19           delta=+5.6
+    CSNK2A2         delta=+5.9
+    CSNK1A1         delta=+7.2
 
 --- concat ---
 Kinases with data in >=1 network: 415
-Kinases with complete data in ALL networks (used for clustering): 415
+Informative kinases (std_rank > 1.0): 410 / 415
+Informative kinases with complete data in ALL networks (plotted): 410
 
-Top 10 by lowest mean rank in Liver FC:
+Top 10 by lowest mean rank in Liver FC (informative only):
   VRK3            Generic=3.5  Control=11.3  Cancer=12.6  Liver FC=1.0
   WNK4            Generic=27.2  Control=9.3  Cancer=48.8  Liver FC=2.0
   ZAP70           Generic=12.2  Control=1.4  Cancer=4.7  Liver FC=3.0
@@ -56,6 +165,52 @@ Top 10 by lowest mean rank in Liver FC:
   ULK3            Generic=36.2  Control=29.6  Cancer=8.4  Liver FC=5.3
   YES1            Generic=6.3  Control=6.1  Cancer=1.0  Liver FC=6.0
   ULK2            Generic=8.5  Control=28.5  Cancer=4.3  Liver FC=6.6
-  VRK2            Generic=92.9  Control=4.3  Cancer=2.3  Liver FC=8.6
   SYK             Generic=98.5  Control=24.1  Cancer=6.1  Liver FC=8.7
   TRIB2           Generic=15.1  Control=13.0  Cancer=11.5  Liver FC=10.6
+  WNK2            Generic=71.2  Control=5.9  Cancer=19.7  Liver FC=11.7
+
+Delta vs Control (informative kinases only) -- concat:
+  Most GAINED relevance (Cancer - Control, most negative delta):
+    SRC             delta=-305.9
+    TTK             delta=-264.7
+    TRPM7           delta=-220.1
+    TRPM6           delta=-213.7
+    STK33           delta=-198.5
+    MAPKAPK5        delta=-193.9
+    NTRK1           delta=-190.4
+    MAPK4           delta=-183.2
+    MAPKAPK3        delta=-178.6
+    RET             delta=-166.9
+  Most LOST relevance (Cancer - Control, most positive delta):
+    SGK3            delta=+147.2
+    FGR             delta=+148.8
+    CLK1            delta=+170.9
+    ERBB4           delta=+184.4
+    STK39           delta=+188.3
+    FGFR3           delta=+215.5
+    PDGFRB          delta=+233.3
+    PDGFRA          delta=+251.3
+    TP53RK          delta=+302.0
+    VRK1            delta=+319.7
+  Most GAINED relevance (Liver FC - Control, most negative delta):
+    TRPM6           delta=-276.2
+    SRC             delta=-264.4
+    SRMS            delta=-255.4
+    MAPKAPK5        delta=-224.0
+    JMJD6           delta=-217.4
+    DYRK4           delta=-200.5
+    MST1R           delta=-200.5
+    GTF2F1          delta=-185.4
+    EPHB3           delta=-176.3
+    NUAK2           delta=-174.0
+  Most LOST relevance (Liver FC - Control, most positive delta):
+    SRPK1           delta=+162.8
+    ERBB4           delta=+170.2
+    KHK             delta=+174.9
+    MAPK14          delta=+180.8
+    MELK            delta=+188.9
+    LATS1           delta=+190.9
+    EPHA7           delta=+193.2
+    PDK2            delta=+209.5
+    SIK2            delta=+250.8
+    TTBK1           delta=+342.6
