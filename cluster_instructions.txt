@@ -1,0 +1,234 @@
+================================================================================
+CLUSTER QUICK-START GUIDE — Kinase-Substrate HGN Project
+UTRGV CRADLE HPC  |  login.cradle.utrgv.edu
+Last updated: 2026-06-29
+================================================================================
+
+CLUSTER SPECS (as of 2026-06-29)
+---------------------------------
+Login node : login001
+Partition  : kimq  (the only CPU partition; default)
+Nodes      : sxm003, sxm004  (2 nodes, jobs run 2 at a time)
+CPUs/node  : 56 total (2 reserved for OS = 54 usable; scripts request 48)
+RAM/node   : 1 TB
+Wall limit : 12 hours per job
+Scheduler  : SLURM
+Python     : 3.12 via Miniconda at ~/miniconda3/envs/kinase/
+             (system python3 is 3.6.8 — too old, do not use)
+
+
+================================================================================
+SECTION 1 — FIRST-TIME SETUP (run once, never again)
+================================================================================
+
+Step 1: SSH into the cluster
+    ssh salvadorleonlopez01@login.cradle.utrgv.edu
+
+Step 2: Install Miniconda and create Python 3.12 environment
+    cd ~
+    curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p ~/miniconda3
+
+    Accept conda Terms of Service:
+    ~/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+    ~/miniconda3/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+    Create the Python 3.12 environment:
+    ~/miniconda3/bin/conda create -n kinase python=3.12 -y
+
+    Verify:
+    ~/miniconda3/envs/kinase/bin/python --version
+    # Expected: Python 3.12.x
+
+Step 3: Clone the project from GitHub
+    cd ~
+    git clone https://github.com/Reysll/kinase-phosphosite-graph.git Kinase_Substrate_HGN
+    cd Kinase_Substrate_HGN
+
+Step 4: Set up the virtual environment (installs all Python dependencies)
+    bash scripts/cluster/setup_env.sh
+
+    This creates ~/Kinase_Substrate_HGN/cluster_venv/ using the conda Python 3.12.
+    Test it worked:
+    source cluster_venv/bin/activate && python -c 'import networkx, gensim, sklearn; print("OK")'
+
+
+================================================================================
+SECTION 2 — RUNNING THE FULL PIPELINE (all sites, all embeddings)
+================================================================================
+
+This is the standard run. It covers:
+  - 14,596 LOO trials across 10,146 sites (all sites, including single-kinase)
+  - 4 networks x 3 embeddings = 12 LOO combos running in parallel
+  - Predict-all inference pass (all 420 kinases x 3,228 liver sites)
+  - Analysis scripts producing heatmaps, volcano plots, and summary files
+
+From the project root on the login node:
+
+    cd ~/Kinase_Substrate_HGN
+    git pull                          # always pull latest before submitting
+    bash scripts/cluster/submit_all.sh
+
+This does 3 things automatically:
+  1. Freezes the trial set (fast, runs interactively on login node)
+  2. Submits the LOO array (12 parallel SLURM tasks)
+  3. Submits inference and analysis with automatic dependencies (run after LOO)
+
+Expected output:
+    LOO array:  <JOB_ID>  (12 parallel tasks, 2 run at a time, ~3-6h each)
+    Inference:  <JOB_ID>  (starts automatically after LOO; ~4-8h)
+    Analysis:   <JOB_ID>  (starts automatically after inference; ~1-2h)
+
+Current job parameters (set in scripts/cluster/run_loo.sh):
+    N_JOBS=36        outer trial workers (ThreadPoolExecutor parallelism)
+    WORKERS=12       node2vec Word2Vec threads
+    DIMENSIONS=64    embedding dimensions per sub-strategy (concat = 128 total)
+    TRIALS=all       covers all 14,596 trials
+
+
+================================================================================
+SECTION 3 — RUNNING MULTI-KINASE ONLY (original 6,909 trial subset)
+================================================================================
+
+Use this if you want to reproduce or compare against the original Phase 1/2
+results, which only evaluated sites with more than one known kinase.
+
+Change ONE line in scripts/cluster/run_loo.sh before submitting:
+
+    TRIALS=multi     (was: TRIALS=all)
+
+This uses frozen_trials_multi_kinase.csv.gz (6,909 trials, already exists).
+Everything else stays the same.
+
+To switch back to all sites afterward, change TRIALS back to "all".
+
+Why the difference matters:
+  - "all"   includes single-kinase sites: 14,596 trials, broader coverage,
+             but single-kinase LOO evaluation is less informative (no within-site
+             negative contrast — there's only one known kinase to hold out)
+  - "multi" is the original setup: 6,909 trials, cleaner evaluation metric,
+             comparable to the published Phase 1/2 results
+
+
+================================================================================
+SECTION 4 — MONITORING JOBS
+================================================================================
+
+Check job status:
+    squeue -u $USER
+
+Live refresh every 30 seconds:
+    watch -n 30 squeue -u $USER
+
+Watch live output of a running task (e.g. task 0 = generic + node2vec):
+    tail -f cluster_logs/loo_0.out
+
+Check for errors on a task:
+    cat cluster_logs/loo_0.err
+
+Task ID to (network, embedding) mapping:
+    Task 0:  generic   + node2vec
+    Task 1:  generic   + spectral
+    Task 2:  generic   + concat
+    Task 3:  control   + node2vec
+    Task 4:  control   + spectral
+    Task 5:  control   + concat
+    Task 6:  cancer    + node2vec
+    Task 7:  cancer    + spectral
+    Task 8:  cancer    + concat
+    Task 9:  liver_fc  + node2vec
+    Task 10: liver_fc  + spectral
+    Task 11: liver_fc  + concat
+
+Jobs are done when squeue -u $USER shows nothing (or only inference/analysis).
+
+
+================================================================================
+SECTION 5 — RETRIEVING RESULTS TO YOUR LOCAL MACHINE
+================================================================================
+
+Run these from your LOCAL machine (PowerShell or Git Bash), not the cluster.
+Replace the local path if your project is in a different location.
+
+Retrieve LOO results (experiment summaries + metrics):
+    rsync -avz salvadorleonlopez01@login.cradle.utrgv.edu:~/Kinase_Substrate_HGN/cluster_results/ "C:/Users/chavy/OneDrive/python/Kinase_Substrate_HGN/cluster_results/"
+
+Retrieve analysis outputs (heatmaps, plots, summary files):
+    rsync -avz salvadorleonlopez01@login.cradle.utrgv.edu:~/Kinase_Substrate_HGN/outputs_prediction/analysis/ "C:/Users/chavy/OneDrive/python/Kinase_Substrate_HGN/outputs_prediction/analysis/"
+
+Retrieve SLURM logs (for debugging if something failed):
+    rsync -avz salvadorleonlopez01@login.cradle.utrgv.edu:~/Kinase_Substrate_HGN/cluster_logs/ "C:/Users/chavy/OneDrive/python/Kinase_Substrate_HGN/cluster_logs/"
+
+What lands where:
+    cluster_results/{network}_{embedding}_{dim}_{trials}/
+        results.csv.gz   — per-trial LOO results (rank, scores, kinase info)
+        metrics.csv      — aggregate metrics (median rank, top-1%, top-5%, etc.)
+        summary.txt      — human-readable summary
+    cluster_results/inference_all/{network}_{embedding}/
+        ranks.csv.gz     — predict-all scores (all 420 kinases x 3,228 sites)
+        summary.txt      — coverage and top-ranked kinases
+    outputs_prediction/analysis/
+        rank_heatmap_delta_{embedding}.{csv,png}   — Result 1: delta-vs-control heatmaps
+        ks_test_{pair}_{embedding}.csv             — Result 2: KS-test rank shift
+        ks_volcano_{pair}_{embedding}.png          — Result 2: volcano plots
+        spotlight_necroptosis.png                  — necroptosis cluster scatter
+        ksea_vs_loo_rank.png                       — KSEA vs LOO hub-bias figure
+        rank_heatmap_summary.txt                   — top gained/lost kinases
+
+
+================================================================================
+SECTION 6 — IF SOMETHING FAILS
+================================================================================
+
+Check which tasks failed:
+    cat cluster_logs/loo_<N>.err      # N = task number (0-11)
+
+Cancel stuck dependent jobs:
+    scancel <JOB_ID>
+
+Resubmit only failed tasks (safe — completed combos are skipped automatically):
+    bash scripts/cluster/submit_all.sh
+
+If the venv is broken, rebuild it:
+    rm -rf cluster_venv/
+    bash scripts/cluster/setup_env.sh
+
+If you need to update the code and rerun:
+    git pull                          # on the cluster
+    bash scripts/cluster/submit_all.sh
+
+Common errors seen so far:
+  - "No such file or directory: .../cluster_venv/bin/activate"
+    Cause: SLURM ran the script from the spool directory, not the project root.
+    Fix:   Already fixed — scripts now use SLURM_SUBMIT_DIR. Always run
+           sbatch from the project root (submit_all.sh handles this).
+
+  - "DependencyNeverSatisfied" on inference or analysis job
+    Cause: The LOO array (preceding job) failed.
+    Fix:   scancel the stuck jobs, check loo_0.err, fix, resubmit.
+
+  - PYTHONPATH conflicts from conda install
+    Fix:   Already fixed — scripts unset PYTHONPATH before activating the venv.
+
+
+================================================================================
+SECTION 7 — KEY FILES ON THE CLUSTER
+================================================================================
+
+~/Kinase_Substrate_HGN/
+    scripts/cluster/
+        setup_env.sh              one-time environment setup
+        submit_all.sh             master pipeline submission script
+        run_loo.sh                SLURM array job (12 LOO combos)
+        run_inference.sh          SLURM inference job
+        run_analysis.sh           SLURM analysis job
+        cluster_loo_runner.py     parametrized LOO runner (called by run_loo.sh)
+        cluster_inference_runner.py  parametrized inference runner
+    outputs_prediction/
+        frozen_trials_all.csv.gz          all-sites trial set (14,596 trials)
+        frozen_trials_multi_kinase.csv.gz multi-kinase trial set (6,909 trials)
+        candidate_kinases.csv.gz          420 candidate kinases
+        liver_positive_kinase_site_edges.csv.gz  all known KSA edges in liver graph
+    cluster_results/              LOO + inference outputs (gitignored)
+    cluster_logs/                 SLURM stdout/stderr (gitignored)
+    cluster_venv/                 Python 3.12 virtual environment (gitignored)
