@@ -61,9 +61,10 @@ date
 PROJECT_DIR="${SLURM_SUBMIT_DIR}"
 VENV_DIR="$PROJECT_DIR/cluster_venv"
 
+unset PYTHONPATH
 source "$VENV_DIR/bin/activate"
 cd "$PROJECT_DIR"
-export PYTHONPATH="$PROJECT_DIR:${PYTHONPATH:-}"
+export PYTHONPATH="$PROJECT_DIR"
 
 mkdir -p cluster_logs "$OUTPUT_DIR"
 
