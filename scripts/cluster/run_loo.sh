@@ -58,7 +58,7 @@ date
 # --------------------------------------------------------------------------
 # Environment
 # --------------------------------------------------------------------------
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PROJECT_DIR="${SLURM_SUBMIT_DIR}"
 VENV_DIR="$PROJECT_DIR/cluster_venv"
 
 source "$VENV_DIR/bin/activate"
