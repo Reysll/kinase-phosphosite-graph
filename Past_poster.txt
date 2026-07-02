@@ -1,61 +1,107 @@
-abstract
+TITLE
 
-Protein phosphorylation regulates cellular signaling and cancer progression, yet more than 90% of experimentally identified phosphosites lack annotation of their upstream kinases. Existing computational approaches for kinase–substrate association (KSA) prediction are biased toward well-studied kinases, a phenomenon often described as the streetlight effect. This imbalance limits discovery of understudied kinases that may play critical roles in disease.
+Context-Aware Kinase-Substrate Association Prediction in Liver Cancer Using a Heterogeneous Graph Network with Spectral Embeddings
 
-We developed a large-scale heterogeneous protein–phosphosite network integrating biochemical, pathway, interaction, and evolutionary evidence. To mitigate annotation bias, we propose a stratified modeling strategy in which kinases are grouped by annotation density, enabling fairer prioritization within comparable categories.
+---
+ABSTRACT
 
-The resulting network contains approximately 13.6k nodes and over 1 million edges. Structural analysis reveals heavy-tailed connectivity consistent with annotation imbalance. Integration of liver cancer phosphoproteomic and proteomic correlations demonstrates feasibility of incorporating context-specific molecular information. These results establish a scalable baseline for bias-aware and context-specific KSA prediction.
+Protein phosphorylation regulates cellular signaling and cancer progression, yet more than 90% of experimentally identified phosphosites lack annotation of their upstream kinases. Existing computational approaches for kinase-substrate association (KSA) prediction are biased toward well-studied kinases, a phenomenon described as the streetlight effect. This imbalance limits discovery of understudied kinases that may play critical roles in disease.
 
+We developed a large-scale heterogeneous protein-phosphosite network integrating biochemical, pathway, interaction, and evolutionary evidence, extended with liver cancer-specific phosphoproteomic correlations. A leave-one-out (LOO) evaluation framework across 420 candidate kinases and 6,909 multi-kinase sites demonstrates that spectral graph embeddings reduce median prediction rank by 57% relative to random-walk embeddings. Analysis of network-dependent rank shifts identifies a necroptosis and innate-immune kinase cluster (RIPK1, RIPK3, MLKL, IRAK4) that gains predicted relevance specifically under the liver cancer correlation network. Kinase-substrate enrichment analysis (KSEA) provides orthogonal validation, identifying 17 significantly active kinases in liver cancer that are distinct from LOO top-ranked kinases, confirming the complementary nature of the two approaches.
 
-OUR Hypothesis
+---
+HYPOTHESIS
 
-Our hypothesis is that integrating heterogeneous biological data within a network framework, combined with stratified modeling, can mitigate bias toward well-studied kinases and provide fairer prioritization of understudied kinases avoiding the “Streetlight” effect.
-Annotation imbalance in phosphorylation data produces structural bias toward well-studied kinases.
-Stratifying kinases by annotation density enables fairer prioritization of understudied kinases.
-Integration of liver cancer–specific molecular correlations enhances context-aware KSA modeling.
+Our hypothesis is that integrating heterogeneous biological data within a network framework, combined with stratified modeling and spectral embeddings, can mitigate bias toward well-studied kinases and enable context-aware identification of disease-relevant kinases in liver cancer.
 
+- Annotation imbalance in phosphorylation data produces structural bias toward well-studied kinases.
+- Stratifying kinases by annotation density enables fairer prioritization of understudied kinases.
+- Integration of liver cancer-specific molecular correlations shifts kinase prioritization toward disease-relevant biology.
 
-Figure 1. Overview of the integrated protein–phosphosite network architecture. Nodes represent proteins (including kinases and phosphatases) and phosphosites. Edges encode site membership, enzymatic regulation, protein–protein interactions, and site-level and protein-level functional relationships.
-
-Figure 2. Complementary cumulative degree distribution (log-log). The heavy-tailed topology indicates that most nodes exhibit low connectivity while a small number of hubs dominate network structure, consistent with annotation imbalance in phosphorylation data.
-
+---
 METHODS
 
 Heterogeneous Network Graph Representation
+
 The heterogeneous graph contains two node types: proteins and phosphosites. Kinases and phosphatases are represented as proteins; their functional roles are encoded in edge types. This design preserves biological identity and ensures that all interactions involving a protein contribute to a unified network representation.
+
 Edge types include:
-• Protein → Site: phosphorylates / dephosphorylates
-• Protein → Site: has_site
-• Protein ↔ Protein: shared pathway and high-confidence interaction
-• Site ↔ Site: shared pathway and co-evolution
-Context-Specific 
-Liver cancer phosphoproteomic and proteomic datasets were used to compute Pearson correlations separately for normal and tumor samples. Frequency-normalized histograms were generated to compare global correlation distributions across conditions. These correlation will be integrated to the network. 
+- Protein to Site: phosphorylates / dephosphorylates
+- Protein to Site: has_site
+- Protein to Protein: shared pathway and high-confidence interaction
+- Site to Site: shared pathway and co-evolution
+- Site to Site: liver cancer phosphoproteomic Pearson correlation (positive and negative, 80th percentile threshold)
 
-Figure 3. Global topological properties of the integrated heterogeneous network. The graph contains over one million edges with low density characteristic of biological systems and forms a single connected component, indicating successful multi-layer integration.
+Context-Specific Liver Cancer Integration
 
+Pearson correlations were computed from liver cancer phosphoproteomic data separately for normal samples, tumor samples, and tumor-to-control fold-change ratios. Edges above the 80th percentile threshold were incorporated, producing three liver-specific graph variants (Control, Cancer, Liver FC) alongside a Generic baseline without correlation edges.
+
+Prediction and Evaluation
+
+KSA prediction was evaluated using a leave-one-out framework. For each multi-kinase phosphosite, one known kinase was held out and ranked among 420 candidate kinases. Graph embeddings were computed on a PhosphoSitePlus-stripped graph to prevent leakage of kinase-substrate labels. Two embedding strategies were compared: node2vec (random-walk) and spectral (Laplacian eigenvectors). Logistic regression was trained on all non-held-out KSA edges and scored each candidate at the test site. The adjusted rank metric removes co-kinases from the candidate list before ranking to prevent artificial inflation by unlabeled true positives. Kinases were stratified into three annotation categories: poor (5 or fewer substrates), average (5 to 20), and rich (more than 20).
+
+Kinase Activity Enrichment Analysis
+
+KSEA was applied to the liver FC dataset using the formula from Wiredja et al. (2017): score = (mean substrate FC minus global mean FC) times sqrt(n substrates), divided by the global FC standard deviation. Significance was assessed by permutation testing with Benjamini-Hochberg correction (64 scoreable kinases with 3 or more detected substrates).
+
+---
+Figure 1.
+
+Overview of the integrated protein-phosphosite network architecture. Nodes represent proteins (including kinases and phosphatases) and phosphosites. Edges encode site membership, enzymatic regulation, protein-protein interactions, site-level co-evolution, and liver cancer-specific phosphoproteomic correlations.
+
+Figure 2.
+
+Global topological properties of the integrated heterogeneous network. The generic graph contains approximately 13,318 nodes and 1.1 million edges. The liver-extended graph contains 16,605 nodes and 2.1 million edges across all three correlation types. Both form a single connected component, indicating successful multi-layer integration.
+
+---
 RESULTS
-Global Correlation Structure in HCC
-We computed pairwise Pearson correlations separately within normal and tumor samples (minimum 10 samples per pair). Across normal samples, both proteomics and phosphoproteomics exhibit heavier positive and negative correlation tails, indicating tightly coordinated molecular programs. In contrast, tumor samples show reduced extreme correlations, suggesting disruption of highly coordinated protein and phosphorylation relationships. These findings indicate that liver cancer perturbs strongly co-regulated molecular interactions, leading to loss of functional coordination.
 
-Figure 4. Protein correlation distributions in normal and HCC samples.
-Frequency-normalized histograms of Pearson correlation coefficients computed from HCC proteomic data. Overlayed distributions enable direct comparison of global co-expression structure between normal and tumor samples.
+LOO Prediction Performance
 
-Figure 5. Phosphosite correlation distributions in HCC phosphoproteomics.
-Phosphorylation patterns show a similar shift in correlation structure between conditions. Reduced tail magnitude in tumor samples suggests altered coordination of phosphorylation-dependent regulatory processes.
+Node2vec embeddings show improved prediction when disease-specific correlations are included (median adjusted rank 165-174) compared to the generic network (rank 188), confirming that liver cancer phosphoproteomic data contributes meaningful signal. Spectral embeddings further amplify this improvement, achieving median ranks of 74-79 across all four networks regardless of correlation type, representing a 57% reduction relative to node2vec. The topological structure captured by spectral decomposition of the graph Laplacian encodes biological context more effectively than random-walk approaches, and node2vec results demonstrate that the improvement is not exclusive to spectral embedding.
 
+Figure 3.
+
+Median adjusted kinase rank across 6,909 multi-kinase leave-one-out trials. Node2vec and spectral embeddings are compared across four network conditions (Generic, Control, Cancer, Liver FC). Lower rank indicates better prediction performance among 420 candidate kinases. Dashed line indicates the expected random baseline (rank 210).
+
+Network-Dependent Rank Shifts in Liver Cancer
+
+Delta analysis was performed by computing the difference in mean kinase rank between each disease network and the Control network under spectral embedding. Kinases showing the most negative delta in both Cancer-vs-Control and Liver FC-vs-Control comparisons include RIPK1, RIPK3, and MLKL (core necroptosis pathway kinases), IRAK4 (TLR and IL-1R innate-immune signaling), and TRPM7. These kinases do not appear among LOO top-1 predictions due to hub-kinase dominance, underscoring the value of delta analysis for extracting disease-relevant signals that are otherwise obscured.
+
+Figure 4.
+
+Delta heatmap under spectral embedding: mean kinase rank shift versus Control for Cancer and Liver FC networks. Negative values indicate improved predicted relevance under the disease network. Analysis restricted to informative kinases (rank standard deviation greater than 1.0 across networks). Necroptosis and innate-immune cluster kinases are annotated.
+
+Kinase Activity Enrichment in Liver Cancer
+
+KSEA using known PhosphoSitePlus substrates identified 17 of 64 scoreable kinases as significantly enriched in liver cancer (adj. p < 0.05). Top up-regulated kinases include MAPK12, CDKL5, and MAPK13. Top down-regulated kinases include PRKACA, PRKD1, PRKCD, and RPS6KA1. None of these kinases appear in LOO top-1 predictions, where hub kinases dominate. This divergence confirms that LOO ranking and KSEA capture complementary dimensions of kinase biology: predictive association versus substrate activity enrichment. The two methods together provide a more complete picture of kinase dysregulation in liver cancer than either approach alone.
+
+Figure 5.
+
+Kinase activity enrichment scores for liver cancer. Horizontal bars represent KSEA scores for the 17 significantly enriched kinases (adj. p < 0.05, Benjamini-Hochberg correction). Orange: substrate set is hyper-phosphorylated in tumor relative to control. Blue: substrate set is hypo-phosphorylated in tumor relative to control. Significance levels: * p < 0.05, ** p < 0.01, *** p < 0.001.
+
+---
 CONCLUSIONS
-This study establishes a scalable heterogeneous network framework that capture different kind of relationships among kinases, phosphatases, phosphoproteins and phosphosites. Structural analysis confirms annotation imbalance consistent with the streetlight effect and supports the need for bias mitigation strategies. Stratified modeling provides a principled mechanism for fairer kinase prioritization. Integration of liver-specific phosphoproteomic and proteomic correlations demonstrates feasibility of constructing context-aware networks capable of capturing dynamic signaling relationships. Together, these results provide a practical foundation for bias-aware, cancer-specific KSA prediction in liver cancer as a future work. 
 
+This study extends a heterogeneous KSA prediction framework with liver cancer-specific molecular correlations and rigorous leave-one-out evaluation across 420 candidate kinases. Spectral graph embeddings substantially outperform random-walk embeddings, reducing median adjusted rank by 57% across all network conditions. Delta analysis under spectral embedding identifies a biologically coherent kinase cluster (RIPK1, RIPK3, MLKL, IRAK4, TRPM7) that gains predicted relevance in liver cancer relative to healthy control. KSEA provides orthogonal validation of kinase activity disruption, identifying a distinct set of significantly active kinases not captured by LOO ranking. Together, these results demonstrate that heterogeneous graph integration with context-specific molecular data and spectral embeddings enables discovery of disease-relevant kinase associations beyond the reach of annotation-biased approaches.
+
+---
 FUTURE WORK
-Developing a predictive model for kinase-substrate association using heterogenous network
-Quantitative evaluation of stratified versus non-stratified model performance using AUROC and precision-recall analysis
-Module detection incorporating average fold-change (FC) to identify highly connected and dysregulated phosphorylation subnetworks
- Pathway enrichment analysis of clustered phosphosite modules
- Experimental validation of top-ranked understudied kinases in liver cancer
 
-Acknowledgements
-This project is supported by Pilot Project funded through NIH Research Centers in Minority Institutions (RCMI) program at UTRGV, funded by the NIHHD award number U54MD019970. 
+- Experimental validation of the necroptosis cluster kinases (RIPK1, RIPK3, MLKL, IRAK4) as functional drivers in hepatocellular carcinoma
+- Mitigation of hub-kinase bias through graph rewiring or contrastive learning objectives
+- Extension of the framework to additional cancer types using the same modular network architecture
 
-References
-Gao, Qiang, et al. "Integrated proteogenomic characterization of HBV-related hepatocellular carcinoma." Cell 179.2 (2019): 561-577.
-Hornbeck, Peter V., et al. "PhosphoSitePlus: a comprehensive resource for investigating the structure and function of experimentally determined post-translational modifications in man and mouse." Nucleic acids research 40.D1 (2012): D261-D270.
+---
+ACKNOWLEDGEMENTS
+
+This project is supported by Pilot Project funded through NIH Research Centers in Minority Institutions (RCMI) program at UTRGV, funded by the NIHHD award number U54MD019970.
+
+---
+REFERENCES
+
+Gao, Qiang, et al. "Integrated proteogenomic characterization of HBV-related hepatocellular carcinoma." Cell 179.2 (2019): 561-577.
+
+Hornbeck, Peter V., et al. "PhosphoSitePlus: a comprehensive resource for investigating the structure and function of experimentally determined post-translational modifications in man and mouse." Nucleic acids research 40.D1 (2012): D261-D270.
+
+Wiredja, Danica D., et al. "The KSEA App: a web-based tool for kinase activity inference from quantitative phosphoproteomics." Bioinformatics 33.21 (2017): 3489-3491.
