@@ -29,7 +29,7 @@ PAIRS = [
     ("cancer_vs_control", "Cancer", "Control", "Cancer − Control median rank"),
     ("control_vs_liver_fc", "Control", "Liver FC", "Liver FC − Control median rank"),
 ]
-EMBEDDINGS = ["spectral", "node2vec"]
+EMBEDDINGS = ["spectral", "node2vec", "concat"]
 
 
 def _plot_volcano(df: pd.DataFrame, x_label: str, title: str, out_path: pathlib.Path) -> None:
@@ -150,7 +150,7 @@ def main() -> None:
             df = pd.read_csv(csv_path)
             out_path = ANALYSIS_DIR / f"ks_volcano_{pair_key}_{emb}.png"
             title = (
-                f"KS-test: rank distribution shift — {net_a} vs {net_b}\n"
+                f"KS-test: rank distribution shift, {net_a} vs {net_b}\n"
                 f"({emb} embedding; informative kinases highlighted)"
             )
             _plot_volcano(df, x_label, title, out_path)

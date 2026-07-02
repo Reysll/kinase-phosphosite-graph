@@ -5,10 +5,8 @@ Project Title
 ==============
 Context-Aware Prediction of Kinase-Substrate Associations in Liver Cancer
 
-Last updated: 2026-06-25 (Phase 3 "predict-all" inference pass built and run
-across all 4 networks x 3 embeddings; Result 1 heatmap/clustergram and
-Result 2 KS-test built; email_reply.txt sent, no response yet — see Section
-12 and new Section 13)
+Last updated: 2026-07-02 (cluster run outcome, poster draft, four-network
+clarification, k-means future direction -- see Section 14)
 
 HOW TO USE THIS FILE
 =====================
@@ -512,3 +510,272 @@ Outputs (in addition to the existing rank_heatmap_{embedding}.{csv,png}):
   rank_heatmap_delta_{node2vec,spectral,concat}.{csv,png}
 rank_heatmap_summary.txt now also reports informative-kinase counts and the
 top-10 gained/lost-relevance kinases per delta column per embedding.
+
+
+SECTION 14. CLUSTER RUN, POSTER DRAFT, AND FUTURE DIRECTIONS (2026-07-02)
+==========================================================================
+
+14.1 UTRGV CRADLE Cluster Run — Outcome
+-----------------------------------------
+Submitted 2026-06-29 via bash scripts/cluster/submit_all.sh.
+Target: 12 LOO combos (4 networks x 3 embeddings), all-sites trial set
+(14,596 trials), N_JOBS=36, 12h wall time per task on the kimq partition.
+
+Results by task:
+  Task  | Network   | Embedding | Outcome
+  ------+-----------+-----------+------------------------------------------
+  0     | generic   | node2vec  | KILLED — hit 12h wall at 5,500/14,596
+  1     | generic   | spectral  | COMPLETE — median rank 41.0, wrote to
+        |           |           |   cluster_results/generic_spectral_dim64_allsites/
+  2     | generic   | concat    | KILLED — hit 12h wall at 2,000/14,596
+  3     | control   | node2vec  | KILLED — hit 12h wall at 5,500/14,596
+  4     | control   | spectral  | COMPLETE (Tue Jun 30 02:10 CDT)
+  5     | control   | concat    | KILLED — hit 12h wall at 2,500/14,596
+  6     | cancer    | node2vec  | KILLED — hit 12h wall at 6,000/14,596
+  7     | cancer    | spectral  | COMPLETE (Tue Jun 30 22:59 CDT)
+  8     | cancer    | concat    | KILLED — hit 12h wall at 2,000/14,596
+  9     | liver_fc  | node2vec  | KILLED — hit 12h wall at 5,500/14,596
+  10    | liver_fc  | spectral  | COMPLETE (Wed Jul 1 15:28 CDT)
+  11    | liver_fc  | concat    | KILLED — hit 12h wall at 2,000/14,596
+
+Root cause: node2vec with 14,596 trials at N_JOBS=36 needs ~32h wall clock.
+Concat (512-feature LR) needs ~87h. Only spectral (~8-9h) fits in 12h.
+Switching to TRIALS=multi (6,909 trials) would not save node2vec — it still
+needs ~15h at the observed per-trial throughput on the cluster nodes.
+
+Action taken: cancelled stuck inference (58413) and analysis (58414) jobs.
+Resubmitted inference pass standalone (job 62824, status: PD Resources ->
+should start shortly). Node2vec and concat cluster LOO: abandoned for now.
+The 4 spectral all-sites LOO results are the primary cluster deliverable.
+
+Spectral all-sites LOO results are in cluster_results/ on the cluster.
+Rsync command (run locally after inference job 62824 completes):
+  rsync -avz salvadorleonlopez01@login.cradle.utrgv.edu:~/Kinase_Substrate_HGN/cluster_results/ \
+        "C:/Users/chavy/OneDrive/python/Kinase_Substrate_HGN/cluster_results/"
+
+
+14.2 Four Networks Clarification (for future reference)
+---------------------------------------------------------
+There are TWO graph files, not four. The four "networks" are created by
+filtering which edges are activated from those files:
+
+  Network   | File loaded  | Edges in use
+  ----------+--------------+----------------------------------------------
+  Generic   | Generic file | Base relations only (no correlations)
+  Control   | Liver file   | Base relations + ctrl raw abundance corr edges
+  Cancer    | Liver file   | Base relations + cancer raw abundance corr edges
+  Liver FC  | Liver file   | Base relations + tumor/control FC corr edges
+
+The liver graph file stores all three correlation edge types simultaneously
+(labeled site_corr_ctrl_pos/neg, site_corr_cancer_pos/neg, site_corr_fc_pos/neg).
+Each run script selects the relevant subset via allowed_relations.
+
+The spectral embedding is recomputed independently for each network from
+the Laplacian of that network's specific graph (PSP phosphorylates edges
+stripped before embedding). The context-specific signal is therefore encoded
+directly in the embedding geometry, not added as a post-hoc feature.
+
+Why Control=Cancer=Liver FC all reach median rank 74 under spectral:
+  The three liver graph variants have the same nodes and base edges; the
+  three correlation sets produce similar overall Laplacian structure. The
+  correlation TYPE (which condition) matters less than the existence of
+  correlation edges. Generic reaches 79 because it is structurally smaller
+  and sparser (no correlation cliques, 13,318 vs 16,605 nodes).
+
+
+14.3 Poster Draft (2026-07-02)
+--------------------------------
+Full draft written for a conference poster reusing the award-winning format.
+Five figures (same count as previous poster):
+
+  Fig 1 | Network architecture diagram        | existing image (old poster)
+  Fig 2 | Global topology stats table         | existing image, update numbers:
+         |                                     |   generic 13,318 nodes / 1.1M edges
+         |                                     |   liver   16,605 nodes / 2.1M edges
+  Fig 3 | LOO performance bar chart           | outputs_prediction/analysis/poster_loo_figure.png
+         |                                     |   generated by build_poster_loo_figure.py
+  Fig 4 | KS-test volcano, Cancer vs Control  | outputs_prediction/analysis/ks_volcano_cancer_vs_control_spectral.png
+         |                                     |   NOTE: delta heatmap (rank_heatmap_delta_spectral.png)
+         |                                     |   reviewed and rejected — 271 stacked kinases
+         |                                     |   renders nearly white at poster scale
+  Fig 5 | KSEA enrichment bar chart           | outputs_prediction/analysis/poster_ksea_figure.png
+         |                                     |   generated by build_poster_ksea_figure.py
+
+New scripts added:
+  src_prediction/analysis/build_poster_loo_figure.py   -- Fig 3
+  src_prediction/analysis/build_poster_ksea_figure.py  -- Fig 5
+
+Story arc (new vs old poster):
+  Old: "We built the network; future work = build the predictor."
+  New: "We built and evaluated it; liver cancer context shifts kinase
+        prioritization toward a necroptosis/innate-immune cluster."
+
+Key results featured on poster:
+  - Spectral embedding reduces median LOO rank by 57% vs node2vec (188->79
+    generic, 165-174->74 for disease networks).
+  - KS-test (Cancer vs Control, spectral): IRAK4, RIPK1, TRPM7 are the
+    most significant rank-gainers in cancer vs healthy context (labeled red
+    in volcano; biologically coherent with necroptosis/innate-immune axis).
+  - KSEA: 17/64 scoreable kinases significant (adj_p < 0.05). Top UP:
+    MAPK12, CDKL5, MAPK13. Top DOWN: PRKACA, PRKD1, PRKCD, RPS6KA1.
+    These are entirely distinct from LOO hub kinases, confirming the two
+    methods are complementary.
+
+Writing style note: no em dashes anywhere in poster text. Match concise
+academic register of Past_poster.txt.
+
+
+14.4 Future Direction: K-means / Spectral Clustering
+------------------------------------------------------
+Running k-means on the spectral embedding vectors is mathematically
+equivalent to spectral clustering (the two-step Shi-Malik / Ng-Jordan-Weiss
+procedure). This would reveal functional modules in the network and could
+show whether necroptosis kinases cluster together or change cluster membership
+between Control and Liver FC embeddings.
+
+To implement:
+  1. Save embedding vectors to disk from within the LOO runner or a
+     standalone embedding script.
+  2. Run k-means over a range of k (e.g., 5-30 clusters).
+  3. Compare cluster assignments between Control and Liver FC embeddings
+     to identify kinases that move clusters under disease context.
+  4. Visualize with UMAP or PCA (2D) colored by cluster, necroptosis
+     kinases annotated.
+
+Assessment: strong future-paper figure material; not a sixth poster figure.
+The current five figures already tell a complete story. Pursue after
+cluster results are retrieved and Dr. Ayati responds.
+
+
+SECTION 15. PROJECT GOAL, READINESS GAP, AND SURVIVAL ANALYSIS PLAN (2026-07-02)
+==================================================================================
+
+15.1 True Project Goal (clarified 2026-07-02)
+----------------------------------------------
+The ultimate goal is to identify which specific phosphosite is driving liver
+cancer, so it can be validated experimentally in a wet lab and eventually
+targeted therapeutically (toward a cure).
+
+Context-specificity is not a technical preference — it is scientifically
+essential. The same phosphosite that drives one cancer can be protective or
+therapeutic in a different cancer in a different organ. Findings from a
+generic model cannot be transferred across cancer types. This is why the
+four-network design exists: to isolate what is unique to the liver cancer
+context versus what is general background biology.
+
+The intended scientific pipeline:
+  1. Computational: predict which kinase-phosphosite associations are most
+     disease-relevant in liver cancer (current work).
+  2. Experimental: take top predictions into a wet lab, test in HCC cell
+     lines or animal models.
+  3. Translational: validate as a therapeutic target for liver cancer.
+
+The necroptosis cluster (RIPK1, RIPK3, MLKL, IRAK4) and the KSEA-significant
+kinases (MAPK12, PRKACA, etc.) are computational nominations for step 2 —
+they are hypotheses for wet lab follow-up, not confirmed findings.
+
+
+15.2 Readiness Gap — What Is Missing Before Experimental Validation
+--------------------------------------------------------------------
+Current results are NOT yet ready to hand to a wet lab with confidence.
+
+What we have:
+  - Kinases that gain predicted relevance in liver cancer vs. healthy control
+    (delta analysis, spectral embedding)
+  - Kinases with significantly dysregulated substrate activity in tumor
+    (KSEA, 17/64 significant)
+  - Signal coherence: both methods point toward necroptosis/innate-immune axis
+
+What we are missing:
+  - A specific phosphosite-kinase PAIR with high enough confidence to
+    justify a limited number of lab experiments
+  - Clinical evidence that any prediction connects to patient OUTCOMES
+    (survival, disease progression)
+  - Ability to distinguish kinases causally driving cancer vs. incidentally
+    elevated in tumor tissue
+
+The triple intersection needed for lab-ready candidates:
+  A. Significantly differentially phosphorylated in tumor vs. control
+     (formal statistical test, not just correlation structure)
+  B. Regulated by a kinase that gains predicted relevance in the liver
+     cancer network (our model output)
+  C. Whose regulating kinase shows elevated activity by KSEA
+
+Candidates satisfying all three are likely a very short list — exactly
+what is needed given limited experimental budget.
+
+Additional evidence that would strengthen any candidate further:
+  - Survival correlation: phosphosite abundance correlates with poor OS
+  - Literature/database: kinase appears in COSMIC, HCC drug trials, or
+    prior HCC biology literature
+  - Multi-omics: kinase also over-expressed at mRNA/protein level in tumor
+    (the Gao dataset has all three: mRNA, protein, phosphoprotein)
+
+
+15.3 Survival Analysis — Data Gap and Plan
+-------------------------------------------
+CURRENT DATA: data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx
+  Two sheets only:
+    - ProteinExpression  (Table S4 from Gao et al. 2019)
+    - Phosphorylation    (Table S11 from Gao et al. 2019)
+  Contains: normalized protein and phosphosite abundance for 18 control
+  (F26-F58 even) and 18 tumor (F29-F61 odd) samples.
+  Does NOT contain: survival time, event status, clinical staging,
+  patient demographics.
+
+WHAT IS NEEDED:
+  Clinical annotation table from Gao et al. 2019 (Cell 179(2):561-577).
+  Likely Table S1 or S2 of the paper's supplementary data.
+  Must contain: patient ID (matching F26, F27... sample codes), overall
+  survival time (months), survival event (0=alive, 1=dead), tumor stage.
+
+WHERE TO GET IT:
+  Option A: Cell paper supplementary data
+    Gao et al. 2019, Cell 179(2):561-577
+    Download supplementary tables directly from Cell's website.
+    Look for Table S1 (clinical/patient information table).
+
+  Option B: CPTAC / PDC data portal
+    pdc.cancer.gov or cptac-data.github.io
+    This dataset is deposited there under HCC or HBV-HCC.
+    Full clinical metadata including survival is available for download.
+
+ACTION: download the clinical table, save to data/liver/, then proceed
+with the analysis pipeline below.
+
+ANALYSIS PIPELINE (once clinical data is available):
+  Step 1 — Differential phosphorylation
+    For each phosphosite with >= 6 values in both tumor and control,
+    run a t-test (or Wilcoxon) on tumor vs. control abundance.
+    Apply Benjamini-Hochberg correction.
+    Output: list of significantly differentially phosphorylated sites
+    with fold-change direction (hyper vs. hypo in tumor).
+
+  Step 2 — Survival correlation
+    For each phosphosite, fit a Cox proportional hazards model:
+      phosphosite abundance (continuous) ~ overall survival
+    Or: median-split patients into high/low abundance groups,
+    run log-rank test, plot Kaplan-Meier curves for top candidates.
+    Apply BH correction across all tested sites.
+    Output: phosphosites where abundance significantly predicts survival.
+
+  Step 3 — Triple intersection filter
+    Take phosphosites that are:
+      (a) significantly differentially phosphorylated (Step 1)
+      (b) predicted by a kinase that shows network-dependent rank shift
+          (from KS-test volcano or delta analysis, spectral embedding)
+      (c) whose predicted kinase is KSEA-significant (if applicable)
+    This intersection is the high-confidence candidate list for the lab.
+
+  Step 4 — Kaplan-Meier plots for top candidates
+    For each site in the final intersection, plot KM survival curves
+    (high vs. low abundance) with p-value annotation.
+    These figures are directly communicable to a clinical collaborator
+    or wet lab.
+
+  Libraries: lifelines (Python, already installable) for Cox and KM.
+  Output directory: outputs_prediction/survival/
+
+  Note: with only 18 tumor patients, statistical power is limited.
+  Cox regression with continuous predictor is preferred over median-split
+  to maximize power. Focus on effect size and direction as much as p-value.

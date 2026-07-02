@@ -1,0 +1,61 @@
+abstract
+
+Protein phosphorylation regulates cellular signaling and cancer progression, yet more than 90% of experimentally identified phosphosites lack annotation of their upstream kinases. Existing computational approaches for kinase–substrate association (KSA) prediction are biased toward well-studied kinases, a phenomenon often described as the streetlight effect. This imbalance limits discovery of understudied kinases that may play critical roles in disease.
+
+We developed a large-scale heterogeneous protein–phosphosite network integrating biochemical, pathway, interaction, and evolutionary evidence. To mitigate annotation bias, we propose a stratified modeling strategy in which kinases are grouped by annotation density, enabling fairer prioritization within comparable categories.
+
+The resulting network contains approximately 13.6k nodes and over 1 million edges. Structural analysis reveals heavy-tailed connectivity consistent with annotation imbalance. Integration of liver cancer phosphoproteomic and proteomic correlations demonstrates feasibility of incorporating context-specific molecular information. These results establish a scalable baseline for bias-aware and context-specific KSA prediction.
+
+
+OUR Hypothesis
+
+Our hypothesis is that integrating heterogeneous biological data within a network framework, combined with stratified modeling, can mitigate bias toward well-studied kinases and provide fairer prioritization of understudied kinases avoiding the “Streetlight” effect.
+Annotation imbalance in phosphorylation data produces structural bias toward well-studied kinases.
+Stratifying kinases by annotation density enables fairer prioritization of understudied kinases.
+Integration of liver cancer–specific molecular correlations enhances context-aware KSA modeling.
+
+
+Figure 1. Overview of the integrated protein–phosphosite network architecture. Nodes represent proteins (including kinases and phosphatases) and phosphosites. Edges encode site membership, enzymatic regulation, protein–protein interactions, and site-level and protein-level functional relationships.
+
+Figure 2. Complementary cumulative degree distribution (log-log). The heavy-tailed topology indicates that most nodes exhibit low connectivity while a small number of hubs dominate network structure, consistent with annotation imbalance in phosphorylation data.
+
+METHODS
+
+Heterogeneous Network Graph Representation
+The heterogeneous graph contains two node types: proteins and phosphosites. Kinases and phosphatases are represented as proteins; their functional roles are encoded in edge types. This design preserves biological identity and ensures that all interactions involving a protein contribute to a unified network representation.
+Edge types include:
+• Protein → Site: phosphorylates / dephosphorylates
+• Protein → Site: has_site
+• Protein ↔ Protein: shared pathway and high-confidence interaction
+• Site ↔ Site: shared pathway and co-evolution
+Context-Specific 
+Liver cancer phosphoproteomic and proteomic datasets were used to compute Pearson correlations separately for normal and tumor samples. Frequency-normalized histograms were generated to compare global correlation distributions across conditions. These correlation will be integrated to the network. 
+
+Figure 3. Global topological properties of the integrated heterogeneous network. The graph contains over one million edges with low density characteristic of biological systems and forms a single connected component, indicating successful multi-layer integration.
+
+RESULTS
+Global Correlation Structure in HCC
+We computed pairwise Pearson correlations separately within normal and tumor samples (minimum 10 samples per pair). Across normal samples, both proteomics and phosphoproteomics exhibit heavier positive and negative correlation tails, indicating tightly coordinated molecular programs. In contrast, tumor samples show reduced extreme correlations, suggesting disruption of highly coordinated protein and phosphorylation relationships. These findings indicate that liver cancer perturbs strongly co-regulated molecular interactions, leading to loss of functional coordination.
+
+Figure 4. Protein correlation distributions in normal and HCC samples.
+Frequency-normalized histograms of Pearson correlation coefficients computed from HCC proteomic data. Overlayed distributions enable direct comparison of global co-expression structure between normal and tumor samples.
+
+Figure 5. Phosphosite correlation distributions in HCC phosphoproteomics.
+Phosphorylation patterns show a similar shift in correlation structure between conditions. Reduced tail magnitude in tumor samples suggests altered coordination of phosphorylation-dependent regulatory processes.
+
+CONCLUSIONS
+This study establishes a scalable heterogeneous network framework that capture different kind of relationships among kinases, phosphatases, phosphoproteins and phosphosites. Structural analysis confirms annotation imbalance consistent with the streetlight effect and supports the need for bias mitigation strategies. Stratified modeling provides a principled mechanism for fairer kinase prioritization. Integration of liver-specific phosphoproteomic and proteomic correlations demonstrates feasibility of constructing context-aware networks capable of capturing dynamic signaling relationships. Together, these results provide a practical foundation for bias-aware, cancer-specific KSA prediction in liver cancer as a future work. 
+
+FUTURE WORK
+Developing a predictive model for kinase-substrate association using heterogenous network
+Quantitative evaluation of stratified versus non-stratified model performance using AUROC and precision-recall analysis
+Module detection incorporating average fold-change (FC) to identify highly connected and dysregulated phosphorylation subnetworks
+ Pathway enrichment analysis of clustered phosphosite modules
+ Experimental validation of top-ranked understudied kinases in liver cancer
+
+Acknowledgements
+This project is supported by Pilot Project funded through NIH Research Centers in Minority Institutions (RCMI) program at UTRGV, funded by the NIHHD award number U54MD019970. 
+
+References
+Gao, Qiang, et al. "Integrated proteogenomic characterization of HBV-related hepatocellular carcinoma." Cell 179.2 (2019): 561-577.
+Hornbeck, Peter V., et al. "PhosphoSitePlus: a comprehensive resource for investigating the structure and function of experimentally determined post-translational modifications in man and mouse." Nucleic acids research 40.D1 (2012): D261-D270.

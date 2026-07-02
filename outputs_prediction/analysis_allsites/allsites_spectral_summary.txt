@@ -1,0 +1,69 @@
+All-Sites Spectral LOO Results (Cluster Run)
+======================================================================
+Trials:     14,596  (all sites: single-kinase + multi-kinase)
+Embedding:  Spectral, dim=64
+Candidates: 420 kinases
+
+Metric                                 Generic       Control        Cancer      Liver FC
+----------------------------------------------------------------------------------------
+Adj median rank (lower=better)            77.0          77.0          76.0          76.0
+Adj mean rank                            101.9         102.6         102.3         102.5
+Adj top-1 %                               0.0%          0.4%          0.4%          0.4%
+Adj top-5 %                               5.9%          6.3%          6.3%          6.3%
+Adj top-10 %                             10.4%         10.6%         10.8%         10.8%
+Adj top-20 %                             24.6%         21.0%         21.0%         21.0%
+Best-true median rank                     41.0          40.0          40.0          40.0
+Best-true top-20 %                       39.3%         36.5%         36.6%         36.6%
+N trials ranked                         14,570        14,570        14,570        14,570
+
+Comparison vs Phase 2 multi-kinase spectral (6,909 trials, dim=32)
+----------------------------------------------------------------------------------------
+                                       Generic       Control        Cancer      Liver FC
+Phase 2 adj median rank                     79            74            74            74
+All-sites adj median rank                   77            77            76            76
+Delta (all-sites minus Phase 2)             -2            +3            +2            +2
+
+Phase 2 adj top-20 %                     10.6%         22.1%         22.1%         22.0%
+All-sites adj top-20 %                   24.6%         21.0%         21.0%         21.0%
+
+Notes
+-----
+All-sites includes 7,687 single-kinase sites (76% of trials). Single-kinase
+LOO is less informative: no within-site negative contrast (only one true
+kinase, so adjusted rank = held-out rank). Multi-kinase median rank remains
+the cleaner metric for cross-network comparison.
+dim=64 here vs dim=32 in Phase 2; higher dimensions may contribute a small
+fraction of the performance difference.
+
+
+Multi-Kinase Filtered Results (n_true_kinases >= 2)
+======================================================================
+Trials:     ~6,894  (sites with 2+ known kinases only)
+Embedding:  Spectral, dim=64  |  graph: all-sites embedding
+Candidates: 420 kinases
+
+Metric                                 Generic       Control        Cancer      Liver FC
+----------------------------------------------------------------------------------------
+Adj median rank (lower=better)            76.0          75.0          75.0          75.0
+Adj mean rank                            105.5         105.4         105.2         105.3
+Adj top-1 %                               0.1%          0.0%          0.0%          0.0%
+Adj top-5 %                               4.9%          5.1%          5.1%          5.1%
+Adj top-10 %                              9.2%          9.4%          9.6%          9.6%
+Adj top-20 %                             23.8%         22.1%         22.0%         22.0%
+Best-true median rank                     17.0          16.0          15.0          15.0
+Best-true top-20 %                       55.0%         55.0%         55.0%         55.0%
+N trials ranked                          6,894         6,894         6,894         6,894
+
+Direct comparison vs Phase 2 (same trial type, same filter)
+----------------------------------------------------------------------------------------
+                                       Generic       Control        Cancer      Liver FC
+Phase 2 adj median rank                     79            74            74            74
+Cluster multi-filt median rank              76            75            75            75
+Delta (cluster minus Phase 2)               -3            +1            +1            +1
+
+Phase 2 adj top-20 %                     10.6%         22.1%         22.1%         22.0%
+Cluster multi-filt top-20 %              23.8%         22.1%         22.0%         22.0%
+
+Note: cluster embedding trained on all-sites graph (dim=64);
+Phase 2 embedding trained on multi-kinase-only graph (dim=32).
+Remaining delta reflects dim difference and embedding scope.
