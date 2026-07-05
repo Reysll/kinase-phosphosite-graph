@@ -9,6 +9,11 @@ cluster_logs/
 # Email drafts (local only — not part of the codebase)
 email*.txt
 
+# Poster / presentation deliverables (local only — large binaries, not source)
+*.pptx
+*.ppt
+*.pdf
+
 # Source data files (large; regenerate from raw sources)
 data/raw/
 data/liver/
