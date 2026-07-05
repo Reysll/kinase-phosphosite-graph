@@ -66,11 +66,11 @@ Median adjusted kinase rank across 6,909 multi-kinase leave-one-out trials. Node
 
 Network-Dependent Rank Shifts in Liver Cancer
 
-Delta analysis was performed by computing the difference in mean kinase rank between each disease network and the Control network under spectral embedding. Kinases showing the most negative delta in both Cancer-vs-Control and Liver FC-vs-Control comparisons include RIPK1, RIPK3, and MLKL (core necroptosis pathway kinases), IRAK4 (TLR and IL-1R innate-immune signaling), and TRPM7. These kinases do not appear among LOO top-1 predictions due to hub-kinase dominance, underscoring the value of delta analysis for extracting disease-relevant signals that are otherwise obscured.
+Per-kinase rank distributions were compared between each disease network and the Control network under spectral embedding, quantified as the shift in median rank and tested with a two-sample Kolmogorov-Smirnov test (Benjamini-Hochberg corrected). Kinases with the largest negative rank shift in both Cancer-vs-Control and Liver FC-vs-Control comparisons include RIPK1, RIPK3, and MLKL (core necroptosis pathway kinases), IRAK4 (TLR and IL-1R innate-immune signaling), and TRPM7. These kinases do not appear among LOO top-1 predictions due to hub-kinase dominance, underscoring the value of the disease-versus-control comparison for extracting disease-relevant signals that are otherwise obscured.
 
 Figure 4.
 
-Delta heatmap under spectral embedding: mean kinase rank shift versus Control for Cancer and Liver FC networks. Negative values indicate improved predicted relevance under the disease network. Analysis restricted to informative kinases (rank standard deviation greater than 1.0 across networks). Necroptosis and innate-immune cluster kinases are annotated.
+KS-test volcano comparing per-kinase rank distributions between the Cancer and Control networks under spectral embedding. The horizontal axis is the shift in median rank (Cancer minus Control); negative values indicate improved predicted relevance under the disease network. The vertical axis is the Benjamini-Hochberg-corrected Kolmogorov-Smirnov significance (negative log10 adjusted p). Analysis restricted to informative kinases whose rank varies across sites (rank standard deviation greater than 1.0). The necroptosis and innate-immune cluster (IRAK4, RIPK1, TRPM7, with RIPK3 and MLKL) is highlighted as the most significant rank-gainers in the cancer context.
 
 Kinase Activity Enrichment in Liver Cancer
 

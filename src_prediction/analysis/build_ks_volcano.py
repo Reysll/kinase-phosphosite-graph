@@ -132,7 +132,13 @@ def _plot_volcano(df: pd.DataFrame, x_label: str, title: str, out_path: pathlib.
     ax.set_xlabel(x_label, fontsize=11)
     ax.set_ylabel("−log₁₀(adj p-value)", fontsize=11)
     ax.set_title(title, fontsize=11)
-    ax.legend(fontsize=8, loc="upper right", framealpha=0.8)
+    ax.legend(
+        fontsize=12,
+        loc="lower left",
+        bbox_to_anchor=(0.01, 0.06),
+        framealpha=0.85,
+        markerscale=1.3,
+    )
 
     plt.tight_layout()
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
