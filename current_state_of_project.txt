@@ -1,3 +1,24 @@
+================================================================================
+CORRECTION (2026-10-10)
+================================================================================
+Section 14.1 reports the cluster generic spectral run as "median rank 41.0".
+That value is the BEST-TRUE median rank. The adjusted held-out median for that
+run is 77.0 (see outputs_prediction/analysis_allsites/allsites_spectral_summary.txt).
+
+Separately: the cluster / all-sites runs are EXCLUDED from the thesis because
+they were incomplete (wall-clock timeouts), not because of their results.
+Do not cite allsites_spectral_summary.txt as a result.
+
+node2vec numbers throughout this file are single-seed (42). Cross-seed spread
+exceeds the reported context differences, and the top-1 hub-monopoly tables
+describe seed 42 rather than the method: six runs across three seeds produced
+six different dominant kinases.
+
+All metrics are over 6,894 rankable trials; 15 of 6,909 are unrankable.
+
+Authoritative current state: thesis/STATE.md
+================================================================================
+
 CURRENT STATE OF PROJECT
 ========================
 

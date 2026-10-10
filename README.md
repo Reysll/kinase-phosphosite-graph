@@ -1,5 +1,29 @@
 # Kinase-Substrate Graph Project
 
+> ## ⚠ ACCURACY NOTICE (2026-10-10)
+>
+> **This README describes the project as of 2026-05-27 (Phase 1 only) and is
+> partly superseded.** Phases 2 and 3 are complete, the module layout was
+> reorganized on 2026-06-25, and a validation round in October 2026 retracted
+> several claims below. Authoritative current state: **`thesis/STATE.md`**.
+>
+> Specific corrections to what follows:
+>
+> | Claim in this README | Status |
+> |---|---|
+> | "Degree-normalised embedding is the immediate next step" | Done (Phase 2, spectral) |
+> | Module paths `src/main.py`, `src_prediction/leave_one_out.py` | Moved; now `src/runners/main.py`, `src_prediction/engine/leave_one_out.py` |
+> | Generic graph "~1.1 million edges" | Exactly **1,095,542** (the earlier 1,070,352 figure does not match `outputs/edges.csv.gz`) |
+> | Liver graph "~2.1 million edges" | Per-variant: Control 2,095,284, Cancer 2,149,535, **Liver FC 2,110,775**. The liver edge *file* holds 4,087,754 rows (all three correlation types). |
+> | "Top-10% / Top-20%" column headers | These are **Hit@10 / Hit@20**, the fraction of trials with rank ≤ 10 / ≤ 20, not percentile cutoffs |
+> | node2vec results tables | **Single seed (42).** Cross-seed spread exceeds the reported differences; see `thesis/STATE.md` |
+> | Hub-monopoly table (ULK1 100%, VRK2 94.8%, VRK3 95.5%) | **Retracted as a method property.** Six runs across three seeds produced six different dominant kinases |
+> | TTK case-study node2vec numbers | Single seed; same caveat |
+>
+> Not mentioned anywhere below: **15 of 6,909 trials are unrankable** (the
+> held-out kinase has no embedding) and are excluded from every metric, in every
+> run. All reported `n` should be **6,894**.
+
 ## Table of Contents
 
 * [Overview](#overview)

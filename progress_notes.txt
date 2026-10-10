@@ -1,3 +1,22 @@
+================================================================================
+CORRECTION (2026-10-10) -- KSEA FORMULA AND RESULTS BELOW ARE SUPERSEDED
+================================================================================
+The KSEA section in this file states the formula as
+    score = (s_bar - p_bar) / (m * delta)        <- m in the DENOMINATOR
+and reports "no significant hits (adj_p ~0.5)".
+
+Both are obsolete. The implemented formula in src_prediction/analysis/ksea.py is
+    score = (s_bar - p_bar) * sqrt(m) / delta    <- sqrt(m) in the NUMERATOR
+(Wiredja et al. 2017), fixed 2026-06-23.
+
+Significant kinases (BH, alpha = 0.05):
+  17 / 64  using p = norm.sf(abs(z))      <- the convention ksea.py implements
+  12 / 64  using p = 2 * norm.sf(abs(z))  <- proper two-tailed; USE THIS
+Verification: thesis/analysis/out/ksea_twotailed.txt
+
+Authoritative current state: thesis/STATE.md
+================================================================================
+
 Progress Notes — Kinase-Substrate HGN Prediction Pipeline
 ==========================================================
 Last updated: 2026-05-26 (post-power-outage verification; four-network redesign completed)

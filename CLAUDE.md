@@ -202,7 +202,13 @@ outputs_prediction/  <- frozen trials, candidate kinases, experiment results
 
 All node IDs follow:
 - Proteins: `PROTEIN:GENENAME` (e.g., `PROTEIN:AKT1`)
-- Phosphosites: `SITE:GENENAME_pSXXX` (e.g., `SITE:AKT1_pS473`)
+- Phosphosites: `SITE:GENENAME-<residue><position>` (e.g., `SITE:EIF2S1-S52`,
+  `SITE:A1CF-T14`)
+
+Corrected 2026-10-10: this section previously documented the site format as
+`SITE:GENENAME_pSXXX` (e.g. `SITE:AKT1_pS473`). That form does not appear in
+`outputs/nodes.csv.gz`; the actual separator is a hyphen and there is no `p`
+prefix.
 
 ## Critical architectural decisions
 
@@ -229,11 +235,42 @@ All node IDs follow:
 
 ## Current experiment scale
 
-- Generic graph: ~13,318 nodes, ~1.1 M edges
-- Liver graph: ~16,605 nodes, ~2.1 M edges (contains all 3 correlation edge types)
-- Candidate kinases: 420
-- Frozen LOO trial set (multi-kinase): 6,909 trials across 2,459 multi-kinase sites
-- n_jobs_outer: 8 (ThreadPoolExecutor); Node2Vec Word2Vec workers: 4
+Exact counts, recomputed from `outputs/` on 2026-10-10:
+
+- Generic graph: **13,318** nodes (10,196 sites / 3,122 proteins),
+  **1,095,542** edges, density 0.0124, 1 connected component
+- Liver graph: **16,605** nodes (13,410 sites / 3,195 proteins).
+  The edge *file* holds **4,087,754** rows because it stores all three
+  correlation types at once. Per-variant totals (base 1,133,920 + one
+  correlation set):
+  | Variant | Correlation edges | Total |
+  |---|---|---|
+  | Control | 961,364 | 2,095,284 |
+  | Cancer | 1,015,615 | 2,149,535 |
+  | Liver FC | 976,855 | 2,110,775 |
+- Candidate kinases: 420 defined, but **415 are actually scored** in every LOO
+  run (`num_candidate_kinases_scored = 415`); the other 5 lack an embedding
+- Frozen LOO trial set (multi-kinase): 6,909 trials across 2,459 sites.
+  **15 trials are unrankable in every run**, so all metrics use n = **6,894**
+- Metric naming: report **Hit@10 / Hit@20** (fraction of trials with rank ≤ 10
+  or ≤ 20). Older docs label these "Top-10% / Top-20%", which wrongly implies a
+  percentile cutoff
+- n_jobs_outer: 8 (ThreadPoolExecutor)
+- Embedding dimensions per run: local LOO and Phase 3 use **dim=32** per
+  sub-embedding (pair features = 4 x 32 = 128). The concat strategy at dim=32
+  yields 64-dim nodes and 256 features; the "512-feature" figure in older notes
+  applies only to the cluster runs, which used **dim=64** per sub-embedding
+- Node2Vec: `Node2VecStrategy` defaults to `workers=8` and `batch_words=4`, but
+  all four Phase 1 run scripts pass **`workers=4`** and **`batch_words=10000`**.
+  Any new caller must pass these explicitly to stay comparable
+- Measured runtimes: spectral LOO ~62 min/run; node2vec LOO ~357-378 min/run
+  (~3.1-3.3 s per trial, dominated by the trial loop, not by embedding)
+
+> **Validation notice (2026-10-10).** An October validation round retracted
+> several previously reported findings, including the node2vec single-seed
+> comparisons, the top-1 hub-monopoly tables, and the necroptosis cluster as a
+> liver-specific result. See **`thesis/STATE.md`** before citing any number
+> from the "Current run status" section below.
 
 ## Current run status (last updated 2026-06-25)
 
