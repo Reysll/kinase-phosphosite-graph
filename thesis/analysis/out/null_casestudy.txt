@@ -1,0 +1,63 @@
+ITEM 3 -- CASE-STUDY ROBUSTNESS vs DEGREE-PRESERVING NULL
+==============================================================================
+
+Generic  : 391 sites, 162,265 pairs
+Control  : 3,228 sites, 1,339,620 pairs
+Liver FC : 3,228 sites, 1,339,620 pairs
+Null     : 3,228 sites, 1,339,620 pairs
+
+Sites common to all four networks        : 391
+Sites common to Control/Liver FC/Null    : 3,228
+  (Generic covers only its own smaller site population; contrasts below
+   use the Control/Liver FC/Null intersection, Generic shown for reference)
+
+MEDIAN rank_in_site PER KINASE (lower = predicted more relevant)
+------------------------------------------------------------------------------
+kinase  n_sites  Generic  Control  Liver FC  Null  LiverFC_minus_Control  Null_minus_Control
+   TTK     3228      1.0      6.0       7.0   6.0                    1.0                 0.0
+ RIPK1     3228    102.0    175.0      86.0  86.0                  -89.0               -89.0
+ RIPK3     3228    236.0    280.0     254.0 254.0                  -26.0               -26.0
+  MLKL     3228    304.0    340.0     318.0 318.0                  -22.0               -22.0
+ IRAK4     3228    260.0    308.0     203.0 203.0                 -105.0              -105.0
+ TRPM7     3228    413.0    367.0     286.0 286.0                  -81.0               -81.0
+
+KS-TESTS PER KINASE (BH-FDR across the 6 focus kinases, per contrast)
+------------------------------------------------------------------------------
+           contrast kinase  n_a  n_b median_a median_b median_shift ks_statistic  p_value std_a std_b    adj_p  significant
+Control vs Liver FC    TTK 3228 3228     6.00     7.00         1.00         0.54 0.00e+00  2.09  2.24 0.00e+00         True
+Control vs Liver FC  RIPK1 3228 3228   175.00    86.00       -89.00         1.00 0.00e+00  6.90  9.66 0.00e+00         True
+Control vs Liver FC  RIPK3 3228 3228   280.00   254.00       -26.00         0.99 0.00e+00  0.03  4.56 0.00e+00         True
+Control vs Liver FC   MLKL 3228 3228   340.00   318.00       -22.00         0.99 0.00e+00  0.02  3.50 0.00e+00         True
+Control vs Liver FC  IRAK4 3228 3228   308.00   203.00      -105.00         0.99 0.00e+00  4.83 15.21 0.00e+00         True
+Control vs Liver FC  TRPM7 3228 3228   367.00   286.00       -81.00         1.00 0.00e+00  2.98  6.35 0.00e+00         True
+
+       contrast kinase  n_a  n_b median_a median_b median_shift ks_statistic  p_value std_a std_b    adj_p  significant
+Control vs Null    TTK 3228 3228     6.00     6.00         0.00         0.16 8.25e-38  2.09  2.23 8.25e-38         True
+Control vs Null  RIPK1 3228 3228   175.00    86.00       -89.00         1.00 0.00e+00  6.90  9.58 0.00e+00         True
+Control vs Null  RIPK3 3228 3228   280.00   254.00       -26.00         0.99 0.00e+00  0.03  4.44 0.00e+00         True
+Control vs Null   MLKL 3228 3228   340.00   318.00       -22.00         0.99 0.00e+00  0.02  3.33 0.00e+00         True
+Control vs Null  IRAK4 3228 3228   308.00   203.00      -105.00         0.99 0.00e+00  4.83 15.19 0.00e+00         True
+Control vs Null  TRPM7 3228 3228   367.00   286.00       -81.00         1.00 0.00e+00  2.98  6.52 0.00e+00         True
+
+        contrast kinase  n_a  n_b median_a median_b median_shift ks_statistic   p_value std_a std_b     adj_p  significant
+Liver FC vs Null    TTK 3228 3228     7.00     6.00        -1.00         0.38 1.23e-203  2.24  2.23 3.68e-203         True
+Liver FC vs Null  RIPK1 3228 3228    86.00    86.00         0.00         0.30 1.06e-128  9.66  9.58 2.12e-128         True
+Liver FC vs Null  RIPK3 3228 3228   254.00   254.00         0.00         0.14  9.71e-30  4.56  4.44  1.16e-29         True
+Liver FC vs Null   MLKL 3228 3228   318.00   318.00         0.00         0.45 4.12e-299  3.50  3.33 2.47e-298         True
+Liver FC vs Null  IRAK4 3228 3228   203.00   203.00         0.00         0.17  2.78e-43 15.21 15.19  4.17e-43         True
+Liver FC vs Null  TRPM7 3228 3228   286.00   286.00         0.00         0.04    0.0039  6.35  6.52    0.0039         True
+
+DIRECT QUESTION: does the null reproduce the Liver FC shift?
+------------------------------------------------------------------------------
+contrast  Control vs Liver FC  Control vs Null  Liver FC vs Null  null_reproduces_pct
+kinase                                                                               
+IRAK4                  -105.0           -105.0               0.0                100.0
+MLKL                    -22.0            -22.0               0.0                100.0
+RIPK1                   -89.0            -89.0               0.0                100.0
+RIPK3                   -26.0            -26.0               0.0                100.0
+TRPM7                   -81.0            -81.0               0.0                100.0
+TTK                       1.0              0.0              -1.0                  0.0
+
+  null_reproduces_pct = (Null shift) / (Liver FC shift) x 100.
+  ~100 means the randomized network produces the same shift;
+  ~0 means the shift requires the real correlation structure.

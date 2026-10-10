@@ -1,0 +1,67 @@
+G1 -- Significance testing, four-network / two-embedding LOO comparison
+==============================================================================
+
+Total trials in frozen set      : 6,909
+Unrankable in >=1 experiment    : 15  (union across all 8 runs)
+Trials used in EVERY comparison : 6,894
+
+Family: 10 paired tests, Holm-corrected together.
+Convention: diff = rank_A - rank_B. Positive median_paired_diff and
+positive rank_biserial both mean B achieves the BETTER (lower) rank.
+
+1. TRIAL-LEVEL (primary)
+------------------------------------------------------------------------------
+       block                                 comparison    n  n_ties median_A median_B median_paired_diff rank_biserial   wilcoxon_W    p_value     p_holm  significant_holm_0.05             favours
+  A: context   Generic (node2vec) vs Control (node2vec) 6894      38    188.0    166.5               16.0        +0.175  9,691,345.0  2.766e-36  5.531e-36                   True  Control (node2vec)
+  A: context    Generic (node2vec) vs Cancer (node2vec) 6894      77    188.0    174.0                2.0        +0.037 11,191,728.0     0.0085     0.0085                   True   Cancer (node2vec)
+  A: context  Generic (node2vec) vs Liver FC (node2vec) 6894      86    188.0    165.0                7.0        +0.249  8,706,006.0  1.069e-70  3.208e-70                   True Liver FC (node2vec)
+  A: context   Generic (spectral) vs Control (spectral) 6894      41     79.0     74.0                6.0        +0.391  7,147,655.5 3.242e-173 1.945e-172                   True  Control (spectral)
+  A: context    Generic (spectral) vs Cancer (spectral) 6894      53     79.0     74.0                6.0        +0.380  7,249,278.0 1.353e-163 6.766e-163                   True   Cancer (spectral)
+  A: context  Generic (spectral) vs Liver FC (spectral) 6894      48     79.0     74.0                6.0        +0.380  7,267,210.0 3.492e-163 1.397e-162                   True Liver FC (spectral)
+B: embedding   Generic (node2vec) vs Generic (spectral) 6894       4    188.0     79.0               81.5        +0.508  5,834,179.5 1.543e-292 1.080e-291                   True  Generic (spectral)
+B: embedding   Control (node2vec) vs Control (spectral) 6894      21    166.5     74.0               73.0        +0.626  4,420,012.0  0.000e+00  0.000e+00                   True  Control (spectral)
+B: embedding     Cancer (node2vec) vs Cancer (spectral) 6894      20    174.0     74.0               92.0        +0.640  4,256,440.5  0.000e+00  0.000e+00                   True   Cancer (spectral)
+B: embedding Liver FC (node2vec) vs Liver FC (spectral) 6894      17    165.0     74.0               67.0        +0.583  4,925,691.5  0.000e+00  0.000e+00                   True Liver FC (spectral)
+
+2. KINASE-LEVEL SENSITIVITY (mean adjusted rank per held-out kinase)
+------------------------------------------------------------------------------
+       block                                 comparison   n  n_ties median_A median_B median_paired_diff rank_biserial wilcoxon_W   p_value    p_holm  significant_holm_0.05             favours
+  A: context   Generic (node2vec) vs Control (node2vec) 355       1    198.4    200.9                2.0        +0.022   30,742.0    0.7259    1.0000                  False  Control (node2vec)
+  A: context    Generic (node2vec) vs Cancer (node2vec) 355       2    198.4    202.5               -0.5        +0.008   30,995.0    0.8982    1.0000                  False  Generic (node2vec)
+  A: context  Generic (node2vec) vs Liver FC (node2vec) 355       1    198.4    201.0                0.1        +0.007   31,197.5    0.9091    1.0000                  False Liver FC (node2vec)
+  A: context   Generic (spectral) vs Control (spectral) 355       0    197.0    196.5               -9.0        -0.232   24,255.5 1.487e-04    0.0012                   True  Generic (spectral)
+  A: context    Generic (spectral) vs Cancer (spectral) 355       0    197.0    197.5              -10.0        -0.247   23,803.5 5.655e-05 5.655e-04                   True  Generic (spectral)
+  A: context  Generic (spectral) vs Liver FC (spectral) 355       1    197.0    197.0              -10.0        -0.242   23,824.5 8.122e-05 7.310e-04                   True  Generic (spectral)
+B: embedding   Generic (node2vec) vs Generic (spectral) 355       1    198.4    197.0                2.7        +0.015   30,951.5    0.8089    1.0000                  False  Generic (spectral)
+B: embedding   Control (node2vec) vs Control (spectral) 355       0    200.9    196.5                4.5        +0.048   30,071.5    0.4311    1.0000                  False  Control (spectral)
+B: embedding     Cancer (node2vec) vs Cancer (spectral) 355       0    202.5    197.5                5.4        +0.049   30,051.0    0.4249    1.0000                  False   Cancer (spectral)
+B: embedding Liver FC (node2vec) vs Liver FC (spectral) 355       0    201.0    197.0                8.6        +0.049   30,060.5    0.4278    1.0000                  False Liver FC (spectral)
+
+3. INFORMATIVE-KINASE-RESTRICTED (G15), trial level
+------------------------------------------------------------------------------
+informative(node2vec) = 411   informative(spectral) = 271   intersection = 269
+Block A uses the tested embedding's own set; Block B uses the intersection.
+
+       block                                 comparison    n  n_ties median_A median_B median_paired_diff rank_biserial   wilcoxon_W    p_value     p_holm  significant_holm_0.05             favours
+  A: context   Generic (node2vec) vs Control (node2vec) 6846      34    190.0    168.0               17.0        +0.175  9,568,902.5  5.197e-36  1.039e-35                   True  Control (node2vec)
+  A: context    Generic (node2vec) vs Cancer (node2vec) 6846      59    190.0    175.0                2.0        +0.037 11,096,385.0     0.0091     0.0091                   True   Cancer (node2vec)
+  A: context  Generic (node2vec) vs Liver FC (node2vec) 6846      80    190.0    167.0                7.0        +0.250  8,581,315.5  4.027e-71  1.208e-70                   True Liver FC (node2vec)
+  A: context   Generic (spectral) vs Control (spectral) 4291      22    126.0     99.0               10.0        +0.375  2,849,265.0 7.959e-100  5.571e-99                   True  Control (spectral)
+  A: context    Generic (spectral) vs Cancer (spectral) 4291      39    126.0     98.0                9.0        +0.365  2,868,878.5  1.242e-94  7.453e-94                   True   Cancer (spectral)
+  A: context  Generic (spectral) vs Liver FC (spectral) 4291      37    126.0     98.0                9.0        +0.364  2,875,844.5  3.377e-94  1.688e-93                   True Liver FC (spectral)
+B: embedding   Generic (node2vec) vs Generic (spectral) 4244       3    199.0    125.0               43.0        +0.354  2,904,870.5  9.401e-89  3.760e-88                   True  Generic (spectral)
+B: embedding   Control (node2vec) vs Control (spectral) 4244      17    175.0     98.0               56.0        +0.531  2,094,613.5 1.435e-196 1.291e-195                   True  Control (spectral)
+B: embedding     Cancer (node2vec) vs Cancer (spectral) 4244      19    166.0     98.0               54.0        +0.545  2,031,991.5 1.506e-206 1.506e-205                   True   Cancer (spectral)
+B: embedding Liver FC (node2vec) vs Liver FC (spectral) 4244      16    178.0     98.0               54.0        +0.498  2,246,172.0 1.004e-172 8.031e-172                   True Liver FC (spectral)
+
+PROVENANCE (git commit of each results file)
+------------------------------------------------------------------------------
+ network embedding                                                            path  n_rows  n_nan_rank                               git_commit
+ Generic  node2vec          outputs_prediction/generic_multi_kinase/results.csv.gz    6909          15 2d72316b5f838f34fa6b31716f57da6334976009
+ Control  node2vec          outputs_prediction/control_multi_kinase/results.csv.gz    6909          15 2d72316b5f838f34fa6b31716f57da6334976009
+  Cancer  node2vec           outputs_prediction/cancer_multi_kinase/results.csv.gz    6909          15 2d72316b5f838f34fa6b31716f57da6334976009
+Liver FC  node2vec            outputs_prediction/liver_multi_kinase/results.csv.gz    6909          15 2d72316b5f838f34fa6b31716f57da6334976009
+ Generic  spectral outputs_prediction/generic_multi_kinase_spectral/results.csv.gz    6909          15 70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+ Control  spectral outputs_prediction/control_multi_kinase_spectral/results.csv.gz    6909          15 70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+  Cancer  spectral  outputs_prediction/cancer_multi_kinase_spectral/results.csv.gz    6909          15 70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+Liver FC  spectral   outputs_prediction/liver_multi_kinase_spectral/results.csv.gz    6909          15 70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809

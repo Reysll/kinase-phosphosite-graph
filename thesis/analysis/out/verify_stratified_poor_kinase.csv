@@ -1,0 +1,11 @@
+block,comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,n_B_better,n_A_better,p_value,p_holm,significant_holm_0.05,favours
+A: context,Generic (node2vec) vs Control (node2vec),106,1,212.5,224.0,-0.5,-0.08571428571428572,52,53,0.4457752767686567,0.8915505535373134,False,Generic (node2vec)
+A: context,Generic (node2vec) vs Cancer (node2vec),106,3,212.5,236.75,-0.25,-0.047610156833457803,50,53,0.674860007417589,0.8915505535373134,False,Generic (node2vec)
+A: context,Generic (node2vec) vs Liver FC (node2vec),106,1,212.5,223.75,-6.5,-0.20467205750224618,45,60,0.06866103431280016,0.20947333496575013,False,Generic (node2vec)
+A: context,Generic (spectral) vs Control (spectral),106,0,256.0,277.5,-17.5,-0.8735672720860519,8,98,5.806172061680573e-15,5.034105997454985e-14,True,Generic (spectral)
+A: context,Generic (spectral) vs Cancer (spectral),106,0,256.0,278.5,-18.5,-0.8772703226944102,8,98,4.46774195493725e-15,4.46774195493725e-14,True,Generic (spectral)
+A: context,Generic (spectral) vs Liver FC (spectral),106,0,256.0,278.5,-18.0,-0.8740962793158173,10,96,5.593451108283317e-15,5.034105997454985e-14,True,Generic (spectral)
+B: embedding,Generic (node2vec) vs Generic (spectral),106,0,212.5,256.0,-21.0,-0.2244754011638159,46,60,0.04483542883300461,0.20947333496575013,False,Generic (node2vec)
+B: embedding,Control (node2vec) vs Control (spectral),106,0,224.0,277.5,-33.0,-0.34085699171222006,41,65,0.0023164931352118016,0.01621545194648261,True,Control (node2vec)
+B: embedding,Cancer (node2vec) vs Cancer (spectral),106,0,236.75,278.5,-25.5,-0.32763181096808325,43,63,0.0034098850478656417,0.02045931028719385,True,Cancer (node2vec)
+B: embedding,Liver FC (node2vec) vs Liver FC (spectral),106,0,223.75,278.5,-16.75,-0.22764944454240874,48,58,0.041894666993150025,0.20947333496575013,False,Liver FC (node2vec)

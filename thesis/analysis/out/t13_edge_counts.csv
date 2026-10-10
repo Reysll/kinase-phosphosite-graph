@@ -1,0 +1,4 @@
+network,pos_edges,neg_edges,corr_edges_added,total_network_edges
+Control,811769,149595,961364,2095284
+Cancer,724281,291334,1015615,2149535
+Liver FC,700342,276513,976855,2110775

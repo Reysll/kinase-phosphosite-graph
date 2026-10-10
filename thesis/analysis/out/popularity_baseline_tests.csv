@@ -1,0 +1,5 @@
+comparison,n,median_A,median_B,median_paired_diff,rank_biserial,B_wins,A_wins,ties,pct_ties,p_value,p_holm,significant_holm_0.05,favours
+Popularity vs Generic spectral,6894,26.0,79.0,-42.0,-0.7236050104960261,1106,5657,131,1.9,0.0,0.0,True,Popularity
+Popularity vs Liver FC spectral,6894,26.0,74.0,-24.0,-0.6471041156571468,1486,5313,95,1.38,0.0,0.0,True,Popularity
+Popularity vs Generic node2vec seed-avg,6894,26.0,174.33333333333334,-124.0,-0.8537614391677609,732,6157,5,0.07,0.0,0.0,True,Popularity
+Popularity vs Liver FC node2vec seed-avg,6894,26.0,158.33333333333334,-107.66666666666666,-0.8393346383602297,898,5994,2,0.03,0.0,0.0,True,Popularity

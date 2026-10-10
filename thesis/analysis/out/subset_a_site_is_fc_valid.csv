@@ -1,0 +1,6 @@
+comparison,n,median_A,median_B,median_paired_diff,rank_biserial,B_wins,A_wins,ties,pct_ties,p_value,p_holm,significant_holm_0.05,favours,subset
+Generic (spec) vs Liver FC (spec),510,70.0,74.0,5.0,0.25238006491792075,321,186,3,0.59,8.460293871830267e-07,4.230146935915134e-06,True,Liver FC (spec),(a) site is FC-valid
+Null s1 (spec) vs Liver FC (spec),510,74.0,74.0,0.0,-0.22591362126245848,16,26,468,91.76,0.15174672249876087,0.6069868899950435,False,tie,(a) site is FC-valid
+Null s2 (spec) vs Liver FC (spec),510,74.0,74.0,0.0,-0.02418207681365576,18,19,473,92.75,0.8857764027340975,1.0,False,tie,(a) site is FC-valid
+Null s3 (spec) vs Liver FC (spec),510,74.0,74.0,0.0,-0.042682926829268296,19,21,470,92.16,0.7955886908235212,1.0,False,tie,(a) site is FC-valid
+Generic n2v seed-avg vs Liver FC n2v seed-avg,510,155.33333333333331,151.83333333333331,1.3333333333333215,0.032339155051591045,260,248,2,0.39,0.527683140343977,1.0,False,Liver FC n2v seed-avg,(a) site is FC-valid

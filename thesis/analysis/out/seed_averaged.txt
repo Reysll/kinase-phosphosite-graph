@@ -1,0 +1,35 @@
+ITEM 2 -- SEED-AVERAGED node2vec ANALYSIS
+==============================================================================
+
+Seeds averaged         : [42, 7, 13]
+Trials dropped (NaN in any run): 15
+Trials used            : 6,894
+
+PER-SEED MEDIAN ADJUSTED RANK, AND CROSS-SEED SPREAD
+------------------------------------------------------------------------------
+ network  seed42  seed7  seed13  spread_max_minus_min  sd_of_medians
+ generic   188.0  177.0   148.0                  40.0      20.663978
+liver_fc   165.0  157.0   153.0                  12.0       6.110101
+
+PER-TRIAL CROSS-SEED VARIABILITY (SD of a trial's rank across the 3 seeds)
+------------------------------------------------------------------------------
+  generic    mean SD=  42.4   median SD=  38.7   p90 SD=  73.4   max SD= 186.8
+  liver_fc   mean SD=  39.1   median SD=  35.5   p90 SD=  70.9   max SD= 196.2
+
+TOP-1 PREDICTED KINASE PER SEED (hub identity stability)
+------------------------------------------------------------------------------
+ network  seed top1_kinase  pct_of_trials  n_distinct_top1
+ generic    42        ULK1           76.5                3
+ generic     7        YES1           98.7                4
+ generic    13        WNK4           80.9                3
+liver_fc    42        ULK1          100.0                1
+liver_fc     7        WEE1           96.7                2
+liver_fc    13       ZAP70           91.2                5
+
+GENERIC vs LIVER FC ON SEED-AVERAGED RANKS
+------------------------------------------------------------------------------
+                               comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties   p_value    p_holm  significant_holm_0.05             favours
+Generic (seed-avg) vs Liver FC (seed-avg) 6894    174.3    158.3                6.0        +0.205    3963    2893    38      0.55 5.848e-49 1.170e-48                   True Liver FC (seed-avg)
+        Generic seed42 vs Liver FC seed42 6894    188.0    165.0                7.0        +0.249    3908    2900    86      1.25 1.069e-70 3.208e-70                   True     Liver FC seed42
+          Generic seed7 vs Liver FC seed7 6894    177.0    157.0               11.0        +0.271    3864    2971    59      0.86 1.307e-83 5.228e-83                   True      Liver FC seed7
+        Generic seed13 vs Liver FC seed13 6894    148.0    153.0               -5.0        -0.135    2990    3845    59      0.86 5.272e-22 5.272e-22                   True      Generic seed13

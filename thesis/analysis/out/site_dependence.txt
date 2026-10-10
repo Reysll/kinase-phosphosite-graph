@@ -1,0 +1,20 @@
+ITEM 1 -- SITE-DEPENDENCE DIAGNOSTIC
+==============================================================================
+
+eta^2 of rank_in_site ~ kinase identity.
+  1.0 = a kinase gets the same rank at every site (pure global prior)
+  0.0 = kinase identity carries no information about rank
+
+RESULTS
+------------------------------------------------------------------------------
+embedding  network  n_sites  n_kinases  n_pairs  eta_squared     R2  median_SD_rank_per_kinase  mean_SD_rank_per_kinase  pct_kinases_SD_le_1  pct_kinases_SD_le_5  median_SD_rank_per_site
+ spectral  Generic      391        415   162265       0.9886 0.9886                       4.93                     8.05                  6.0                 51.6                   119.94
+ spectral  Control     3228        415  1339620       0.9997 0.9997                       1.05                     1.52                 48.2                 95.9                   119.94
+ spectral Liver FC     3228        415  1339620       0.9997 0.9997                       1.18                     1.52                 42.2                 96.1                   119.94
+ node2vec  Generic      391        415   162265       0.9879 0.9879                      10.20                    11.28                  2.4                 16.4                   119.94
+ node2vec  Control     3228        415  1339620       0.9903 0.9903                       9.08                     9.98                  3.4                 13.0                   119.94
+ node2vec Liver FC     3228        415  1339620       0.9920 0.9920                       8.20                     9.10                  3.9                 18.3                   119.94
+
+Reference: if every kinase held a fixed rank at all sites, eta^2 = 1.000
+and median per-kinase SD = 0.00. The per-SITE SD column is the spread of
+ranks within one site, which is ~constant by construction (ranks 1..K).

@@ -1,0 +1,9 @@
+network,embedding,path,n_rows,n_nan_rank,git_commit
+Generic,node2vec,outputs_prediction/generic_multi_kinase/results.csv.gz,6909,15,2d72316b5f838f34fa6b31716f57da6334976009
+Control,node2vec,outputs_prediction/control_multi_kinase/results.csv.gz,6909,15,2d72316b5f838f34fa6b31716f57da6334976009
+Cancer,node2vec,outputs_prediction/cancer_multi_kinase/results.csv.gz,6909,15,2d72316b5f838f34fa6b31716f57da6334976009
+Liver FC,node2vec,outputs_prediction/liver_multi_kinase/results.csv.gz,6909,15,2d72316b5f838f34fa6b31716f57da6334976009
+Generic,spectral,outputs_prediction/generic_multi_kinase_spectral/results.csv.gz,6909,15,70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+Control,spectral,outputs_prediction/control_multi_kinase_spectral/results.csv.gz,6909,15,70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+Cancer,spectral,outputs_prediction/cancer_multi_kinase_spectral/results.csv.gz,6909,15,70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809
+Liver FC,spectral,outputs_prediction/liver_multi_kinase_spectral/results.csv.gz,6909,15,70ae35aa9d40fe2d5a73f4ac4d97cb4bd55ac809

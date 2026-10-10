@@ -1,0 +1,20 @@
+NODE2VEC SEED-VARIANCE vs SUBSTANTIVE EFFECTS
+==============================================================================
+
+Convention: diff = rank_A - rank_B; positive favours B.
+Seed-to-seed rows are NOISE estimates, not findings.
+
+ALL CONTRASTS SIDE BY SIDE
+------------------------------------------------------------------------------
+              family                         comparison    n median_A median_B median_paired_diff rank_biserial  spearman_rho  top1_agreement_pct  top10_leaderboard_overlap  B_wins  A_wins  ties  pct_ties    p_value
+context effect (RQ1)  Generic seed42 vs Liver FC seed42 6894    188.0    165.0                7.0        +0.249      0.818752               76.53                          6    3908    2900    86      1.25  1.069e-70
+seed-to-seed (noise)   generic seed42 vs generic seed13 6894    188.0    148.0               17.0        +0.373      0.782294                1.44                          7    4660    2175    59      0.86 7.969e-157
+seed-to-seed (noise)    generic seed42 vs generic seed7 6894    188.0    177.0                4.0        +0.071      0.819491                0.71                          7    3656    3155    83      1.20  3.225e-07
+seed-to-seed (noise) liver_fc seed42 vs liver_fc seed13 6894    165.0    153.0               -3.0        -0.020      0.787395                0.00                          8    3200    3645    49      0.71     0.1619
+seed-to-seed (noise)  liver_fc seed42 vs liver_fc seed7 6894    165.0    157.0                8.0        +0.117      0.748530                0.00                          4    4008    2816    70      1.02  4.348e-17
+
+INTERPRETATION GUIDE (numbers only; no claim asserted here)
+------------------------------------------------------------------------------
+  max |rank_biserial| from seed alone      : 0.373
+  max |median paired diff| from seed alone : 17.0
+  Compare each substantive contrast above against these ceilings.

@@ -1,0 +1,4 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,n_B_better,n_A_better,p_value,p_holm,significant_holm_0.05,favours
+Generic vs Control,198,39,75.0,79.0,-1.0,-0.39072327044025157,43,116,1.772840949580744e-05,3.0491221820477422e-05,True,Generic
+Generic vs Cancer,198,41,75.0,79.0,-1.0,-0.39788760783681365,42,115,1.413528905659605e-05,3.0491221820477422e-05,True,Generic
+Generic vs Liver FC,198,42,75.0,79.0,-1.0,-0.4058468071206925,40,116,1.0163740606825808e-05,3.0491221820477422e-05,True,Generic

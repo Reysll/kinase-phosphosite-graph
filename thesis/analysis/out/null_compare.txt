@@ -1,0 +1,55 @@
+TIER 2 -- DEGREE-PRESERVING NULL NETWORK
+==============================================================================
+
+Null = Liver FC correlation edges randomized by double-edge swap.
+Degree sequence preserved exactly; ~99.9% of pairings destroyed.
+Convention: positive median diff / positive r = B ranks BETTER.
+
+--- spectral | seed 1 | n = 6,894 matched trials ---
+embedding  seed           comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties     p_holm  significant_holm_0.05  favours
+ spectral     1  Generic vs Null(s1) 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 7.053e-163                   True Null(s1)
+ spectral     1 Null(s1) vs Liver FC 6894     74.0     74.0                0.0        +0.264     183     110  6601     95.75  9.224e-06                   True      tie
+ spectral     1  Generic vs Liver FC 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 7.053e-163                   True Liver FC
+
+  median adjusted rank by category:
+  category    n  Generic  Null  Liver FC
+      rich 5872     69.0  53.0      53.0
+   average  824    209.0 212.0     212.0
+      poor  198    231.0 272.5     272.5
+
+--- spectral | seed 2 | n = 6,894 matched trials ---
+embedding  seed           comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties     p_holm  significant_holm_0.05  favours
+ spectral     2  Generic vs Null(s2) 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 8.149e-163                   True Null(s2)
+ spectral     2 Null(s2) vs Liver FC 6894     74.0     74.0                0.0        +0.317     172      92  6630     96.17  4.411e-07                   True      tie
+ spectral     2  Generic vs Liver FC 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 8.149e-163                   True Liver FC
+
+  median adjusted rank by category:
+  category    n  Generic  Null  Liver FC
+      rich 5872     69.0  53.0      53.0
+   average  824    209.0 212.0     212.0
+      poor  198    231.0 272.5     272.5
+
+--- spectral | seed 3 | n = 6,894 matched trials ---
+embedding  seed           comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties     p_holm  significant_holm_0.05  favours
+ spectral     3  Generic vs Null(s3) 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 7.574e-163                   True Null(s3)
+ spectral     3 Null(s3) vs Liver FC 6894     74.0     74.0                0.0        +0.268     170     101  6623     96.07  1.565e-05                   True      tie
+ spectral     3  Generic vs Liver FC 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 7.574e-163                   True Liver FC
+
+  median adjusted rank by category:
+  category    n  Generic  Null  Liver FC
+      rich 5872     69.0  53.0      53.0
+   average  824    209.0 212.0     212.0
+      poor  198    231.0 272.5     272.5
+
+SUMMARY -- 'Null vs Liver FC' across seeds
+------------------------------------------------------------------------------
+embedding  seed    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties  pct_B_wins    p_holm  significant_holm_0.05 favours
+ spectral     1 6894     74.0     74.0                0.0        +0.264     183     110  6601     95.75        2.65 9.224e-06                   True     tie
+ spectral     2 6894     74.0     74.0                0.0        +0.317     172      92  6630     96.17        2.49 4.411e-07                   True     tie
+ spectral     3 6894     74.0     74.0                0.0        +0.268     170     101  6623     96.07        2.47 1.565e-05                   True     tie
+
+NULL RUN METADATA
+------------------------------------------------------------------------------
+  null_spectral_seed1: median=74.0, mean=105.1, n=6909, unrankable=15, loo=3755.5s
+  null_spectral_seed2: median=74.0, mean=105.1, n=6909, unrankable=15, loo=3720.5s
+  null_spectral_seed3: median=74.0, mean=105.1, n=6909, unrankable=15, loo=3714.1s

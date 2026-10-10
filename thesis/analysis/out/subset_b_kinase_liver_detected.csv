@@ -1,0 +1,6 @@
+comparison,n,median_A,median_B,median_paired_diff,rank_biserial,B_wins,A_wins,ties,pct_ties,p_value,p_holm,significant_holm_0.05,favours,subset
+Generic (spec) vs Liver FC (spec),6894,79.0,74.0,6.0,0.3798589520687148,4471,2375,48,0.7,3.4917164486301005e-163,1.7458582243150502e-162,True,Liver FC (spec),(b) kinase liver-detected
+Null s1 (spec) vs Liver FC (spec),6894,74.0,74.0,0.0,0.2636808989807527,183,110,6601,95.75,9.224010184813923e-06,1.8448020369627846e-05,True,tie,(b) kinase liver-detected
+Null s2 (spec) vs Liver FC (spec),6894,74.0,74.0,0.0,0.31692395654659805,172,92,6630,96.17,4.411364956868499e-07,1.3234094870605496e-06,True,tie,(b) kinase liver-detected
+Null s3 (spec) vs Liver FC (spec),6894,74.0,74.0,0.0,0.2682602561319731,170,101,6623,96.07,1.56535957623209e-05,1.8448020369627846e-05,True,tie,(b) kinase liver-detected
+Generic n2v seed-avg vs Liver FC n2v seed-avg,6894,174.33333333333334,158.33333333333334,5.9999999999999964,0.2050829931477326,3963,2893,38,0.55,5.848008896550541e-49,2.3392035586202164e-48,True,Liver FC n2v seed-avg,(b) kinase liver-detected

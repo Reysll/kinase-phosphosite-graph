@@ -1,0 +1,110 @@
+TIER 1 ANALYSES
+==============================================================================
+Trials retained: 6,894
+
+T1.1  WITHIN-CATEGORY RANKING (adjusted_held_out_rank_in_category)
+==============================================================================
+SCOPE: spectral runs only -- Phase 1 node2vec results lack this column.
+Family = 3 context tests (Generic vs Control/Cancer/Liver FC), Holm-corrected
+within each stratum. Convention: positive diff / positive r = B better.
+
+--- RICH | trial level | within-category rank ---
+         comparison    n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better p_value p_holm  significant_holm_0.05 favours
+ Generic vs Control 5872     160     33.0     32.0                0.0        +0.033        2834        2878  0.0297 0.0892                  False     tie
+  Generic vs Cancer 5872     142     33.0     32.0                0.0        +0.018        2829        2901  0.2270 0.3548                  False     tie
+Generic vs Liver FC 5872     140     33.0     32.0                0.0        +0.021        2818        2914  0.1774 0.3548                  False     tie
+
+--- RICH | kinase level | within-category rank ---
+         comparison   n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better p_value p_holm  significant_holm_0.05 favours
+ Generic vs Control 121       2     62.0     60.0               -2.0        -0.134          47          72  0.2039 0.4471                  False Generic
+  Generic vs Cancer 121       2     62.0     60.0               -3.0        -0.152          48          71  0.1490 0.4471                  False Generic
+Generic vs Liver FC 121       3     62.0     60.0               -3.0        -0.137          47          71  0.1950 0.4471                  False Generic
+
+--- POOR | trial level | within-category rank ---
+         comparison   n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better   p_value    p_holm  significant_holm_0.05 favours
+ Generic vs Control 198      39     75.0     79.0               -1.0        -0.391          43         116 1.773e-05 3.049e-05                   True Generic
+  Generic vs Cancer 198      41     75.0     79.0               -1.0        -0.398          42         115 1.414e-05 3.049e-05                   True Generic
+Generic vs Liver FC 198      42     75.0     79.0               -1.0        -0.406          40         116 1.016e-05 3.049e-05                   True Generic
+
+--- POOR | kinase level | within-category rank ---
+         comparison   n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better p_value p_holm  significant_holm_0.05 favours
+ Generic vs Control 106      22     82.5     81.5               -1.0        -0.382          22          62  0.0023 0.0048                   True Generic
+  Generic vs Cancer 106      22     82.5     81.5               -1.0        -0.394          21          63  0.0017 0.0048                   True Generic
+Generic vs Liver FC 106      24     82.5     81.5               -1.0        -0.400          19          63  0.0016 0.0048                   True Generic
+
+--- AVERAGE | trial level | within-category rank ---
+         comparison   n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better   p_value    p_holm  significant_holm_0.05 favours
+ Generic vs Control 824      24     62.5     61.0               -4.0        -0.395         221         579 3.363e-22 6.726e-22                   True Generic
+  Generic vs Cancer 824      21     62.5     61.0               -4.0        -0.390         218         585 8.524e-22 8.524e-22                   True Generic
+Generic vs Liver FC 824      25     62.5     61.0               -4.0        -0.398         216         583 1.950e-22 5.849e-22                   True Generic
+
+--- AVERAGE | kinase level | within-category rank ---
+         comparison   n  n_ties median_A median_B median_paired_diff rank_biserial  n_B_better  n_A_better   p_value p_holm  significant_holm_0.05 favours
+ Generic vs Control 128       3     64.0     65.0               -4.0        -0.355          35          90 5.605e-04 0.0015                   True Generic
+  Generic vs Cancer 128       3     64.0     65.2               -4.0        -0.354          34          91 5.812e-04 0.0015                   True Generic
+Generic vs Liver FC 128       4     64.0     65.5               -4.0        -0.361          34          90 4.870e-04 0.0015                   True Generic
+
+Global vs within-category median rank (spectral, same trials)
+------------------------------------------------------------------------------
+category  Generic global  Generic within-cat  Control global  Control within-cat  Cancer global  Cancer within-cat  Liver FC global  Liver FC within-cat
+    rich            69.0                33.0            53.0                32.0           53.0               32.0             53.0                 32.0
+ average           209.0                62.5           212.0                61.0          213.0               61.0            212.0                 61.0
+    poor           231.0                75.0           272.0                79.0          273.5               79.0            272.5                 79.0
+
+T1.2  CONTEXT-NETWORK SIMILARITY
+==============================================================================
+(a) Spearman rho of per-trial adjusted_held_out_rank between network pairs
+
+embedding                pair    n spearman_rho  p_value frac_identical_rank
+ spectral  Generic vs Control 6894       0.8679 0.00e+00               0.006
+ spectral   Generic vs Cancer 6894       0.8712 0.00e+00               0.008
+ spectral Generic vs Liver FC 6894       0.8633 0.00e+00               0.007
+ spectral   Control vs Cancer 6894       0.9994 0.00e+00               0.567
+ spectral Control vs Liver FC 6894       0.9995 0.00e+00               0.565
+ spectral  Cancer vs Liver FC 6894       0.9993 0.00e+00               0.652
+ node2vec  Generic vs Control 6894       0.6821 0.00e+00               0.006
+ node2vec   Generic vs Cancer 6894       0.7543 0.00e+00               0.011
+ node2vec Generic vs Liver FC 6894       0.8188 0.00e+00               0.012
+ node2vec   Control vs Cancer 6894       0.7328 0.00e+00               0.009
+ node2vec Control vs Liver FC 6894       0.7135 0.00e+00               0.009
+ node2vec  Cancer vs Liver FC 6894       0.7193 0.00e+00               0.014
+
+(b) Top-10-per-site overlap (Phase 3 predict-all, 3,228 FC-valid sites)
+    mean |intersection| of each site's top-10 kinase set, out of 10
+
+embedding                pair  n_sites mean_overlap_of_10 frac_sites_identical_top10
+ spectral  Generic vs Control      391               6.32                      0.000
+ spectral   Generic vs Cancer      391               6.09                      0.000
+ spectral Generic vs Liver FC      391               6.08                      0.000
+ spectral   Control vs Cancer     3228               9.57                      0.570
+ spectral Control vs Liver FC     3228               9.57                      0.569
+ spectral  Cancer vs Liver FC     3228               9.99                      0.988
+ node2vec  Generic vs Control      391               4.96                      0.000
+ node2vec   Generic vs Cancer      391               5.40                      0.000
+ node2vec Generic vs Liver FC      391               4.88                      0.000
+ node2vec   Control vs Cancer     3228               4.60                      0.000
+ node2vec Control vs Liver FC     3228               4.70                      0.000
+ node2vec  Cancer vs Liver FC     3228               6.04                      0.000
+
+T1.3  CORRELATION-EDGE ACCOUNTING
+==============================================================================
+Base (non-correlation) edges in liver file : 1,133,920
+ network  pos_edges  neg_edges  corr_edges_added  total_network_edges
+ Control     811769     149595            961364              2095284
+  Cancer     724281     291334           1015615              2149535
+Liver FC     700342     276513            976855              2110775
+
+Correlation-edge endpoints by substrate annotation
+  'rich-touching'  = >=1 endpoint is a substrate of a rich kinase
+  'poor-touching'  = >=1 endpoint is a substrate of a poor kinase
+  'unannotated'    = NEITHER endpoint has any PSP kinase
+
+ network  corr_edges  rich_touching rich_pct  average_touching  poor_touching poor_pct  both_endpoints_annotated  neither_annotated neither_pct
+ Control      961364         213481    22.2%             32913          12086     1.3%                     14532             737879       76.8%
+  Cancer     1015615         199601    19.7%             36505          12036     1.2%                     12431             801123       78.9%
+Liver FC      976855         193271    19.8%             36007          12079     1.2%                     12120             768829       78.7%
+
+Sites with >=1 PSP kinase: 10,146
+  sites with a rich    kinase: 9,258
+  sites with a average kinase: 1,230
+  sites with a poor    kinase: 360

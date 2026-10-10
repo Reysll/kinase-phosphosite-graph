@@ -1,0 +1,6 @@
+family,comparison,n,median_A,median_B,median_paired_diff,rank_biserial,spearman_rho,top1_agreement_pct,top10_leaderboard_overlap,B_wins,A_wins,ties,pct_ties,p_value
+context effect (RQ1),Generic seed42 vs Liver FC seed42,6894,188.0,165.0,7.0,0.24876455248022292,0.8187517052169756,76.53,6,3908,2900,86,1.25,1.0692559336108496e-70
+seed-to-seed (noise),generic seed42 vs generic seed13,6894,188.0,148.0,17.0,0.37262219935510743,0.7822940358594046,1.44,7,4660,2175,59,0.86,7.969155823043414e-157
+seed-to-seed (noise),generic seed42 vs generic seed7,6894,188.0,177.0,4.0,0.07148930872678157,0.8194910857295933,0.71,7,3656,3155,83,1.2,3.2254624844805685e-07
+seed-to-seed (noise),liver_fc seed42 vs liver_fc seed13,6894,165.0,153.0,-3.0,-0.019521447211714164,0.7873948635848214,0.0,8,3200,3645,49,0.71,0.1618753926462838
+seed-to-seed (noise),liver_fc seed42 vs liver_fc seed7,6894,165.0,157.0,8.0,0.11745389038472275,0.7485296604799896,0.0,4,4008,2816,70,1.02,4.3479203620689084e-17

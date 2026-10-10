@@ -1,0 +1,34 @@
+G2 -- KSEA p-value convention: one-tailed-on-|z| vs two-tailed
+==============================================================================
+
+Source file   : outputs_prediction/ksea/ksea_psp.csv
+git commit    : 0567c29ec4f11344d33c2ce286db60fba9f038f7
+Kinases scored: 64   (>= 3 substrates in the FC dataset)
+Correction    : Benjamini-Hochberg, alpha = 0.05
+
+Significant kinase counts
+------------------------------------------------------------------------------
+  stored adj_p_value (as published)          : 17 / 64
+  recomputed p = norm.sf(|z|)   [reproduces] : 17 / 64
+  recomputed p = 2*norm.sf(|z|) [two-tailed] : 12 / 64
+
+Kinases that lose significance under the two-tailed convention (5):
+  CHEK1, MAPK3, PRKCE, PRKDC, TBK1
+
+Two-tailed significant kinases (12)
+------------------------------------------------------------------------------
+ kinase  n_substrates_in_dataset mean_substrate_fc ksea_score p_two_tailed adj_p_two_tailed     direction
+ MAPK12                        3             4.138    +5.6199    1.911e-08        6.839e-07   up in tumor
+  CDKL5                        3             4.033    +5.4547    4.904e-08        1.046e-06   up in tumor
+ MAPK13                        4             3.377    +5.1018    3.365e-07        5.384e-06   up in tumor
+CSNK2A1                       35             1.154    +3.1047       0.0019           0.0135   up in tumor
+  PRKG2                        3            -1.089    -2.6339       0.0084           0.0450 down in tumor
+RPS6KA3                        4            -0.965    -2.8138       0.0049           0.0285 down in tumor
+  PRKG1                        7            -0.637    -2.9329       0.0034           0.0215 down in tumor
+   PAK1                        8            -0.655    -3.1807       0.0015           0.0118 down in tumor
+RPS6KA1                       10            -0.608    -3.4198    6.267e-04           0.0057 down in tumor
+  PRKCD                       11            -0.559    -3.4396    5.826e-04           0.0057 down in tumor
+  PRKD1                       10            -0.794    -3.9564    7.609e-05        9.740e-04 down in tumor
+ PRKACA                       51            -0.282    -5.6005    2.137e-08        6.839e-07 down in tumor
+
+Direction split (two-tailed significant): up = 4, down = 8

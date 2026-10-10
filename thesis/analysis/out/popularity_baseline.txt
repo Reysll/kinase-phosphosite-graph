@@ -1,0 +1,98 @@
+POPULARITY BASELINE -- PARITY-CORRECTED
+==============================================================================
+
+(a) Model trains on the 6,909 frozen multi-kinase edges, NOT all 14,596
+    PSP edges. Code path: run_multi_kinase_*.py passes
+    frozen_trials_multi_kinase.csv.gz as positive_edges ->
+    run_leave_one_out -> _build_training_matrix(positive_edges=...).
+(b) Models score 415 candidates (num_candidate_kinases_scored = 415 in all
+    four runs); the scored set is identical across networks.
+
+EFFECT OF THE PARITY FIX (global adjusted rank, all trials)
+------------------------------------------------------------------------------
+                                        group    n  median  mean  Hit@10_pct  Hit@20_pct
+   OLD: all 14,596 PSP counts, 420 candidates 6894    26.0  57.5       32.64       44.47
+PARITY: 6,909 training counts, 415 candidates 6894    25.0  54.9       33.42       45.08
+
+GLOBAL ADJUSTED RANK -- parity baseline
+------------------------------------------------------------------------------
+  group    n  median  mean  Hit@10_pct  Hit@20_pct
+    ALL 6894    25.0  54.9       33.42       45.08
+   rich 5872    18.0  30.5       39.24       52.93
+average  824   162.0 168.4        0.00        0.00
+   poor  198   303.0 304.7        0.00        0.00
+
+WITHIN-CATEGORY ADJUSTED RANK -- parity baseline
+------------------------------------------------------------------------------
+  group    n  median  mean  Hit@10_pct  Hit@20_pct
+    ALL 6894    22.0  33.2       35.16       48.80
+   rich 5872    18.0  29.2       39.24       52.93
+average  824    53.0  52.8       12.74       27.31
+   poor  198    64.0  70.0        7.58       15.66
+
+PAIRED COMPARISONS -- ALL TRIALS (median_A = popularity, B = model)
+------------------------------------------------------------------------------
+                         comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 6894     25.0     79.0              -47.0        -0.758     949    5775   170 0.000e+00 0.000e+00                   True Popularity
+    Popularity vs Liver FC spectral 6894     25.0     74.0              -26.0        -0.686    1513    5271   110 0.000e+00 0.000e+00                   True Popularity
+ Popularity vs Generic n2v seed-avg 6894     25.0    174.3             -126.3        -0.873     734    6159     1 0.000e+00 0.000e+00                   True Popularity
+Popularity vs Liver FC n2v seed-avg 6894     25.0    158.3             -108.3        -0.863     847    6039     8 0.000e+00 0.000e+00                   True Popularity
+
+STRATIFIED COMPARISONS -- does any model beat popularity where
+annotation is sparse?
+==============================================================================
+--- POOR | global rank | trial level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05               favours
+     Popularity vs Generic spectral 198    303.0    231.0               70.0        +0.626     138      59     1 2.669e-14 5.338e-14                   True      Generic spectral
+    Popularity vs Liver FC spectral 198    303.0    272.5               39.0        +0.480     126      71     1 5.341e-09 5.341e-09                   True     Liver FC spectral
+ Popularity vs Generic n2v seed-avg 198    303.0    194.7               96.3        +0.808     157      40     1 8.425e-23 3.370e-22                   True  Generic n2v seed-avg
+Popularity vs Liver FC n2v seed-avg 198    303.0    192.2               91.0        +0.770     151      47     0 5.914e-21 1.774e-20                   True Liver FC n2v seed-avg
+
+--- POOR | global rank | kinase level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05               favours
+     Popularity vs Generic spectral 106    353.0    256.0               87.2        +0.741      80      25     1 4.484e-11 8.969e-11                   True      Generic spectral
+    Popularity vs Liver FC spectral 106    353.0    278.5               67.8        +0.625      75      31     0 2.355e-08 2.355e-08                   True     Liver FC spectral
+ Popularity vs Generic n2v seed-avg 106    353.0    229.2               99.9        +0.831      84      22     0 1.134e-13 4.535e-13                   True  Generic n2v seed-avg
+Popularity vs Liver FC n2v seed-avg 106    353.0    225.7              100.8        +0.802      83      23     0 7.821e-13 2.346e-12                   True Liver FC n2v seed-avg
+
+--- POOR | within-cat rank | trial level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 198     64.0    231.0             -160.0        -0.932      16     182     0 5.510e-30 1.653e-29                   True Popularity
+    Popularity vs Liver FC spectral 198     64.0    272.5             -192.5        -0.954      14     184     0 2.643e-31 1.057e-30                   True Popularity
+ Popularity vs Generic n2v seed-avg 198     64.0    194.7             -139.5        -0.841      39     159     0 1.003e-24 1.003e-24                   True Popularity
+Popularity vs Liver FC n2v seed-avg 198     64.0    192.2             -140.0        -0.860      29     169     0 8.914e-26 1.783e-25                   True Popularity
+
+--- POOR | within-cat rank | kinase level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 106    106.0    256.0             -152.5        -0.899      11      95     0 9.297e-16 2.789e-15                   True Popularity
+    Popularity vs Liver FC spectral 106    106.0    278.5             -176.5        -0.929      10      96     0 1.036e-16 4.145e-16                   True Popularity
+ Popularity vs Generic n2v seed-avg 106    106.0    229.2             -140.8        -0.785      23      83     0 2.307e-12 2.307e-12                   True Popularity
+Popularity vs Liver FC n2v seed-avg 106    106.0    225.7             -126.2        -0.798      20      86     0 1.018e-12 2.037e-12                   True Popularity
+
+--- AVERAGE | global rank | trial level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 824    162.0    209.0              -32.0        -0.301     355     469     0 7.657e-14 2.297e-13                   True Popularity
+    Popularity vs Liver FC spectral 824    162.0    212.0              -28.0        -0.321     310     512     2 1.570e-15 6.281e-15                   True Popularity
+ Popularity vs Generic n2v seed-avg 824    162.0    188.0              -19.8        -0.244     378     446     0 1.291e-09 1.291e-09                   True Popularity
+Popularity vs Liver FC n2v seed-avg 824    162.0    190.3              -16.0        -0.274     363     459     2 1.092e-11 2.185e-11                   True Popularity
+
+--- AVERAGE | global rank | kinase level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties p_value p_holm  significant_holm_0.05               favours
+     Popularity vs Generic spectral 128    194.2    213.0               -1.0        -0.029      64      64     0  0.7772 1.0000                  False            Popularity
+    Popularity vs Liver FC spectral 128    194.2    219.8              -14.5        -0.052      57      71     0  0.6116 1.0000                  False            Popularity
+ Popularity vs Generic n2v seed-avg 128    194.2    189.8               13.2        +0.069      73      55     0  0.4979 1.0000                  False  Generic n2v seed-avg
+Popularity vs Liver FC n2v seed-avg 128    194.2    193.7               17.7        +0.018      69      59     0  0.8631 1.0000                  False Liver FC n2v seed-avg
+
+--- AVERAGE | within-cat rank | trial level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties    p_value     p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 824     53.0    209.0             -151.0        -0.934      80     744     0 2.261e-119 4.522e-119                   True Popularity
+    Popularity vs Liver FC spectral 824     53.0    212.0             -146.0        -0.946      82     742     0 2.944e-122 1.178e-121                   True Popularity
+ Popularity vs Generic n2v seed-avg 824     53.0    188.0             -130.5        -0.927      93     730     1 1.558e-117 1.558e-117                   True Popularity
+Popularity vs Liver FC n2v seed-avg 824     53.0    190.3             -130.7        -0.936      97     727     0 6.019e-120 1.806e-119                   True Popularity
+
+--- AVERAGE | within-cat rank | kinase level ---
+                         comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties   p_value    p_holm  significant_holm_0.05    favours
+     Popularity vs Generic spectral 128     78.5    213.0             -134.0        -0.899      15     113     0 1.057e-18 3.171e-18                   True Popularity
+    Popularity vs Liver FC spectral 128     78.5    219.8             -143.5        -0.906      17     111     0 5.941e-19 2.376e-18                   True Popularity
+ Popularity vs Generic n2v seed-avg 128     78.5    189.8             -122.2        -0.853      20     108     0 5.483e-17 5.483e-17                   True Popularity
+Popularity vs Liver FC n2v seed-avg 128     78.5    193.7             -117.8        -0.881      21     107     0 5.289e-18 1.058e-17                   True Popularity

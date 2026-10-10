@@ -1,0 +1,13 @@
+embedding,pair,n_sites,mean_overlap_of_10,frac_sites_identical_top10
+spectral,Generic vs Control,391,6.32225063938619,0.0
+spectral,Generic vs Cancer,391,6.089514066496164,0.0
+spectral,Generic vs Liver FC,391,6.081841432225064,0.0
+spectral,Control vs Cancer,3228,9.570322180916977,0.5703221809169765
+spectral,Control vs Liver FC,3228,9.56908302354399,0.5690830235439901
+spectral,Cancer vs Liver FC,3228,9.987918215613384,0.9879182156133829
+node2vec,Generic vs Control,391,4.964194373401535,0.0
+node2vec,Generic vs Cancer,391,5.40153452685422,0.0
+node2vec,Generic vs Liver FC,391,4.877237851662404,0.0
+node2vec,Control vs Cancer,3228,4.6037794299876085,0.0
+node2vec,Control vs Liver FC,3228,4.701672862453532,0.0
+node2vec,Cancer vs Liver FC,3228,6.044919454770756,0.0

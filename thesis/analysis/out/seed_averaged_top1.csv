@@ -1,0 +1,7 @@
+network,seed,top1_kinase,pct_of_trials,n_distinct_top1
+generic,42,ULK1,76.5,3
+generic,7,YES1,98.7,4
+generic,13,WNK4,80.9,3
+liver_fc,42,ULK1,100.0,1
+liver_fc,7,WEE1,96.7,2
+liver_fc,13,ZAP70,91.2,5

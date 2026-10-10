@@ -1,0 +1,42 @@
+ITEM 7 -- EVALUATION-SUBSET ANALYSIS
+==============================================================================
+
+FC-valid liver sites           : 3,228
+Liver-graph protein nodes      : 3,195
+Trials rankable everywhere     : 6,894
+  FULL (all rankable)         : n = 6,894
+  (a) site is FC-valid        : n = 510
+  (b) kinase liver-detected   : n = 6,894
+  (c) both                    : n = 510
+
+--- FULL (all rankable) (n = 6,894) ---
+                                   comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties    p_value     p_holm  significant_holm_0.05               favours
+            Generic (spec) vs Liver FC (spec) 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 3.492e-163 1.746e-162                   True       Liver FC (spec)
+            Null s1 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.264     183     110  6601     95.75  9.224e-06  1.845e-05                   True                   tie
+            Null s2 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.317     172      92  6630     96.17  4.411e-07  1.323e-06                   True                   tie
+            Null s3 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.268     170     101  6623     96.07  1.565e-05  1.845e-05                   True                   tie
+Generic n2v seed-avg vs Liver FC n2v seed-avg 6894    174.3    158.3                6.0        +0.205    3963    2893    38      0.55  5.848e-49  2.339e-48                   True Liver FC n2v seed-avg
+
+--- (a) site is FC-valid (n = 510) ---
+                                   comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties   p_value    p_holm  significant_holm_0.05               favours
+            Generic (spec) vs Liver FC (spec) 510     70.0     74.0                5.0        +0.252     321     186     3      0.59 8.460e-07 4.230e-06                   True       Liver FC (spec)
+            Null s1 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.226      16      26   468     91.76    0.1517    0.6070                  False                   tie
+            Null s2 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.024      18      19   473     92.75    0.8858    1.0000                  False                   tie
+            Null s3 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.043      19      21   470     92.16    0.7956    1.0000                  False                   tie
+Generic n2v seed-avg vs Liver FC n2v seed-avg 510    155.3    151.8                1.3        +0.032     260     248     2      0.39    0.5277    1.0000                  False Liver FC n2v seed-avg
+
+--- (b) kinase liver-detected (n = 6,894) ---
+                                   comparison    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties    p_value     p_holm  significant_holm_0.05               favours
+            Generic (spec) vs Liver FC (spec) 6894     79.0     74.0                6.0        +0.380    4471    2375    48      0.70 3.492e-163 1.746e-162                   True       Liver FC (spec)
+            Null s1 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.264     183     110  6601     95.75  9.224e-06  1.845e-05                   True                   tie
+            Null s2 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.317     172      92  6630     96.17  4.411e-07  1.323e-06                   True                   tie
+            Null s3 (spec) vs Liver FC (spec) 6894     74.0     74.0                0.0        +0.268     170     101  6623     96.07  1.565e-05  1.845e-05                   True                   tie
+Generic n2v seed-avg vs Liver FC n2v seed-avg 6894    174.3    158.3                6.0        +0.205    3963    2893    38      0.55  5.848e-49  2.339e-48                   True Liver FC n2v seed-avg
+
+--- (c) both (n = 510) ---
+                                   comparison   n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  ties  pct_ties   p_value    p_holm  significant_holm_0.05               favours
+            Generic (spec) vs Liver FC (spec) 510     70.0     74.0                5.0        +0.252     321     186     3      0.59 8.460e-07 4.230e-06                   True       Liver FC (spec)
+            Null s1 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.226      16      26   468     91.76    0.1517    0.6070                  False                   tie
+            Null s2 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.024      18      19   473     92.75    0.8858    1.0000                  False                   tie
+            Null s3 (spec) vs Liver FC (spec) 510     74.0     74.0                0.0        -0.043      19      21   470     92.16    0.7956    1.0000                  False                   tie
+Generic n2v seed-avg vs Liver FC n2v seed-avg 510    155.3    151.8                1.3        +0.032     260     248     2      0.39    0.5277    1.0000                  False Liver FC n2v seed-avg

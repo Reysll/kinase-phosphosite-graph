@@ -14,6 +14,16 @@ email*.txt
 *.ppt
 *.pdf
 
+# Thesis analysis: regenerable per-trial result matrices (large binaries).
+# Scripts, chapters, briefs and the .txt/.csv summary tables ARE tracked; the
+# raw per-trial outputs are reproducible via the commands in thesis/STATE.md.
+thesis/analysis/out/**/*.csv.gz
+thesis/analysis/out/null/
+thesis/analysis/out/seed_variance/
+thesis/analysis/out/null_inference/
+thesis/analysis/out/logs/
+thesis/analysis/__pycache__/
+
 # Source data files (large; regenerate from raw sources)
 data/raw/
 data/liver/
