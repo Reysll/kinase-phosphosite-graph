@@ -1,9 +1,11 @@
 # CHAPTER II: BACKGROUND AND RELATED WORK
 
-> Draft. Citations marked `[VERIFIED]` have a confirmed DOI or PMC link recorded
-> in `thesis/references.md`. Citations marked `[CITE-TODO]` are standard works
-> whose bibliographic details still need verification before submission; they
-> are flagged rather than guessed, per the accuracy rules.
+> Draft. Citation verification completed 2026-10-10. `[VERIFIED]` = DOI or PMC
+> link confirmed, recorded in `thesis/references.md`. `[PARTIAL]` = freely
+> accessible but no DOI exists. Two items remain unresolved and are marked
+> inline: the protein-interaction source file has no recorded provenance, and
+> the liver dataset's attribution to Gao et al. is blocked by a cohort-size
+> mismatch. No citation is guessed.
 
 ## 2.1 Protein Phosphorylation and Kinase Signaling
 
@@ -60,23 +62,26 @@ Several curated resources supply the evidence integrated in this work.
 
 **PhosphoSitePlus** is the principal source of experimentally determined
 kinase-substrate associations and of phosphorylation site definitions
-(Hornbeck et al., 2012) [CITE-TODO]. Its curated kinase-substrate table provides
+(Hornbeck et al., 2012) [VERIFIED]. Its curated kinase-substrate table provides
 the positive labels used throughout this thesis.
 
 **DEPOD** catalogues human phosphatase-substrate relationships, supplying the
-dephosphorylation counterpart to the kinase annotations [CITE-TODO].
+dephosphorylation counterpart to the kinase annotations (Duan et al., 2015)
+[VERIFIED].
 
 **MSigDB** and **PTMsigDB** provide pathway membership at the protein level and
 at the post-translational-modification site level respectively, allowing
 proteins or sites that participate in the same biological process to be linked
-[CITE-TODO].
+(Liberzon et al., 2015; Krug et al., 2019) [VERIFIED].
 
 **Protein-protein interaction data** supplies physical and high-confidence
-functional associations between proteins [CITE-TODO].
+functional associations between proteins. The specific source of
+`high_confidence_score.csv` is not recorded anywhere in the repository and is
+**not yet attributable**; see `thesis/references.md`.
 
 **PTMcode2** provides evidence of co-evolution between modification sites, which
 captures functional coupling not visible in interaction or pathway data
-[CITE-TODO].
+(Minguez et al., 2015) [VERIFIED].
 
 These resources are complementary rather than redundant: each supplies a
 different kind of evidence about how proteins and sites relate, which is the
@@ -133,7 +138,8 @@ families are compared in this work.
 
 ### 2.5.1 Random-Walk Embeddings
 
-DeepWalk [CITE-TODO] and node2vec (Grover and Leskovec, 2016) [CITE-TODO]
+DeepWalk (Perozzi et al., 2014) and node2vec (Grover & Leskovec, 2016)
+[both VERIFIED]
 generate sequences of nodes by random walks over the graph and then apply a word
 embedding model, treating node sequences as sentences. Nodes that frequently
 co-occur in walks receive similar vectors. node2vec adds two parameters, `p` and
@@ -163,8 +169,9 @@ node's degree. High-degree nodes are therefore down-weighted by construction,
 which makes spectral embedding a natural remedy for the degree sensitivity of
 random-walk methods. The eigenvectors associated with the smallest non-trivial
 eigenvalues encode the coarse community structure of the graph. Spectral methods
-have a long history in clustering and dimensionality reduction (von Luxburg,
-2007; Ng, Jordan, and Weiss, 2002; Shi and Malik, 2000) [CITE-TODO].
+have a long history in clustering and dimensionality reduction (von Luxburg, 2007
+[VERIFIED]; Shi & Malik, 2000 [VERIFIED]; Ng, Jordan, & Weiss, 2002 [PARTIAL:
+no DOI, NeurIPS-era proceedings]).
 
 Two properties relevant to later chapters follow from this definition. Spectral
 embedding is **deterministic** given the graph and the number of components
@@ -202,9 +209,12 @@ alone then adding edges can appear to help for reasons unrelated to the biology
 being encoded.
 
 The liver cancer measurements used here come from an integrated proteogenomic
-characterization of hepatitis-B-related hepatocellular carcinoma (Gao et al.,
-2019) [CITE-TODO], which provides matched protein and phosphoprotein abundance
-for tumor and adjacent non-tumor tissue.
+characterization of hepatitis-B-related hepatocellular carcinoma (Gao et al., 2019)
+[VERIFIED publication, PROVENANCE UNRESOLVED], which provides matched protein
+and phosphoprotein abundance for tumor and adjacent non-tumor tissue. Note that
+Gao et al. report 159 patients whereas the file used here contains 18 tumor and
+18 control samples; the attribution is therefore provisional pending
+confirmation (see `thesis/references.md`).
 
 ## 2.7 Inferring Kinase Activity from Phosphoproteomics
 
@@ -213,7 +223,7 @@ inference: given measured changes in phosphorylation across conditions, which
 kinases appear more or less active? Kinase-Substrate Enrichment Analysis (KSEA)
 answers this by testing whether the known substrates of a kinase are
 collectively shifted relative to the global distribution of changes (Wiredja
-et al., 2017) [CITE-TODO]. The score takes the form
+et al., 2017) [VERIFIED]. The score takes the form
 
 $$\text{score} = \frac{(\bar{s} - \bar{p})\sqrt{m}}{\delta}$$
 
