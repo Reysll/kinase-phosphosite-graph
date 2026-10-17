@@ -98,10 +98,16 @@ yet, so the collaborator deliverable is genuinely new work.
 
 ### Git
 
-Work is on branch `docs/accuracy-fixes`, pushed to `origin`. It is not merged
-to `main`, and whether to merge is open decision 4. Large regenerable outputs
-under `thesis/analysis/out/` are gitignored and reproducible from the commands
-in STATE.md.
+All work is merged into `main` and pushed to `origin` as of 2026-10-17, so a
+fresh clone of `main` has everything. The `docs/accuracy-fixes` branch is fully
+merged and can be deleted. Large regenerable outputs under
+`thesis/analysis/out/` are gitignored, and reproducible from the commands in
+STATE.md.
+
+A fresh clone will not include `data/raw/`, `data/liver/`, `outputs/`,
+`outputs_prediction/` or `.venv312/`, all of which are gitignored. Copy the
+data directories across and rebuild the virtual environment before running
+any command from STATE.md. Thesis writing needs none of them.
 
 Tell me what you have read and what you think the first move should be before
 you change anything.

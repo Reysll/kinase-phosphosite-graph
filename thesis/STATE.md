@@ -138,8 +138,9 @@ Supersedes open decision 1. Every number here was recomputed from the repo on
    email, but the direction is not settled and the walkthrough meeting
    (item 7 above) has not occurred, so the framing these chapters need is
    still open.
-4. **G5–G14 doc fixes** — committed on branch `docs/accuracy-fixes` (`c5f6111`),
-   not merged to `main`.
+4. **G5–G14 doc fixes** — RESOLVED 2026-10-17. Committed as `c5f6111` and
+   merged into `main` by fast-forward, no merge commit. `main` is now at
+   `b72234c`.
 5. **Provenance of the liver dataset.** Confirm the source study behind
    `data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx` before citing Gao
    et al. (2019). The file has **18 tumor + 18 control** samples, which may not
@@ -163,7 +164,6 @@ Supersedes open decision 1. Every number here was recomputed from the repo on
 ## Outstanding work
 
 - Chapters II and III drafts (in progress; independent of the above)
-- G5–G14 doc fixes branch (committed, not merged)
 - Chapters I, IV, V, VI, VII after the direction settles
 - `.docx` build + PDF export + formatting check (Checkpoint 4)
 - Reply to the advisor's 2026-10-15 email (not drafted)
