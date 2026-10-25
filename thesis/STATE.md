@@ -1,6 +1,6 @@
 # Thesis state — recovery point
 
-Last updated: 2026-10-25. Advisor decisions of 2026-10-25 recorded below;
+Last updated: 2026-10-25 (second pass). Advisor decisions recorded below;
 see "Current plan" for the three tasks now in flight.
 All paths relative to the repo root. All analysis scripts are read-only with
 respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
@@ -19,7 +19,7 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 7 | Context networks near-identical under spectral (ρ=0.999; 57–99% identical top-10) | `out/t12_spearman.csv`, `t12_top10_overlap.csv` | same |
 | 8 | Edge accounting: base 1,133,920; Liver FC +976,855 = 2,110,775. 77–79% of corr edges touch no annotated site | `out/t13_*.csv` | same |
 | 9 | **Null reproduces Liver FC**: 95.8–96.2% identical ranks, 3 seeds | `out/null_compare.txt`, `null_compare.csv` | `python -m thesis.analysis.null_compare` |
-| 10 | **Null reproduces 100% of necroptosis shift**; TTK 0% | `out/null_casestudy.txt`, `null_casestudy_ks.csv` | `python -m thesis.analysis.null_casestudy` |
+| 10 | **Null reproduces 100% of necroptosis shift**. TTK was reported as a 0% exception; **retracted**, its Control to Liver FC shift was 1 rank (6 to 7), too small to evaluate against the null | `out/null_casestudy.txt`, `null_casestudy_ks.csv` | `python -m thesis.analysis.null_casestudy` |
 | 11 | Seed noise (+0.373) exceeds context effect (+0.249); seed 13 reverses direction | `out/seedvar_compare.txt` | `python -m thesis.analysis.seedvar_compare` |
 | 12 | Six runs, six different top-1 hubs; Generic median spread 40 ranks | `out/seed_averaged.txt`, `seed_averaged_top1.csv` | `python -m thesis.analysis.seed_averaged` |
 | 13 | **η² = 0.9997** (spectral); median per-kinase rank SD ≈ 1 across 3,228 sites | `out/site_dependence.txt`, `site_dependence.csv` | `python -m thesis.analysis.site_dependence` |
@@ -29,6 +29,9 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 17 | **Within-category ranking does not escape the null.** 184/415 kinases (44.3%) differ from the null by KS+BH, but 159 of those 184 have a median shift of exactly 0 and the max is 2 ranks; liverfc_shift vs null_shift r=0.9944 | `out/withincat_null.txt`, `withincat_null_*.csv` | `python -m thesis.analysis.withincat_null` |
 | 18 | **Identifier map truncated at 2^20 lines.** `gene_protein.csv` has exactly 1,048,576 lines (Excel's row cap); 1,664/16,185 PPI proteins unmapped (10.3%), costing 6,960/472,000 PPI rows (1.5%) | `GRAPH_WALKTHROUGH.md` §3.5 | see that file §8 |
 | 19 | Liver sheets are supplementary Tables S4 and S11 of an unidentified HCC paper; 18+18 is consistent with 6 batches of 3+3 but the patient pairing is not recorded | `GRAPH_WALKTHROUGH.md` §5.1-5.2 | same |
+| 20 | **Phospho sheet is NOT normalized**: per-channel medians span 6.13x (2.62 log2). Per-channel median centering applied before testing | `out/diffsites/normalization_check.txt` | `python -m thesis.analysis.check_normalization` |
+| 21 | **Differential sites**: 2,973 tested, **1,548 significant** (BH-FDR<0.05) under a batch-aware linear model; 801 up, 747 down; 659 on the shortlist. Welch alone gives 939, so **643 sites (21.6%) change significance** when batch is modelled | `out/diffsites/diffsites.txt` | `python -m thesis.analysis.differential_sites` |
+| 22 | **KSEA and ranking are NOT meaningfully disjoint.** Overlap 0/1/3 at the top 10/20/50 cutoffs against 0.56/1.50/3.56 expected by chance; hypergeometric depletion n.s. in all 6 comparisons | `out/ksea_ranking_overlap.txt` | `python -m thesis.analysis.ksea_ranking_overlap` |
 
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
@@ -42,6 +45,10 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 6. **`batch_words=4` caused the 343.8-min runtime** — false. Correct-settings runs took 357–378 min (3.1–3.3 s/trial); the trial loop dominates.
 7. **|r| threshold admits low-n pairs** — false. Mean |r| is flat across n buckets, highest at n=18.
 8. **Cluster/all-sites results** — excluded; runs were incomplete (timeouts). Do not cite `allsites_spectral_summary.txt`.
+9. **TTK as a surviving exception to the null** — retracted 2026-10-25. Its
+   Control to Liver FC shift was **1 rank** (median 6 to 7). A 0% null
+   reproduction of a 1-rank shift is noise, not evidence. State it as: TTK's
+   shift was too small to evaluate against the null.
 
 ## Quarantined
 
@@ -155,7 +162,8 @@ notes above where they conflict.
 | 1 | Record these decisions in STATE.md | **done** 2026-10-25 | this file |
 | 2 | Within-category comparative ranking vs the null, read-only | **done** 2026-10-25 | `out/withincat_null.txt` + 3 CSVs, finding 17 |
 | 3 | Preprocessing audit written for a biologist | **done** 2026-10-25 | `thesis/GRAPH_WALKTHROUGH.md` |
-| 4 | Differential site analysis for the collaborator | **plan written, NOT run, awaiting approval** | `thesis/PLAN_differential_sites.md` |
+| 4 | Differential site analysis for the collaborator | **approved and run** 2026-10-25, with per-channel normalization and a batch-aware model added | `thesis/PLAN_differential_sites.md`, `out/diffsites/` |
+| 5 | Chapter III updated with the audit; Chapter IV drafted; Chapter II citations and APA fixed | **done** 2026-10-25 | `thesis/chapters/` |
 
 Task 2's result, stated plainly: within-category ranking is the right metric and
 it does **not** rescue the context effect. Of 415 kinases, 184 (44.3%) have a
@@ -201,8 +209,22 @@ channel belongs to which tumour channel.
    paper. Next step is to ask the advisor or the file's supplier, not to search
    again. Until then, describe the data by its contents and sample counts and
    cite nothing. British spelling in the captions suggests a non-US journal.
-6. **Two unsupported claims in the chapter drafts.** Locate the file that
-   supports each, or delete the sentence:
+   **Implemented 2026-10-25**: Chapters II and III now describe the dataset
+   without attribution, and `references.md` records the evidence gathered.
+6. **RESOLVED 2026-10-25. Two unsupported claims in the chapter drafts.**
+   Both were addressed:
+   - The 85th-percentile sentence was **deleted** from Chapter III. A repository
+     search found no output file for that comparison, only the assertion in
+     `CLAUDE.md`, which is itself the unsupported documentation.
+   - The KSEA-disjointness sentence was **computed and corrected** (finding 22).
+     The sets overlap in 0, 1 and 3 kinases at the top 10, 20 and 50 cutoffs,
+     against 0.56, 1.50 and 3.56 expected by chance, with no significant
+     depletion in any of the six comparisons. Chapter II now states that the two
+     methods nominate few kinases in common but no more rarely than chance, and
+     that the apparent disagreement follows from both nominating small sets from
+     a large pool.
+
+   Original wording retained for the record:
    - Chapter III §3.6.2 — "An 85th-percentile threshold was tested on the
      fold-change variant and performed worse." Referenced in project docs but
      no output file for that comparison has been found.
@@ -235,7 +257,9 @@ channel belongs to which tumour channel.
 
 ## Outstanding work
 
-- Chapters II and III drafts (in progress; independent of the above)
+- Chapter II: citations verified, APA 7 applied, disjointness claim corrected
+- Chapter III: audit findings integrated, unsupported sentence removed
+- Chapter IV: drafted 2026-10-25, methods only, no results
 - Chapters I, IV, V, VI, VII after the direction settles
 - `.docx` build + PDF export + formatting check (Checkpoint 4)
 - Graph-construction walkthrough: **written**, `thesis/GRAPH_WALKTHROUGH.md`

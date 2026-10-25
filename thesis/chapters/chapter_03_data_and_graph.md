@@ -36,10 +36,31 @@ supplies the liver context.
 | Gene-protein map | identifier normalization | `gene_protein.csv` |
 | Liver cancer proteomics | liver nodes, correlation edges | `LiverCancer_ProtExp_Phospho_casecntrl.xlsx` |
 
-The liver dataset provides matched protein expression and phosphorylation
-measurements for **18 tumor** and **18 control** samples. It contributes two
-sheets, `ProteinExpression` and `Phosphorylation`; only the phosphorylation
-sheet is used to build correlation edges, for reasons given in Section 3.6.4.
+The liver dataset provides protein expression and phosphorylation measurements
+for **18 tumor** and **18 control** samples of hepatocellular carcinoma and
+adjacent non-tumor tissue. It contributes two sheets, `ProteinExpression` with
+444 rows and `Phosphorylation` with 6,571 rows; only the phosphorylation sheet
+is used to build correlation edges, for reasons given in Section 3.6.4.
+
+The dataset is described here by its contents and sample counts rather than
+attributed to a published study, because its provenance could not be
+established. The two sheets carry their original captions, "Table S4 Detailed
+information of unique proteins identified in HCC tumour tissues" and "Table S11
+Identified and quantified phosphopeptides, phosphosites and corresponding
+phosphoproteins in HCC tumour and adjacent non-tumour tissues", which identify
+them as supplementary tables of a hepatocellular carcinoma proteogenomics study.
+The study itself is not recorded anywhere in the project, and a literature
+search did not identify it. One candidate was examined and excluded: the cohort
+sizes do not match, that study reporting 159 patients against the 18 and 18 here.
+No citation is therefore given for this dataset anywhere in this thesis.
+
+The sample columns are identified by name, those ending in `Control` and those
+ending in `Sample`. Their numbering falls into six consecutive blocks of three
+controls followed by three tumors, which is the layout of a six-batch
+multiplexed acquisition with three of each condition per batch. That is
+consistent with 18 matched tumor and adjacent-normal pairs, but the file does
+not record which control channel belongs to the same patient as which tumor
+channel, so the pairing cannot be reconstructed from the data as supplied.
 
 Identifier normalization is applied before merging so that gene symbols and site
 labels from different sources resolve to the same node. Large inputs are cached
@@ -127,6 +148,119 @@ for interpreting any result driven by graph connectivity.
 > `outputs/edges.csv.gz` contains 1,095,542 edges summing exactly to the table
 > above. The recomputed figures are used throughout this thesis.
 
+### 3.5.1 Node Provenance: Only Two Sources Create Nodes
+
+The build order matters more than the source list suggests. PhosphoSitePlus and
+the phosphatase table are parsed first and create all protein and site nodes.
+The node set is then final. Each remaining source is invoked with the existing
+node set as an argument, `build_ptmsigdb_edges(path, site_ids)`,
+`build_msigdb_edges(path, protein_ids)`, and the protein-interaction and
+co-evolution builders with `existing_protein_ids` and `existing_site_ids`
+respectively. Each discards any record whose endpoints are not already present,
+and each returns edges only. None contributes nodes.
+
+The consequence constrains everything downstream. The universe of proteins and
+phosphosites the model can represent is fixed entirely by PhosphoSitePlus and
+the phosphatase table. Pathway membership, protein interaction and co-evolution
+data can only densify connections among entities those two sources already
+defined. A phosphosite measured in liver tissue but absent from
+PhosphoSitePlus cannot enter the generic graph at all, regardless of how well
+characterized it is elsewhere.
+
+### 3.5.2 Per-Source Filter Trace
+
+Each source passes through a documented sequence of filters.
+
+**PhosphoSitePlus.** The raw file holds 23,820 rows across all species.
+Restricting to human kinase and human substrate leaves **14,676**, cached as
+`data/processed/Kinase_Substrate_Dataset_human.tsv`. The builder then requires
+exactly one residue token in the site field, discarding rows that name several
+residues rather than guessing which is meant, and requires that protein and site
+identifiers normalize to non-empty values. The result is 14,596 unique
+`phosphorylates` edges from 420 distinct kinases, and 10,196 `has_site` edges.
+The builder reports its own intermediate drop counts at run time but those logs
+were not retained, and recovering them would require rebuilding `outputs/`.
+
+**Phosphatase table.** The raw file holds 938 rows naming **115** distinct
+phosphatases. Requiring a phosphatase, a substrate and a named dephosphosite
+simultaneously leaves 517 rows carrying **82** phosphatases; many records name a
+substrate protein without specifying a residue, and no site node can be created
+from those. Applying the same single-residue-token filter and deduplicating
+yields **329** `dephosphorylates` edges from **65** phosphatases onto 171 sites.
+
+This trace resolves a discrepancy raised during review, where the phosphatase
+count in the source was reported as roughly 250. That figure is not reproducible
+from this file, which contains 115. The most plausible explanation is that 250
+refers to a full phosphatase catalogue rather than the protein-substrate table
+used here, most catalogued phosphatases having no annotated protein substrate,
+but this was not confirmed. An independent check supports the 65 figure: the
+`protein_role` metadata written onto every protein node records 64 phosphatases
+plus one protein classified as both kinase and phosphatase, and 419 kinases plus
+that same protein, matching the edge counts exactly.
+
+**MSigDB and PTMsigDB.** Both convert gene sets into cliques among the members
+that already exist as nodes, each set contributing one edge per member pair.
+Clique size caps of 100 proteins and 50 sites guard against the quadratic
+explosion a large set would otherwise produce; a 100-member set alone
+contributes 4,950 edges. MSigDB's 4,761 gene sets yield 992,485
+`protein_same_pathway` edges and PTMsigDB's 687 signature sets yield 17,922
+`site_same_pathway` edges.
+
+**Protein interactions.** The interaction file holds 472,000 pairs identified by
+Ensembl protein accession, mapped to gene symbols through a separate identifier
+file and then restricted to proteins already in the graph, giving 36,009 edges.
+
+**PTMcode2.** The raw file holds 18,727,764 rows. Restricting to human records
+with phosphorylation at both positions and co-evolution evidence present leaves
+**3,861,786**, cached in preprocessed form. Requiring both residue labels to
+parse and both resulting sites to exist in the graph is the dominant filter,
+since PTMcode2 covers far more sites than PhosphoSitePlus annotates, leaving
+24,005 `site_coevolution` edges.
+
+### 3.5.3 Defects Identified by Audit
+
+A systematic audit of the construction path identified three defects. They are
+reported here with their measured cost, because a defect's existence and a
+defect's consequence are different questions and the distinction matters for
+deciding what to repair.
+
+**The interaction confidence filter is nominal.** The relation is named
+`ppi_high_confidence`, but the builder is invoked with a minimum confidence
+score of zero and therefore applies no threshold. Whatever selection the file
+embodies was applied before it entered the project. The relation name describes
+an assumption about the input, not an operation performed on it.
+
+**The identifier map is incomplete, and the pattern of incompleteness indicates
+truncation.** The file mapping Ensembl protein accessions to gene symbols
+contains exactly 1,048,576 lines. That is exactly 2^20, which is exactly the
+maximum number of rows a worksheet can hold in common spreadsheet software, so
+the file was most likely opened and saved in such a tool at some point. The
+incompleteness is measurable: the map covers 14,521 distinct accessions while
+the interaction file references 16,185, leaving **1,664 accessions (10.3%)
+unmapped**. Every interaction touching an unmapped accession is discarded
+without warning. Those accessions appear in **6,960 of 472,000 interaction rows,
+or 1.5%**, so the unmapped proteins are predominantly low-degree and the
+edge-level cost is small. The co-evolution builder consumes the same map but
+falls back to the raw identifier when a lookup fails, so it degrades gracefully.
+
+**The co-evolution preprocessing and builder disagree on file format.** The
+preprocessing step writes its cached output without a header row, while the
+builder reads that cached file with an instruction to skip the first four lines.
+That instruction was written for the raw file, which does begin with comment
+lines. Applied to the preprocessed file it silently discards four genuine data
+rows. The numerical consequence is at most four edges out of 24,005 and changes
+no reported quantity, but the contract between the two stages is mismatched.
+A related inconsistency: preprocessing retains records with co-evolution
+evidence of at least one while the builder retains only those equal to one,
+which agree only if the field is strictly binary.
+
+Set against the composition in Section 3.5, none of these three defects can
+account for a modelling result. The phosphatase shortfall affects 0.03% of
+edges and the identifier truncation 1.5% of interaction candidates. The
+concentration of 90.6% of all edges in pathway co-membership is a design
+decision rather than a defect, and it is the only feature of the construction
+with the scale to shape downstream behavior.
+
 ## 3.6 Liver Context Integration
 
 ### 3.6.1 Adding Liver-Observed Entities
@@ -144,17 +278,31 @@ The base (non-correlation) edge count rises correspondingly to **1,133,920**.
 ### 3.6.2 Correlation Edge Construction
 
 Correlation edges connect pairs of phosphosites whose measured abundances move
-together across samples. For each pair of sites, a Pearson correlation is
-computed over the samples where both are observed, requiring a minimum of six
-overlapping measurements. Correlations above the **80th percentile** of the
-positive distribution become positive edges, and correlations below the
-corresponding negative threshold become negative edges. Positive and negative
-relations are kept distinct rather than merged, so that anti-correlated and
-co-correlated structure remain separable.
+together across samples. The computation is **pairwise complete**: for each pair
+of sites, a Pearson correlation is calculated using only the samples in which
+both sites were quantified, requiring a minimum of six such overlapping
+measurements. Phosphoproteomic matrices are sparse, so this is materially
+different from correlating across all 18 samples, and the effective sample size
+differs from pair to pair. Section 3.6.5 quantifies the resulting distribution.
+A site enters the matrix at all only if it was quantified in at least six of the
+18 samples. Neither minimum is overridden at the call site, so both remain at
+their default value of six.
 
-An 85th-percentile threshold was tested on the fold-change variant during
-development and performed worse, so the 80th percentile is retained for all
-three correlation types.
+Correlations above the **80th percentile** of the positive distribution become
+positive edges, and correlations below the corresponding negative threshold
+become negative edges. Positive and negative relations are kept distinct rather
+than merged, so that anti-correlated and co-correlated structure remain
+separable. The same 80th-percentile threshold is applied to all three
+correlation types.
+
+The threshold is computed over **all pairwise correlations pooled together**,
+without reference to how many samples each one rests on. A correlation of 0.9
+estimated from six observations and one estimated from eighteen are therefore
+placed on the same scale and compete for the same cut, although they carry very
+different evidential weight: approximately p = 0.01 in the first case against
+p = 1e-7 in the second. No significance test and no multiple-testing correction
+is applied at any stage of edge selection. This is a limitation of the
+construction as implemented, and Section 3.6.5 returns to it.
 
 ### 3.6.3 Three Correlation Types
 

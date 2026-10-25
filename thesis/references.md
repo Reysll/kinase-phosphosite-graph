@@ -102,17 +102,29 @@ https://doi.org/10.1093/bioinformatics/btx415 · PMC5860163
 
 ## Liver cancer dataset
 
-**VERIFIED (publication) — PROVENANCE UNRESOLVED (our file)** — Gao, Q., Zhu,
-H., Dong, L., Shi, W., Chen, R., Song, Z., … Fan, J. (2019). Integrated
-proteogenomic characterization of HBV-related hepatocellular carcinoma.
-*Cell, 179*(2), 561–577.e22. https://doi.org/10.1016/j.cell.2019.08.052
+**NOT CITED — source study unidentified.** The liver dataset
+`data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx` is described by its
+contents and sample counts throughout the thesis, with no attribution. As of
+2026-10-25 it is cited nowhere in Chapters II or III.
 
-> **Discrepancy.** Gao et al. report a cohort of **159 patients** with paired
-> tumor and adjacent tissue. Our file
-> `data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx` contains **18 tumor +
-> 18 control** samples. The file may be a subset, a different release, or a
-> different study. **Do not attribute the dataset to Gao et al. until the
-> provenance is confirmed** (STATE.md open item 5).
+Evidence gathered so far, for whoever resolves this:
+
+- The sheets retain their original captions. `ProteinExpression` is "Table S4
+  Detailed information of unique proteins identified in HCC tumour tissues" and
+  `Phosphorylation` is "Table S11 Identified and quantified phosphopeptides,
+  phosphosites and corresponding phosphoproteins in HCC tumour and adjacent
+  non-tumour tissues". So the source is some HCC proteogenomics paper whose
+  supplementary tables S4 and S11 these are.
+- British spelling ("tumour") suggests a non-US journal.
+- The file holds **18 tumor + 18 control** samples in six batches of three plus
+  three, with 444 protein rows and 6,571 phosphopeptide rows.
+- **Gao et al. (2019), *Cell* 179(2), 561–577.e22,
+  https://doi.org/10.1016/j.cell.2019.08.052, is RULED OUT**: that study reports
+  a cohort of 159 patients. The publication itself verifies cleanly; it is
+  simply not the source of this file.
+- Two extended literature searches on the captions did not identify the paper.
+  The next step is to ask the advisor or the file's supplier, not to search
+  again.
 
 ## Hepatocellular carcinoma biology (Chapter VI, held)
 
@@ -135,5 +147,19 @@ to be captured.
 |---|---|
 | VERIFIED with DOI | 14 |
 | PARTIAL (accessible link, missing DOI or details) | 2 |
-| UNVERIFIED, must not cite | 1 (PPI source) |
-| VERIFIED but provenance-blocked | 1 (Gao / liver file) |
+| UNVERIFIED, not cited | 1 (PPI source) |
+| Source unidentified, not cited | 1 (liver dataset) |
+
+## In-text citation format (APA 7)
+
+Applied to Chapter II on 2026-10-25:
+
+- Parenthetical citations use `&`: (Grover & Leskovec, 2016).
+- Narrative citations use "and" in prose and place the year in parentheses:
+  Deznabi et al. (2020) state that...
+- Three or more authors are always `et al.` from the first citation, so
+  "Ng, Jordan, & Weiss, 2002" became "Ng et al., 2002".
+- Multiple works in one parenthesis are ordered alphabetically and separated by
+  semicolons: (Krug et al., 2019; Liberzon et al., 2015).
+- Working `[VERIFIED]` and `[PARTIAL]` markers have been removed from the prose.
+  This file is the verification record.

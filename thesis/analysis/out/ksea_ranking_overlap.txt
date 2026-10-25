@@ -1,0 +1,94 @@
+KSEA vs RANKING: DO THEY NOMINATE THE SAME KINASES?
+==============================================================================
+
+KSEA (two-tailed, BH-FDR < 0.05)
+------------------------------------------------------------------------------
+  scoreable kinases          : 64
+  significant, two-tailed    : 12
+  significant, one-tailed    : 17  (the figure in older project docs)
+  two-tailed set: CDKL5, CSNK2A1, MAPK12, MAPK13, PAK1, PRKACA, PRKCD, PRKD1, PRKG1, PRKG2, RPS6KA1, RPS6KA3
+
+==============================================================================
+NETWORK: control (spectral)
+==============================================================================
+  kinases ranked              : 415
+  comparison universe         : 64
+    (kinases BOTH methods could nominate)
+  KSEA-significant within it  : 12
+
+  --- ranking top 10 by median rank ---
+    ranking set in universe : 3
+    overlap with KSEA       : 0
+    overlap expected by chance: 0.56
+    Jaccard                 : 0.000
+    hypergeometric p, depletion (supports disjointness) : 0.5304
+    hypergeometric p, enrichment                        : 1.0000
+
+  --- ranking top 20 by median rank ---
+    ranking set in universe : 8
+    overlap with KSEA       : 1
+    overlap expected by chance: 1.50
+    Jaccard                 : 0.053
+    hypergeometric p, depletion (supports disjointness) : 0.5327
+    hypergeometric p, enrichment                        : 0.8300
+    shared: PRKCD
+
+  --- ranking top 50 by median rank ---
+    ranking set in universe : 19
+    overlap with KSEA       : 3
+    overlap expected by chance: 3.56
+    Jaccard                 : 0.107
+    hypergeometric p, depletion (supports disjointness) : 0.4950
+    hypergeometric p, enrichment                        : 0.7664
+    shared: MAPK13, PAK1, PRKCD
+
+  top 20 kinases by median rank (control): 
+    PIK3R1, CDK1, EGFR, PRKCA, SGK1, TTK, MET, TGM2, TGFBR2, FYN, PRKCB, MAPK1, PDGFRA, AURKA, AKT1, PRKCD, IGF1R, PIK3CD, MAPK14, FGFR2
+
+==============================================================================
+NETWORK: liver_fc (spectral)
+==============================================================================
+  kinases ranked              : 415
+  comparison universe         : 64
+    (kinases BOTH methods could nominate)
+  KSEA-significant within it  : 12
+
+  --- ranking top 10 by median rank ---
+    ranking set in universe : 3
+    overlap with KSEA       : 0
+    overlap expected by chance: 0.56
+    Jaccard                 : 0.000
+    hypergeometric p, depletion (supports disjointness) : 0.5304
+    hypergeometric p, enrichment                        : 1.0000
+
+  --- ranking top 20 by median rank ---
+    ranking set in universe : 8
+    overlap with KSEA       : 1
+    overlap expected by chance: 1.50
+    Jaccard                 : 0.053
+    hypergeometric p, depletion (supports disjointness) : 0.5327
+    hypergeometric p, enrichment                        : 0.8300
+    shared: PRKCD
+
+  --- ranking top 50 by median rank ---
+    ranking set in universe : 19
+    overlap with KSEA       : 3
+    overlap expected by chance: 3.56
+    Jaccard                 : 0.107
+    hypergeometric p, depletion (supports disjointness) : 0.4950
+    hypergeometric p, enrichment                        : 0.7664
+    shared: MAPK13, PAK1, PRKCD
+
+  top 20 kinases by median rank (liver_fc): 
+    PIK3R1, EGFR, CDK1, PRKCA, SGK1, MET, TTK, TGFBR2, FYN, TGM2, AURKA, PRKCB, MAPK1, PDGFRA, PRKCD, AKT1, IGF1R, PIK3CD, MAPK14, FGFR2
+
+==============================================================================
+VERDICT
+==============================================================================
+  Maximum overlap across all networks and cutoffs: 3 kinase(s).
+  Comparisons where the depletion is significant at p < 0.05: 0 of 6.
+
+  The overlap is larger than 'largely disjoint' implies. The
+  Chapter II sentence should be softened to what the table shows.
+
+Written: thesis/analysis/out/ksea_ranking_overlap.{txt,csv}

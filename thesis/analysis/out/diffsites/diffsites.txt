@@ -1,0 +1,224 @@
+DIFFERENTIAL PHOSPHOSITE ANALYSIS (HCC tumour vs adjacent non-tumour)
+==============================================================================
+
+Read-only. Writes only into thesis/analysis/out/diffsites/.
+
+DESIGN
+------------------------------------------------------------------------------
+  channels: 18 control, 18 tumour
+  batches inferred from channel numbering (blocks of six):
+           control  tumour
+    batch                 
+    0            3       3
+    1            3       3
+    2            3       3
+    3            3       3
+    5            3       3
+    7            3       3
+
+NORMALIZATION
+------------------------------------------------------------------------------
+  Per-channel median centering applied on log2.
+  Channel log2 medians before: min 16.599  max 19.216  spread 2.616
+  Channel log2 medians after : min -0.000  max 0.000  spread 0.000
+  See normalization_check.txt for the diagnostic that motivated this.
+
+SITE PARSING
+------------------------------------------------------------------------------
+  rows in sheet                         : 6,571
+  rows with exactly one phosphosite     : 5,249
+  rows with more than one (excluded)    : 1,319
+  rows with none parseable (excluded)   : 3
+  unique sites after collapsing peptides: 3,780
+    duplicate peptide rows are averaged per channel on the log2 scale,
+    so each site gets exactly one test and the FDR denominator is sites
+
+TESTABLE SET
+------------------------------------------------------------------------------
+  sites with >= 6 observed in BOTH groups: 2,973
+  sites with >= 12 observed in BOTH groups: 2,046  (strict tier)
+
+RESULTS: PRIMARY TEST (linear model, condition + batch)
+------------------------------------------------------------------------------
+  sites tested                 : 2,973
+  model not estimable          : 0
+  significant at BH-FDR < 0.05 : 1,548  (52.1%)
+    up in tumour 801   down in tumour 747
+  |log2FC| >= 1 among significant : 783
+  shortlist (FDR<0.05, |log2FC|>=1, n>=9 both groups): 659
+
+RESULTS: SENSITIVITY TESTS
+------------------------------------------------------------------------------
+  Welch unpaired, ignoring batch : 939 significant (31.6%)
+  Mann-Whitney U                 : 861 significant (29.0%)
+
+HOW MUCH DID BATCH STRUCTURE MATTER?
+------------------------------------------------------------------------------
+  significant in BOTH                  : 922
+  gained by modelling batch (LM only)  : 626
+  lost by modelling batch (Welch only) : 17
+  significant in neither                : 1,408
+  sites that CHANGE significance        : 643  (21.6% of tested)
+
+  correlation of log2FC, raw vs batch-adjusted: r = 0.9649
+
+  10 sites most clearly rescued by the batch model:
+           site  n_control  n_tumour log2fc_raw log2fc_adj   lm_fdr welch_fdr
+     WIPF2-S235         12        18     +1.556     +2.384 2.13e-11  5.66e-02
+    SLC38A3-S54         15        13     -1.376     -2.023 8.30e-11  7.58e-02
+     RPLP0-S304          9        13     +1.475     +3.305 2.47e-09  7.82e-02
+     AHNAK-S210         18        15     -0.876     -1.040 3.31e-08  5.40e-02
+    KMT2D-S4738         10        15     +0.749     +0.747 5.41e-08  6.38e-02
+    AHNAK-T5824         17        18     +1.274     +1.438 5.96e-08  1.85e-01
+      ALDOC-S36         15         6     -0.641     -1.595 1.06e-07  4.95e-01
+    HNRNPM-S701          6        12     +0.350     +2.316 1.12e-07  7.00e-01
+      OXR1-S204         13        11     -1.052     -1.377 1.86e-07  5.15e-02
+     DCP1A-T401         10        15     +1.046     +1.727 4.18e-07  7.40e-02
+
+TOP 30 SITES BY PRIMARY TEST
+------------------------------------------------------------------------------
+          site  n_control  n_tumour log2fc_adj hedges_g cliffs_delta   lm_fdr  sig_welch
+     PGM5-S122         18        18     -3.595    -2.82        -0.98 2.33e-19       True
+      PGLS-S49         18        17     -2.595    -2.17        -0.90 2.62e-17       True
+   HSPA12B-S25         18        12     -3.523    -2.53        -0.98 1.34e-16       True
+    ZPBP2-S173         18        18     -1.901    -1.46        -0.75 7.78e-16       True
+  PRKAR2B-S114         18        18     -3.778    -4.88        -1.00 6.81e-15       True
+    ASPDH-S168         18        17     -2.759    -2.37        -0.94 1.37e-14       True
+     DMTN-S372         18        15     -1.921    -1.40        -0.62 1.66e-14       True
+TNKS1BP1-S1008         18        12     -2.404    -3.60        -1.00 1.51e-13       True
+     EML3-T881         18        18     -2.872    -3.21        -0.94 2.53e-13       True
+ARHGAP31-S1178         18        18     -1.256    -2.20        -0.97 4.88e-13       True
+    STBD1-S175         18        18     -2.746    -2.52        -0.97 1.06e-12       True
+   SYNE1-T8360         18        14     -2.114    -4.56        -1.00 1.21e-12       True
+    PLEC-S1732         18        14     -1.839    -1.38        -0.64 1.32e-12       True
+   CYP2A6-S131         18        11     -5.524    -2.55        -1.00 4.31e-12       True
+   ABLIM3-S388         18        18     -1.918    -1.92        -0.77 4.74e-12       True
+   CYBRD1-S260         18        15     -1.741    -2.67        -0.97 5.36e-12       True
+  SPECC1L-S868         18        12     -2.256    -3.43        -1.00 5.87e-12       True
+     GOT2-S143         18        14     -2.056    -2.05        -0.89 8.67e-12       True
+     KRT18-S60         18        18     -2.013    -2.20        -0.91 1.15e-11       True
+     NFIA-S280         18        18     -1.357    -2.20        -0.88 1.15e-11       True
+   DPYSL3-S522         18        18     -2.496    -2.42        -0.94 1.97e-11       True
+    WIPF2-S235         12        18     +2.384    +0.90        +0.46 2.13e-11      False
+   AHNAK-S5448         18        17     -1.401    -1.37        -0.72 2.51e-11       True
+  ARHGEF6-S684         18        15     -2.075    -2.30        -0.90 4.02e-11       True
+    PFKFB1-S33         18        14     -2.864    -2.47        -0.91 6.07e-11       True
+    PLCB2-S958         18        17     -2.552    -2.54        -0.96 6.07e-11       True
+     TPI1-S212         17        15     -1.748    -1.66        -0.73 6.41e-11       True
+  TGFB1I1-S403         18        17     -3.404    -2.48        -1.00 8.25e-11       True
+   SLC38A3-S54         15        13     -2.023    -0.83        -0.60 8.30e-11      False
+   FMNL1-S1031         18        18     -2.081    -1.78        -0.77 9.97e-11       True
+
+PRESENCE / ABSENCE (detected in one group only, never tested above)
+------------------------------------------------------------------------------
+  sites: 114
+    tumour only  : 77
+    control only : 37
+    significant at BH-FDR < 0.05: 114
+
+           site  n_control  n_tumour    direction fisher_fdr
+     CHCHD6-S13         18         0 control only   2.51e-08
+   COL6A1-S1008         17         0 control only   1.59e-07
+  GTF2IRD1-S448          0        17  tumour only   1.59e-07
+       REM1-S18         16         0 control only   1.19e-06
+        MT1E-S6         15         0 control only   4.18e-06
+     NCAPG-S674          0        15  tumour only   4.18e-06
+     LRCH3-S419          0        15  tumour only   4.18e-06
+      NGFR-S313         15         0 control only   4.18e-06
+    CTNND1-T201          0        14  tumour only   1.67e-05
+      UROC1-S35         14         0 control only   1.67e-05
+      BASP1-T36         14         0 control only   1.67e-05
+        PLN-S16         13         0 control only   4.23e-05
+     RRP1B-S513          0        13  tumour only   4.23e-05
+     NOS3-S1177         13         0 control only   4.23e-05
+   SHANK3-S1133         13         0 control only   4.23e-05
+
+KINASE MAPPING, ROUTE A: DIRECT PhosphoSitePlus ANNOTATION
+------------------------------------------------------------------------------
+  tested sites with >=1 annotated kinase      : 372 of 2,973  (12.5%)
+  SIGNIFICANT sites with >=1 annotated kinase : 209 of 1,548  (13.5%)
+  Coverage is stated rather than filtered: unannotated sites remain in
+  every output, since the collaborator may still want to assay them.
+
+  kinases with the most significant annotated sites:
+    PRKACA     37
+    CDK1       29
+    CSNK2A1    22
+    MAPK1      19
+    MAPK3      18
+    CDK2       15
+    AKT1       12
+    PRKAA1     11
+    MAPK14     10
+    RPS6KA1     8
+    PRKCD       7
+    PAK1        7
+    PRKD1       7
+    PRKCA       6
+    TBK1        6
+    GSK3B       6
+    CDK5        6
+    CHEK1       5
+    AURKB       5
+    SGK1        5
+
+KINASE MAPPING, ROUTE B: KSEA ON THE DIFFERENTIAL RESULT (two-tailed)
+------------------------------------------------------------------------------
+  score = (mean substrate log2FC - global mean) * sqrt(m) / sd
+  p = 2 * norm.sf(|score|). The published 17/64 used a one-tailed p.
+  kinases scoreable (>=3 measured substrates): 64
+  significant at BH-FDR < 0.05             : 15
+
+  most UP in tumour:
+     kinase  n_substrates_measured mean_substrate_log2fc ksea_score    adj_p
+       CDK2                     24                +0.915      +4.58 1.46e-04
+    CSNK2A1                     32                +0.568      +3.32 7.71e-03
+      CDKL5                      3                +1.882      +3.30 7.71e-03
+       CDK7                      4                +1.475      +2.99 1.76e-02
+       CDK1                     59                +0.365      +2.94 1.89e-02
+       CDC7                      4                +1.280      +2.60 4.42e-02
+     MAPK13                      4                +1.260      +2.56 4.42e-02
+     MAPK12                      3                +1.419      +2.50 5.02e-02
+      HIPK2                      3                +0.640      +1.14 5.16e-01
+       TBK1                      7                +0.411      +1.14 5.16e-01
+       PLK3                      3                +0.468      +0.84 6.56e-01
+      MAPK8                      6                +0.247      +0.65 7.55e-01
+
+  most DOWN in tumour:
+     kinase  n_substrates_measured mean_substrate_log2fc ksea_score    adj_p
+     PRKACA                     51                -0.810      -5.68 8.57e-07
+    RPS6KA1                     10                -1.169      -3.66 5.48e-03
+      PRKD1                     10                -1.110      -3.47 6.86e-03
+       PAK1                      8                -1.221      -3.42 6.86e-03
+      PRKG1                      7                -1.302      -3.41 6.86e-03
+      PRKG2                      3                -1.777      -3.06 1.58e-02
+      AURKB                      8                -0.931      -2.59 4.42e-02
+      PRKCD                     11                -0.792      -2.58 4.42e-02
+    RPS6KA3                      4                -1.227      -2.43 5.52e-02
+       BRAF                      3                -1.409      -2.42 5.52e-02
+      PRKCE                      4                -1.094      -2.16 1.03e-01
+      CHEK1                     12                -0.607      -2.05 1.29e-01
+
+DO THE TWO ROUTES NOMINATE THE SAME KINASES?
+------------------------------------------------------------------------------
+  Route A, kinases annotated to >=1 significant site : 109
+  Route B, KSEA-significant kinases                  : 15
+  overlap                                            : 15
+  Jaccard                                            : 0.138
+  share of Route B found in Route A                  : 100.0%
+  overlapping kinases: AURKB, CDC7, CDK1, CDK2, CDK7, CDKL5, CSNK2A1, MAPK13, PAK1, PRKACA, PRKCD, PRKD1, PRKG1, PRKG2, RPS6KA1
+
+Volcano written: diffsites_volcano.png
+
+FILES WRITTEN (all under thesis/analysis/out/diffsites/)
+------------------------------------------------------------------------------
+  diffsites.txt
+  diffsites_tests.csv
+  diffsites_significant.csv
+  diffsites_sensitivity.csv
+  diffsites_presence_absence.csv
+  diffsites_kinase_map.csv
+  diffsites_ksea.csv
+  diffsites_volcano.png
+  normalization_check.txt
+  channel_stats.csv

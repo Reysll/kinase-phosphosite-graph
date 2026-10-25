@@ -1,0 +1,128 @@
+ARE THE PHOSPHORYLATION ABUNDANCES NORMALIZED?
+==============================================================================
+
+Read-only diagnostic. No test is run here.
+
+------------------------------------------------------------------------------
+SHEET: ProteinExpression   column label: "Abundances (Normalized)"
+------------------------------------------------------------------------------
+  channels: 18 control + 18 tumour
+  rows: 444
+  observed values per channel: min 1  median 31  max 89
+
+  per-channel MEDIAN on the raw scale:
+    min 1.881e+05   max 1.438e+07   max/min = 76.415
+    coefficient of variation across channels = 1.2067
+  per-channel MEDIAN on log2:
+    spread (max - min) = 6.2558 log2 units
+
+  VERDICT: per-channel medians DIFFER by more than 10% (max/min = 76.415).
+           -> NOT median-normalized; per-channel centering is required
+
+  per-channel detail:
+     channel   group  n_observed    median        q1        q3 log2_median log2_sd
+F26: Control control           2  6.26e+06 3.263e+06 9.256e+06      20.785   3.906
+F27: Control control           2 7.288e+06 3.854e+06 1.072e+07      21.216   3.590
+F28: Control control           1 1.438e+07 1.438e+07 1.438e+07      23.777     nan
+F32: Control control           2 3.418e+06  1.82e+06 5.016e+06      20.207   3.465
+F33: Control control           2 2.917e+06 1.564e+06 4.271e+06      20.052   3.353
+F34: Control control           2 2.911e+06 1.681e+06 4.142e+06      20.570   2.527
+F38: Control control           2 4.762e+06 2.506e+06 7.017e+06      20.540   3.683
+F39: Control control           1 9.997e+06 9.997e+06 9.997e+06      23.253     nan
+F40: Control control           2 4.742e+06 2.479e+06 7.005e+06      20.432   3.835
+F44: Control control           1 9.795e+06 9.795e+06 9.795e+06      23.224     nan
+F45: Control control           3 3.827e+05 2.345e+05 5.544e+06      18.546   3.560
+F46: Control control           3  3.05e+05 1.933e+05 5.158e+06      18.219   3.586
+F50: Control control           2 5.053e+06 2.612e+06 7.495e+06      20.311   4.148
+F51: Control control           2 5.732e+06 3.008e+06 8.456e+06      20.763   3.750
+F52: Control control           2 5.377e+06 2.776e+06 7.978e+06      20.376   4.185
+F56: Control control           2 6.588e+06 3.489e+06 9.687e+06      21.090   3.561
+F57: Control control           2 6.195e+06 3.271e+06 9.118e+06      20.964   3.617
+F58: Control control           2 6.035e+06 3.111e+06 8.958e+06      20.511   4.230
+ F29: Sample  tumour          81 3.005e+05 1.654e+05 5.225e+05      18.197   1.529
+ F30: Sample  tumour          82 3.274e+05 1.939e+05 5.894e+05      18.321   1.478
+ F31: Sample  tumour          89 2.889e+05 1.866e+05 5.139e+05      18.140   1.457
+ F35: Sample  tumour          79 2.579e+05  1.83e+05 5.103e+05      17.977   1.202
+ F36: Sample  tumour          78 3.549e+05 2.154e+05 6.286e+05      18.437   1.280
+ F37: Sample  tumour          76 3.179e+05 1.832e+05  5.66e+05      18.278   1.319
+ F41: Sample  tumour          61 2.398e+05 1.541e+05 5.365e+05      17.872   1.448
+ F42: Sample  tumour          65 2.631e+05 1.394e+05 5.133e+05      18.005   1.477
+ F43: Sample  tumour          59 2.562e+05 1.762e+05  4.72e+05      17.967   1.460
+ F47: Sample  tumour          81 2.024e+05  1.31e+05 2.873e+05      17.627   1.096
+ F48: Sample  tumour          74 1.893e+05 1.274e+05 2.883e+05      17.530   1.090
+ F49: Sample  tumour          75 1.939e+05 1.253e+05 2.932e+05      17.565   1.225
+ F53: Sample  tumour          64 1.996e+05 1.313e+05 3.062e+05      17.607   1.129
+ F54: Sample  tumour          64 1.881e+05  1.36e+05 2.913e+05      17.521   1.105
+ F55: Sample  tumour          69 1.898e+05 1.414e+05 2.814e+05      17.534   1.039
+ F59: Sample  tumour          64 2.302e+05  1.53e+05 3.933e+05      17.812   1.450
+ F60: Sample  tumour          64  2.67e+05 1.577e+05 4.896e+05      18.026   1.435
+ F61: Sample  tumour          65  2.23e+05 1.251e+05 4.436e+05      17.766   1.524
+
+------------------------------------------------------------------------------
+SHEET: Phosphorylation   column label: "Abundance"
+------------------------------------------------------------------------------
+  channels: 18 control + 18 tumour
+  rows: 6,571
+  observed values per channel: min 3,042  median 4,415  max 5,126
+
+  per-channel MEDIAN on the raw scale:
+    min 9.93e+04   max 6.088e+05   max/min = 6.131
+    coefficient of variation across channels = 0.5635
+  per-channel MEDIAN on log2:
+    spread (max - min) = 2.6161 log2 units
+
+  VERDICT: per-channel medians DIFFER by more than 10% (max/min = 6.131).
+           -> NOT median-normalized; per-channel centering is required
+
+  per-channel detail:
+     channel   group  n_observed    median        q1        q3 log2_median log2_sd
+ F1: Control control        4060 1.216e+05 4.689e+04 3.489e+05      16.892   2.377
+ F2: Control control        3968 1.267e+05 4.847e+04 3.373e+05      16.951   2.287
+ F3: Control control        4032 1.357e+05 5.388e+04 3.779e+05      17.050   2.320
+ F7: Control control        4195 1.497e+05 6.165e+04 4.035e+05      17.191   2.268
+ F8: Control control        4061 1.403e+05 5.358e+04 3.731e+05      17.098   2.320
+ F9: Control control        4108 1.548e+05 6.079e+04 4.007e+05      17.240   2.296
+F13: Control control        3048  1.03e+05  3.85e+04 2.685e+05      16.653   2.287
+F14: Control control        3119  9.93e+04 3.787e+04 2.649e+05      16.599   2.299
+F15: Control control        3042 9.958e+04 3.788e+04 2.698e+05      16.604   2.252
+F19: Control control        5093 3.818e+05 1.536e+05  1.01e+06      18.543   2.214
+F20: Control control        5098 3.683e+05 1.554e+05 9.847e+05      18.491   2.167
+F21: Control control        5126 4.026e+05 1.701e+05 1.057e+06      18.619   2.142
+F31: Control control        4759 3.046e+05  1.23e+05 7.983e+05      18.217   2.207
+F32: Control control        4797 2.765e+05 1.074e+05 7.536e+05      18.077   2.264
+F33: Control control        4805 2.688e+05 1.066e+05 7.329e+05      18.036   2.240
+F43: Control control        4070 1.357e+05 5.131e+04 3.761e+05      17.050   2.428
+F44: Control control        4051 1.351e+05 5.196e+04 3.675e+05      17.044   2.383
+F45: Control control        4085 1.601e+05 6.549e+04 4.303e+05      17.289   2.314
+  F4: Sample  tumour        4157 2.361e+05 9.211e+04 6.444e+05      17.849   2.364
+  F5: Sample  tumour        4363 2.308e+05 8.638e+04 6.244e+05      17.816   2.370
+  F6: Sample  tumour        4315  1.97e+05 7.432e+04 5.415e+05      17.588   2.396
+ F10: Sample  tumour        4737 2.743e+05 9.667e+04  7.38e+05      18.066   2.409
+ F11: Sample  tumour        4749 3.314e+05  1.25e+05 8.852e+05      18.338   2.343
+ F12: Sample  tumour        4645 2.991e+05 1.095e+05 8.212e+05      18.190   2.369
+ F16: Sample  tumour        3359 1.065e+05 4.216e+04 2.821e+05      16.701   2.265
+ F17: Sample  tumour        3345 9.997e+04 3.847e+04 2.674e+05      16.609   2.298
+ F18: Sample  tumour        3307 1.049e+05 4.161e+04 2.782e+05      16.679   2.273
+ F22: Sample  tumour        4552 1.971e+05 7.861e+04 5.445e+05      17.589   2.247
+ F23: Sample  tumour        4567 2.115e+05 8.786e+04 5.867e+05      17.691   2.250
+ F24: Sample  tumour        4468 1.854e+05 7.426e+04  5.02e+05      17.500   2.238
+ F34: Sample  tumour        4945  6.03e+05 2.385e+05 1.608e+06      19.202   2.195
+ F35: Sample  tumour        4959 5.397e+05 2.142e+05 1.387e+06      19.042   2.205
+ F36: Sample  tumour        4972 6.088e+05 2.419e+05 1.556e+06      19.216   2.173
+ F46: Sample  tumour        4515 2.709e+05 1.068e+05 7.548e+05      18.048   2.380
+ F47: Sample  tumour        4551 3.144e+05 1.194e+05 8.252e+05      18.262   2.353
+ F48: Sample  tumour        4495 2.838e+05 1.103e+05 7.772e+05      18.114   2.363
+
+==============================================================================
+CONCLUSION
+==============================================================================
+ProteinExpression, labelled normalized : max/min median = 76.415
+Phosphorylation,  labelled abundance   : max/min median = 6.131
+
+The phosphorylation channels are NOT comparable as supplied.
+Per-channel median centering on log2 WILL be applied before testing:
+    log2_centered[:, j] = log2(x[:, j]) - median(log2(x[:, j]))
+computed over the sites observed in channel j. This removes
+channel loading differences without touching within-channel ranking.
+
+Written: thesis/analysis/out/diffsites/channel_stats.csv

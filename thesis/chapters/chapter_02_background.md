@@ -1,11 +1,12 @@
 # CHAPTER II: BACKGROUND AND RELATED WORK
 
-> Draft. Citation verification completed 2026-10-10. `[VERIFIED]` = DOI or PMC
-> link confirmed, recorded in `thesis/references.md`. `[PARTIAL]` = freely
-> accessible but no DOI exists. Two items remain unresolved and are marked
-> inline: the protein-interaction source file has no recorded provenance, and
-> the liver dataset's attribution to Gao et al. is blocked by a cohort-size
-> mismatch. No citation is guessed.
+> Draft. Every citation in this chapter was verified against a publisher or
+> PubMed Central record; the status of each, with its DOI or accessible link, is
+> recorded in `thesis/references.md`. In-text citations follow APA 7. Two
+> sources remain unresolved and are deliberately **not** cited: the
+> protein-interaction source file, which has no recorded provenance, and the
+> liver dataset, whose originating study could not be identified. Both are
+> described by their contents instead. No citation is guessed.
 
 ## 2.1 Protein Phosphorylation and Kinase Signaling
 
@@ -40,10 +41,10 @@ translationally important as well as biologically interesting.
 Although high-throughput mass spectrometry has catalogued hundreds of thousands
 of human phosphorylation sites, the enzyme responsible for most of them is
 unknown. Deznabi et al. (2020) state that "more than 95% of the reported human
-phosphosites have no known kinases" [VERIFIED]. The gap is not merely large, it
+phosphosites have no known kinases". The gap is not merely large, it
 is also **structurally uneven**. Maier et al. (2025) report that approximately
 150 kinases have no known substrates at all, and that roughly 80% of annotated
-phosphosites are attributed to just 20% of kinases [VERIFIED].
+phosphosites are attributed to just 20% of kinases.
 
 This imbalance produces a self-reinforcing bias often called the streetlight
 effect: well-studied kinases accumulate more annotations, which makes them
@@ -62,17 +63,16 @@ Several curated resources supply the evidence integrated in this work.
 
 **PhosphoSitePlus** is the principal source of experimentally determined
 kinase-substrate associations and of phosphorylation site definitions
-(Hornbeck et al., 2012) [VERIFIED]. Its curated kinase-substrate table provides
+(Hornbeck et al., 2012). Its curated kinase-substrate table provides
 the positive labels used throughout this thesis.
 
 **DEPOD** catalogues human phosphatase-substrate relationships, supplying the
-dephosphorylation counterpart to the kinase annotations (Duan et al., 2015)
-[VERIFIED].
+dephosphorylation counterpart to the kinase annotations (Duan et al., 2015).
 
 **MSigDB** and **PTMsigDB** provide pathway membership at the protein level and
 at the post-translational-modification site level respectively, allowing
 proteins or sites that participate in the same biological process to be linked
-(Liberzon et al., 2015; Krug et al., 2019) [VERIFIED].
+(Krug et al., 2019; Liberzon et al., 2015).
 
 **Protein-protein interaction data** supplies physical and high-confidence
 functional associations between proteins. The specific source of
@@ -81,7 +81,7 @@ functional associations between proteins. The specific source of
 
 **PTMcode2** provides evidence of co-evolution between modification sites, which
 captures functional coupling not visible in interaction or pathway data
-(Minguez et al., 2015) [VERIFIED].
+(Minguez et al., 2015).
 
 These resources are complementary rather than redundant: each supplies a
 different kind of evidence about how proteins and sites relate, which is the
@@ -126,7 +126,7 @@ a model may learn the former while appearing to learn the latter.
 
 Methods that explicitly target understudied kinases have also been proposed.
 DeepKinZero (Deznabi et al., 2020) uses zero-shot learning to transfer
-information to kinases with no training substrates [VERIFIED], an approach
+information to kinases with no training substrates, an approach
 motivated by the same annotation imbalance that motivates the stratified
 modeling in this thesis.
 
@@ -139,7 +139,6 @@ families are compared in this work.
 ### 2.5.1 Random-Walk Embeddings
 
 DeepWalk (Perozzi et al., 2014) and node2vec (Grover & Leskovec, 2016)
-[both VERIFIED]
 generate sequences of nodes by random walks over the graph and then apply a word
 embedding model, treating node sequences as sentences. Nodes that frequently
 co-occur in walks receive similar vectors. node2vec adds two parameters, `p` and
@@ -169,9 +168,8 @@ node's degree. High-degree nodes are therefore down-weighted by construction,
 which makes spectral embedding a natural remedy for the degree sensitivity of
 random-walk methods. The eigenvectors associated with the smallest non-trivial
 eigenvalues encode the coarse community structure of the graph. Spectral methods
-have a long history in clustering and dimensionality reduction (von Luxburg, 2007
-[VERIFIED]; Shi & Malik, 2000 [VERIFIED]; Ng, Jordan, & Weiss, 2002 [PARTIAL:
-no DOI, NeurIPS-era proceedings]).
+have a long history in clustering and dimensionality reduction (Ng et al., 2002;
+Shi & Malik, 2000; von Luxburg, 2007).
 
 Two properties relevant to later chapters follow from this definition. Spectral
 embedding is **deterministic** given the graph and the number of components
@@ -208,13 +206,16 @@ connectivity as well as information, and if a model is sensitive to connectivity
 alone then adding edges can appear to help for reasons unrelated to the biology
 being encoded.
 
-The liver cancer measurements used here come from an integrated proteogenomic
-characterization of hepatitis-B-related hepatocellular carcinoma (Gao et al., 2019)
-[VERIFIED publication, PROVENANCE UNRESOLVED], which provides matched protein
-and phosphoprotein abundance for tumor and adjacent non-tumor tissue. Note that
-Gao et al. report 159 patients whereas the file used here contains 18 tumor and
-18 control samples; the attribution is therefore provisional pending
-confirmation (see `thesis/references.md`).
+The liver cancer measurements used here provide protein and phosphoprotein
+abundance for hepatocellular carcinoma tumor tissue and adjacent non-tumor
+tissue, across 18 tumor and 18 control samples. The dataset is described
+throughout this thesis by its contents and sample counts rather than attributed
+to a published study. Its two sheets retain captions identifying them as
+supplementary tables of a hepatocellular carcinoma proteogenomics study, but
+that study is not recorded anywhere in the project and could not be identified
+from the captions. One candidate was examined and excluded on cohort size,
+reporting 159 patients against the 18 and 18 present here. Section 3.2 gives the
+full description and `thesis/references.md` records the unresolved status.
 
 ## 2.7 Inferring Kinase Activity from Phosphoproteomics
 
@@ -223,7 +224,7 @@ inference: given measured changes in phosphorylation across conditions, which
 kinases appear more or less active? Kinase-Substrate Enrichment Analysis (KSEA)
 answers this by testing whether the known substrates of a kinase are
 collectively shifted relative to the global distribution of changes (Wiredja
-et al., 2017) [VERIFIED]. The score takes the form
+et al., 2017). The score takes the form
 
 $$\text{score} = \frac{(\bar{s} - \bar{p})\sqrt{m}}{\delta}$$
 
@@ -234,9 +235,24 @@ a smaller standard error.
 
 KSEA and network-based ranking answer different questions. Ranking asks which
 kinase is structurally most plausible for a given site; KSEA asks which kinases
-show coordinated substrate-level change. Chapter V reports both and finds that
-they nominate largely disjoint kinase sets, which is informative about what each
-method measures.
+show coordinated substrate-level change. Whether the two nominate the same
+kinases was computed directly rather than assumed, over the 64 kinases both
+methods can score, comparing the 12 kinases significant under two-tailed KSEA
+against the kinases the predict-all pass ranks highest by median rank.
+
+| Ranking cutoff | Ranking set | Overlap with KSEA | Expected by chance |
+|---|---|---|---|
+| top 10 | 3 | 0 | 0.56 |
+| top 20 | 8 | 1 | 1.50 |
+| top 50 | 19 | 3 | 3.56 |
+
+The overlap is small, but it is almost exactly what random assignment would
+produce, and a hypergeometric test finds no significant depletion at any cutoff
+in either network examined. The correct statement is therefore narrower than it
+might appear: the two methods **nominate few kinases in common, but no more
+rarely than chance would predict**. Their apparent disagreement is a consequence
+of both nominating small sets from a large candidate pool, not evidence that
+they systematically disagree. Chapter V reports both sets.
 
 ## 2.8 Evaluation Practice and Its Pitfalls
 
