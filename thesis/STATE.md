@@ -1,7 +1,7 @@
 # Thesis state — recovery point
 
-Last updated: 2026-10-17. Analysis phase **complete**; no experiments pending.
-Advisor response received 2026-10-15; see "Advisor direction" below.
+Last updated: 2026-10-25. Advisor decisions of 2026-10-25 recorded below;
+see "Current plan" for the three tasks now in flight.
 All paths relative to the repo root. All analysis scripts are read-only with
 respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 `thesis/analysis/out/`. Interpreter: `.venv312/Scripts/python`.
@@ -26,6 +26,9 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 14 | **Popularity baseline beats all models** (median 25.0 vs 74.0; Hit@20 45.1% vs 22.1%) | `out/popularity_baseline.txt` | `python -m thesis.analysis.popularity_baseline` |
 | 15 | **Models beat popularity for poor kinases, global rank** (r +0.48 to +0.81) | `out/popularity_parity_stratified.csv` | same |
 | 16 | Liver-measured subset (n=510): spectral context survives; null contrast n.s. | `out/subset_analysis.txt` | `python -m thesis.analysis.subset_analysis` |
+| 17 | **Within-category ranking does not escape the null.** 184/415 kinases (44.3%) differ from the null by KS+BH, but 159 of those 184 have a median shift of exactly 0 and the max is 2 ranks; liverfc_shift vs null_shift r=0.9944 | `out/withincat_null.txt`, `withincat_null_*.csv` | `python -m thesis.analysis.withincat_null` |
+| 18 | **Identifier map truncated at 2^20 lines.** `gene_protein.csv` has exactly 1,048,576 lines (Excel's row cap); 1,664/16,185 PPI proteins unmapped (10.3%), costing 6,960/472,000 PPI rows (1.5%) | `GRAPH_WALKTHROUGH.md` §3.5 | see that file §8 |
+| 19 | Liver sheets are supplementary Tables S4 and S11 of an unidentified HCC paper; 18+18 is consistent with 6 batches of 3+3 but the patient pairing is not recorded | `GRAPH_WALKTHROUGH.md` §5.1-5.2 | same |
 
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
@@ -125,27 +128,79 @@ Supersedes open decision 1. Every number here was recomputed from the repo on
    integration, to get aligned. Not yet scheduled, no walkthrough document
    drafted.
 
+## Advisor decisions (2026-10-25)
+
+Received after she read `ADVISOR_BRIEF.md`. These supersede the 2026-10-15
+notes above where they conflict.
+
+1. **Journal manuscript, not a conference paper.** The grant program manager
+   requires a journal paper for the NIH renewal. No deadline pressure.
+2. **Comparative kinase ranking with within-category ranking, not PSP
+   prediction performance.** PhosphoSitePlus is not liver-specific, so
+   "performance improved with liver data" does not test our hypothesis.
+   Kinases are to be ranked inside their own substrate-count category so
+   understudied kinases do not compete with rich ones.
+3. **Collaborator deliverable.** The cancer center wants statistically
+   significant, liver-cancer-associated **substrates** for experimental
+   validation, kinases and kinase-substrate pairs both.
+4. **Preprocessing is under suspicion.** She found 114 phosphatases in DEPOD
+   against the 250 reported earlier and wants the preprocessing re-examined.
+   Confirmed: the file holds 115, our graph retains 65. See finding 18 for a
+   second, independent preprocessing defect found during the audit.
+
+## Current plan
+
+| # | Task | State | Output |
+|---|---|---|---|
+| 1 | Record these decisions in STATE.md | **done** 2026-10-25 | this file |
+| 2 | Within-category comparative ranking vs the null, read-only | **done** 2026-10-25 | `out/withincat_null.txt` + 3 CSVs, finding 17 |
+| 3 | Preprocessing audit written for a biologist | **done** 2026-10-25 | `thesis/GRAPH_WALKTHROUGH.md` |
+| 4 | Differential site analysis for the collaborator | **plan written, NOT run, awaiting approval** | `thesis/PLAN_differential_sites.md` |
+
+Task 2's result, stated plainly: within-category ranking is the right metric and
+it does **not** rescue the context effect. Of 415 kinases, 184 (44.3%) have a
+Liver FC within-category rank distribution that differs from the
+degree-preserving null at BH-FDR < 0.05, but that significance is a sample-size
+artifact. Each kinase is tested across 3,228 sites, so the KS test resolves
+differences far below one rank position. Among those 184 kinases, 159 have a
+median shift of exactly **0** ranks, 23 have 1, one has 2, and none exceeds 2.
+Across all 415 kinases the Liver FC shift and the null shift correlate at
+**r = 0.9944** (Spearman 0.9600), and the median gap between them is 0.
+Separately, Control vs Liver FC is significant for 75.9% of kinases and Control
+vs Null for 74.9%, which are the same number within noise.
+
+Task 4 is blocked on approval, and partly on the patient pairing: the design is
+consistent with 18 matched pairs but the file does not record which control
+channel belongs to which tumour channel.
+
 ## Open decisions
 
-1. **Direction after the advisor response.** Options A-D in `ADVISOR_BRIEF.md`
-   are superseded. The advisor's direction maps to none of them cleanly: it is
-   closest to A (no new runs) with within-category comparative ranking as the
-   headline, but that headline needs the null and eta^2 results confronted
-   first. Pending: whether to scope the differential substrate analysis
-   (item 2 above) as the primary new contribution.
+1. **MOVED 2026-10-25 to "Advisor decisions" above.** Options A-D in
+   `ADVISOR_BRIEF.md` are retired. The direction is settled: journal
+   manuscript, within-category comparative ranking as the headline analysis,
+   and the collaborator's differential substrates as the new contribution.
+   What remains open is narrower and is now decision 8.
 2. **Context-conditioned kinase feature / 15.2%-vs-60% gate / relational-only baseline / drop-K / lbfgs flag** — not in the repo. Do not write about these until a source is confirmed.
-3. **Chapters I, V, VI** — still on hold. The advisor meeting happened by
-   email, but the direction is not settled and the walkthrough meeting
-   (item 7 above) has not occurred, so the framing these chapters need is
-   still open.
+3. **MOVED 2026-10-25.** The chapter hold is lifted in principle: the
+   direction is settled enough to frame Chapters I and V. Chapter VI still
+   waits on the differential-site result, since that is now the contribution
+   it would report. The walkthrough meeting has not happened yet, but
+   `thesis/GRAPH_WALKTHROUGH.md` is written and ready for it.
 4. **G5–G14 doc fixes** — RESOLVED 2026-10-17. Committed as `c5f6111` and
    merged into `main` by fast-forward, no merge commit. `main` is now at
    `b72234c`.
-5. **Provenance of the liver dataset.** Confirm the source study behind
-   `data/liver/LiverCancer_ProtExp_Phospho_casecntrl.xlsx` before citing Gao
-   et al. (2019). The file has **18 tumor + 18 control** samples, which may not
-   match that study's cohort size. If it cannot be confirmed, describe the data
-   by its contents and sample counts and drop the attribution.
+5. **Provenance of the liver dataset. Narrowed 2026-10-25, still open.**
+   The sheets carry their original captions, which are the strongest lead yet:
+   - `ProteinExpression`: "Table S4 Detailed information of unique proteins
+     identified in HCC tumour tissues"
+   - `Phosphorylation`: "Table S11 Identified and quantified phosphopeptides,
+     phosphosites and corresponding phosphoproteins in HCC tumour and adjacent
+     non-tumour tissues"
+   **Gao et al. (2019) is ruled out**: that cohort is 159 patients, ours is 18
+   and 18. Two extended web searches on the captions did not identify the
+   paper. Next step is to ask the advisor or the file's supplier, not to search
+   again. Until then, describe the data by its contents and sample counts and
+   cite nothing. British spelling in the captions suggests a non-US journal.
 6. **Two unsupported claims in the chapter drafts.** Locate the file that
    supports each, or delete the sentence:
    - Chapter III §3.6.2 — "An 85th-percentile threshold was tested on the
@@ -160,18 +215,34 @@ Supersedes open decision 1. Every number here was recomputed from the repo on
    conversion for Checkpoint 4: either OMML via a converter, or rendered images
    with text fallback. Decide before the build, since it affects numbering and
    captioning.
+8. **What the headline analysis now is.** Finding 17 means within-category
+   comparative ranking cannot carry the manuscript on its own: it is
+   indistinguishable from a degree-preserving null at any effect size that
+   matters. Either the graph changes (see decision 9) or the differential-site
+   contribution becomes the primary result and the ranking work is reported as
+   a negative methodological finding. This is the main thing to settle with the
+   advisor.
+9. **Preprocessing fixes: which, if any, to make.** Three defects are
+   documented in `GRAPH_WALKTHROUGH.md` §6. By blast radius:
+   - `protein_same_pathway` is **90.6%** of generic edges, all MSigDB cliques.
+     This is the only one that plausibly changes a result.
+   - The truncated identifier map costs **1.5%** of PPI candidate rows.
+   - The DEPOD phosphatase loss (115 to 65) is **0.03%** of edges.
+   Recommend auditing in that order rather than rebuilding everything.
+10. **Patient pairing for the liver data.** Needed for a paired differential
+    test. See `PLAN_differential_sites.md` §1 for the three ways to resolve it,
+    including a read-only empirical fallback.
 
 ## Outstanding work
 
 - Chapters II and III drafts (in progress; independent of the above)
 - Chapters I, IV, V, VI, VII after the direction settles
 - `.docx` build + PDF export + formatting check (Checkpoint 4)
-- Reply to the advisor's 2026-10-15 email (not drafted)
-- Graph-construction walkthrough for the requested meeting (not drafted)
-- Per-site differential analysis for the collaborator's validation targets
-  (not started; no such code exists yet)
-- Decide whether to fix the phosphatase builder's multi-site row loss (65 of
-  115 phosphatases retained; 0.03% of edges, so low priority)
+- Graph-construction walkthrough: **written**, `thesis/GRAPH_WALKTHROUGH.md`
+- Per-site differential analysis: **planned**, `thesis/PLAN_differential_sites.md`,
+  awaiting approval before any run
+- Decide the headline analysis (open decision 8)
+- Preprocessing fixes, if any (open decision 9)
 
 ## Not to be rerun
 

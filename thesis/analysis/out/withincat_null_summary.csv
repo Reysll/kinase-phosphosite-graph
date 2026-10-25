@@ -1,0 +1,10 @@
+contrast,category,n_tested,n_significant,n_sig_percat_bh,median_ks,median_shift
+Control vs Liver FC,average,132,99,99,0.5185873605947955,0.0
+Control vs Liver FC,poor,162,98,98,0.26889714993804215,0.0
+Control vs Liver FC,rich,121,118,118,0.6167905824039653,0.0
+Control vs Null,average,132,98,98,0.5907682775712515,0.0
+Control vs Null,poor,162,95,95,0.2648698884758364,0.0
+Control vs Null,rich,121,118,118,0.7078686493184635,0.0
+Liver FC vs Null,average,132,62,62,0.030978934324659233,0.0
+Liver FC vs Null,poor,162,48,47,0.006660470879801735,0.0
+Liver FC vs Null,rich,121,74,74,0.08921933085501858,0.0

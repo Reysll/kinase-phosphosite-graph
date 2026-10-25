@@ -1,0 +1,138 @@
+WITHIN-CATEGORY COMPARATIVE RANKING vs DEGREE-PRESERVING NULL
+==============================================================================
+
+Read-only. Consumes existing Phase 3 and null-inference outputs.
+Within-category rank: 1 = best inside that kinase's own category.
+Shift convention: negative = ranks BETTER than under Control.
+
+KINASE CATEGORY ASSIGNMENT (poor <=5, average 6-20, rich >20 PSP sites)
+------------------------------------------------------------------------------
+  poor    : 162 kinases scored in the inference pass
+  average : 132 kinases scored in the inference pass
+  rich    : 121 kinases scored in the inference pass
+  total   : 415
+
+Generic  : 391 sites, 162,265 pairs
+Control  : 3,228 sites, 1,339,620 pairs
+Liver FC : 3,228 sites, 1,339,620 pairs
+Null     : 3,228 sites, 1,339,620 pairs
+
+Sites common to Control / Liver FC / Null : 3,228
+Sites common to all four                  : 391
+  Contrasts below use the Control/Liver FC/Null intersection.
+  Generic covers a smaller, PSP-annotated site population and is
+  reported for reference only, never inside a contrast.
+
+PER-KINASE WITHIN-CATEGORY MEDIAN SHIFTS, BY CATEGORY
+------------------------------------------------------------------------------
+          n_kinases  median_liverfc_shift  median_null_shift  median_shift_gap  n_lf_better  n_lf_worse  n_lf_same  n_null_better  n_null_worse  n_null_same
+category                                                                                                                                                    
+poor            162                   0.0                0.0               0.0           17          31        114             18            31          113
+average         132                   0.0                0.0               0.0           22          53         57             22            55           55
+rich            121                   0.0                0.0               0.0           27          55         39             25            57           39
+
+KS TESTS ON WITHIN-CATEGORY RANK DISTRIBUTIONS
+------------------------------------------------------------------------------
+One test per kinase with >= 30 sites in both arms.
+BH-FDR applied across ALL tested kinases within each contrast.
+
+--- Control vs Liver FC ---
+          n_tested  n_significant  n_sig_percat_bh  median_ks  median_shift  pct_significant
+category                                                                                    
+poor           162             98               98   0.268897           0.0             60.5
+average        132             99               99   0.518587           0.0             75.0
+rich           121            118              118   0.616791           0.0             97.5
+  TOTAL tested 415, significant (global BH) 315 (75.9%)
+
+--- Control vs Null ---
+          n_tested  n_significant  n_sig_percat_bh  median_ks  median_shift  pct_significant
+category                                                                                    
+poor           162             95               95   0.264870           0.0             58.6
+average        132             98               98   0.590768           0.0             74.2
+rich           121            118              118   0.707869           0.0             97.5
+  TOTAL tested 415, significant (global BH) 311 (74.9%)
+
+--- Liver FC vs Null ---
+          n_tested  n_significant  n_sig_percat_bh  median_ks  median_shift  pct_significant
+category                                                                                    
+poor           162             48               47   0.006660           0.0             29.6
+average        132             62               62   0.030979           0.0             47.0
+rich           121             74               74   0.089219           0.0             61.2
+  TOTAL tested 415, significant (global BH) 184 (44.3%)
+
+HEADLINE: KINASES WHOSE LIVER FC RANKING DIFFERS FROM THE NULL
+------------------------------------------------------------------------------
+          n_tested  n_differ_from_null  n_differ_percat_bh   pct
+category                                                        
+poor           162                  48                  47  29.6
+average        132                  62                  62  47.0
+rich           121                  74                  74  61.2
+
+  Across all categories: 184 of 415 kinases (44.3%) have a
+  within-category rank distribution under the real Liver FC network
+  that is distinguishable from the degree-preserving null at
+  BH-FDR < 0.05.
+
+  25 kinases most distinguishable from the null:
+ kinase category  n_a median_a median_b median_shift ks_statistic     adj_p
+    KHK     poor 3228    38.00    39.00         1.00         0.48  0.00e+00
+   AAK1     poor 3228    39.00    38.00        -1.00         0.46 4.09e-310
+   MLKL     poor 3228   101.00   101.00         0.00         0.45 5.70e-297
+  CDK18     poor 3228   100.00   100.00         0.00         0.45 1.14e-296
+   ROR1     poor 3228    79.00    79.00         0.00         0.39 1.22e-214
+RPS6KA6     poor 3228    80.00    80.00         0.00         0.39 5.99e-213
+    MET     rich 3228     5.00     6.00         1.00         0.37 8.00e-198
+    TTK     rich 3228     6.00     5.00        -1.00         0.37 8.00e-198
+  MASTL     poor 3228   105.00   106.00         1.00         0.35 1.89e-176
+    ATR     rich 3228   105.00   105.00         0.00         0.35 6.73e-176
+  DAPK3     rich 3228   106.00   106.00         0.00         0.35 6.73e-176
+ CAMK1G     poor 3228   106.00   105.00        -1.00         0.35 4.45e-173
+  PINK1     rich 3228    83.00    84.00         1.00         0.34 1.27e-161
+   JAK3     rich 3228    84.00    83.00        -1.00         0.34 2.38e-161
+  RIPK2  average 3228    68.00    67.00        -1.00         0.32 1.37e-148
+ CAMK2G  average 3228    67.00    68.00         1.00         0.32 1.37e-148
+   CDK8  average 3228    62.00    63.00         1.00         0.31 1.02e-139
+ MAP4K1  average 3228    31.00    31.00         0.00         0.31 1.29e-138
+  CDK16     poor 3228    87.00    87.00         0.00         0.30 2.44e-130
+   NEK3     poor 3228    86.00    86.00         0.00         0.30 4.34e-130
+  CAMK1  average 3228    62.00    62.00         0.00         0.30 2.48e-126
+  OXSR1  average 3228   116.00   116.00         0.00         0.30 8.11e-126
+  ALPK3     poor 3228   134.00   134.00         0.00         0.30 9.04e-125
+ TP53RK     poor 3228   135.00   135.00         0.00         0.30 1.60e-124
+    BMX  average 3228   115.00   115.00         0.00         0.29 5.86e-117
+
+EFFECT SIZES BEHIND THE KS SIGNIFICANCE
+------------------------------------------------------------------------------
+Each kinase is tested on 3,228 sites, so a KS test detects
+distributional differences far smaller than one rank position.
+The magnitude of the median shift is reported separately here.
+
+Distribution of |median_shift| among the 184 significant kinases:
+  |median_shift| =  0.0  : 159 kinases
+  |median_shift| =  0.5  :   1 kinases
+  |median_shift| =  1.0  :  23 kinases
+  |median_shift| =  2.0  :   1 kinases
+
+  |median_shift| >=  1 ranks :  24 of 184
+  |median_shift| >=  2 ranks :   1 of 184
+  |median_shift| >=  3 ranks :   0 of 184
+  |median_shift| >=  5 ranks :   0 of 184
+  |median_shift| >= 10 ranks :   0 of 184
+
+  ks_statistic among significant: median 0.164, max 0.477
+
+AGREEMENT BETWEEN THE REAL AND NULL SHIFTS (all 415 kinases)
+------------------------------------------------------------------------------
+  liverfc_shift  median 0.0  mean 0.91  max 31.0  nonzero 205
+  null_shift     median 1.0  mean 0.94  max 31.0  nonzero 208
+  shift_gap      median 0.0  mean 0.06  max 2.0  nonzero  25
+
+  Pearson r (liverfc_shift vs null_shift)  = 0.9944
+  Spearman  (liverfc_shift vs null_shift)  = 0.9600
+
+FILES WRITTEN
+------------------------------------------------------------------------------
+  thesis/analysis/out/withincat_null.txt
+  thesis/analysis/out/withincat_null_per_kinase.csv
+  thesis/analysis/out/withincat_null_ks.csv
+  thesis/analysis/out/withincat_null_summary.csv
