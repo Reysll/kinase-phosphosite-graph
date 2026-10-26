@@ -110,13 +110,20 @@ def install(sampler) -> list:
 
 
 def verify_patch(sampler, seed: int) -> None:
-    """Fail loudly if the replacement is not actually being used."""
+    """Fail loudly if the replacement is not actually being used.
+
+    The self-test uses a THROWAWAY sampler with its own usage log, so the
+    synthetic kinase ids below never reach the run's usage record. An earlier
+    version called `sampler` directly, which logged 88 synthetic ids and made
+    the recorded distinct-kinase count exceed the 420 real candidates.
+    """
     from src_prediction.engine import leave_one_out as loo
     assert loo.sample_negative_pairs_for_site is sampler, "patch not bound on leave_one_out"
+    probe = make_random_sampler(seed, {})
     cands = ["PROTEIN:K{:03d}".format(i) for i in range(200)]
-    a = sampler("SITE:X-S1", cands, set(), max_negatives=50)
-    b = sampler("SITE:X-S1", cands, set(), max_negatives=50)
-    c = sampler("SITE:Y-S2", cands, set(), max_negatives=50)
+    a = probe("SITE:X-S1", cands, set(), max_negatives=50)
+    b = probe("SITE:X-S1", cands, set(), max_negatives=50)
+    c = probe("SITE:Y-S2", cands, set(), max_negatives=50)
     assert len(a) == 50, "wrong count"
     assert list(a["kinase_node_id"]) == list(b["kinase_node_id"]), "not reproducible"
     assert list(a["kinase_node_id"]) != list(c["kinase_node_id"]), "same draw for two sites"

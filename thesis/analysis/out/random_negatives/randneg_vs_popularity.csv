@@ -1,0 +1,49 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,wilcoxon_W,p_value,favours,B_wins,A_wins,network,seed,metric,stratum
+popularity vs random-neg model,6894,70,25.0,74.0,-41.0,-0.7417884733476762,3006473.0,0.0,popularity,1370,5454,generic,1,global,ALL
+popularity vs random-neg model,5872,68,18.0,64.0,-43.0,-0.8873969124029227,948462.0,0.0,popularity,882,4922,generic,1,global,rich
+popularity vs random-neg model,824,1,162.0,209.0,-38.0,-0.29835199188382544,118956.0,1.2188200302763091e-13,popularity,345,478,generic,1,global,average
+popularity vs random-neg model,198,1,303.0,245.0,63.5,0.6430805517099933,3480.5,5.0038839241893764e-15,random-neg model,143,54,generic,1,global,poor
+popularity vs random-neg model,6894,95,22.0,33.0,-10.0,-0.411198056807662,6805549.5,1.446128972722207e-189,popularity,2356,4443,generic,1,within-category,ALL
+popularity vs random-neg model,5872,92,18.0,30.0,-10.0,-0.46562561164152466,4463920.5,1.814742382466716e-206,popularity,1929,3851,generic,1,within-category,rich
+popularity vs random-neg model,824,1,53.0,62.0,-9.0,-0.19448147318005404,136566.0,1.3419675612076755e-06,popularity,340,483,generic,1,within-category,average
+popularity vs random-neg model,198,2,64.0,77.5,-8.5,-0.18325909043820574,7884.0,0.02608884979930723,popularity,87,109,generic,1,within-category,poor
+popularity vs random-neg model,6894,75,25.0,74.0,-41.0,-0.7420974429305043,2998477.0,0.0,popularity,1369,5450,generic,2,global,ALL
+popularity vs random-neg model,5872,73,18.0,64.0,-43.0,-0.8877770245761755,943632.5,0.0,popularity,881,4918,generic,2,global,rich
+popularity vs random-neg model,824,1,162.0,209.0,-37.0,-0.2982281258478925,118977.0,1.247450196644554e-13,popularity,345,478,generic,2,global,average
+popularity vs random-neg model,198,1,303.0,245.5,59.5,0.6437471158283341,3474.0,4.690993398560838e-15,random-neg model,143,54,generic,2,global,poor
+popularity vs random-neg model,6894,92,22.0,33.0,-10.0,-0.4106563412728952,6817823.0,3.7328914503284535e-189,popularity,2361,4441,generic,2,within-category,ALL
+popularity vs random-neg model,5872,89,18.0,30.0,-10.0,-0.4649653357518304,4474076.5,5.410643755938348e-206,popularity,1934,3849,generic,2,within-category,rich
+popularity vs random-neg model,824,1,53.0,62.0,-9.0,-0.19343156106595571,136744.0,1.529507339315993e-06,popularity,340,483,generic,2,within-category,average
+popularity vs random-neg model,198,2,64.0,77.5,-8.5,-0.18626333782243862,7855.0,0.023736754887995874,popularity,87,109,generic,2,within-category,poor
+popularity vs random-neg model,6894,73,25.0,74.0,-41.0,-0.7418742909043505,3002832.0,0.0,popularity,1362,5459,generic,3,global,ALL
+popularity vs random-neg model,5872,72,18.0,64.0,-43.0,-0.8882746137705152,939772.5,0.0,popularity,874,4926,generic,3,global,rich
+popularity vs random-neg model,824,0,162.0,208.0,-36.0,-0.29421006178287734,119949.0,2.5505707886460817e-13,popularity,346,478,generic,3,global,average
+popularity vs random-neg model,198,1,303.0,240.0,71.5,0.6437471158283341,3474.0,4.690452333146976e-15,random-neg model,142,55,generic,3,global,poor
+popularity vs random-neg model,6894,94,22.0,33.0,-10.0,-0.40869971543977096,6836436.5,2.541406951557246e-187,popularity,2353,4447,generic,3,within-category,ALL
+popularity vs random-neg model,5872,91,18.0,30.0,-10.0,-0.4626915387547717,4489983.5,6.204117237205105e-204,popularity,1924,3857,generic,3,within-category,rich
+popularity vs random-neg model,824,1,53.0,62.0,-9.0,-0.19418655404688034,136616.0,1.39235652654023e-06,popularity,340,483,generic,3,within-category,average
+popularity vs random-neg model,198,2,64.0,76.0,-8.5,-0.18144618253392727,7901.5,0.027603960326314122,popularity,89,107,generic,3,within-category,poor
+popularity vs random-neg model,6894,128,25.0,74.0,-27.0,-0.682444594603508,3634860.0,0.0,popularity,1519,5247,liver_fc,1,global,ALL
+popularity vs random-neg model,5872,122,18.0,53.0,-27.0,-0.8038454408685068,1621622.0,0.0,popularity,1085,4665,liver_fc,1,global,rich
+popularity vs random-neg model,824,2,162.0,211.0,-30.0,-0.3227436268118834,114542.0,1.0918293150079087e-15,popularity,308,514,liver_fc,1,global,average
+popularity vs random-neg model,198,4,303.0,270.5,41.0,0.4963256674596881,4763.5,2.038504903978399e-09,random-neg model,126,68,liver_fc,1,global,poor
+popularity vs random-neg model,6894,163,22.0,39.0,-9.0,-0.44129617109333436,6329149.5,6.942225105267893e-216,popularity,2160,4571,liver_fc,1,within-category,ALL
+popularity vs random-neg model,5872,163,18.0,32.0,-9.0,-0.5007806213742458,4068437.0,1.2336543743529629e-235,popularity,1719,3990,liver_fc,1,within-category,rich
+popularity vs random-neg model,824,0,53.0,59.0,-11.0,-0.2187349220358929,132776.0,5.340517064882105e-08,popularity,352,472,liver_fc,1,within-category,average
+popularity vs random-neg model,198,0,64.0,78.5,-7.5,-0.17577787929546723,8119.0,0.0319633439453777,popularity,89,109,liver_fc,1,within-category,poor
+popularity vs random-neg model,6894,127,25.0,74.0,-27.0,-0.6824429743704761,3635953.0,0.0,popularity,1520,5247,liver_fc,2,global,ALL
+popularity vs random-neg model,5872,121,18.0,53.0,-27.0,-0.8038372839070861,1622253.5,0.0,popularity,1086,4665,liver_fc,2,global,rich
+popularity vs random-neg model,824,2,162.0,210.5,-30.0,-0.32263719760061255,114560.0,1.1155956877665946e-15,popularity,308,514,liver_fc,2,global,average
+popularity vs random-neg model,198,4,303.0,270.5,41.0,0.4965371398361089,4761.5,2.0068234632071927e-09,random-neg model,126,68,liver_fc,2,global,poor
+popularity vs random-neg model,6894,163,22.0,38.5,-9.0,-0.4412633770390244,6329521.0,7.462480542470472e-216,popularity,2160,4571,liver_fc,2,within-category,ALL
+popularity vs random-neg model,5872,163,18.0,32.0,-9.0,-0.5008051011108218,4068237.5,1.167973308862701e-235,popularity,1719,3990,liver_fc,2,within-category,rich
+popularity vs random-neg model,824,0,53.0,59.0,-10.0,-0.2181729920564872,132871.5,5.7750297316718076e-08,popularity,352,472,liver_fc,2,within-category,average
+popularity vs random-neg model,198,0,64.0,78.5,-7.5,-0.17557484391655245,8121.0,0.03216240691550976,popularity,89,109,liver_fc,2,within-category,poor
+popularity vs random-neg model,6894,128,25.0,74.0,-27.0,-0.6824617616022812,3634663.5,0.0,popularity,1519,5247,liver_fc,3,global,ALL
+popularity vs random-neg model,5872,122,18.0,53.0,-27.0,-0.8040489593492247,1619939.5,0.0,popularity,1085,4665,liver_fc,3,global,rich
+popularity vs random-neg model,824,2,162.0,210.5,-29.5,-0.32153742908414706,114746.0,1.392712240691778e-15,popularity,308,514,liver_fc,3,global,average
+popularity vs random-neg model,198,4,303.0,270.5,41.0,0.4963256674596881,4763.5,2.0385125691164072e-09,random-neg model,126,68,liver_fc,3,global,poor
+popularity vs random-neg model,6894,160,22.0,38.0,-9.0,-0.4408418403964061,6339943.5,1.5390144893379895e-215,popularity,2159,4575,liver_fc,3,within-category,ALL
+popularity vs random-neg model,5872,160,18.0,32.0,-9.0,-0.5001862551427012,4077562.5,3.342800363674663e-235,popularity,1718,3994,liver_fc,3,within-category,rich
+popularity vs random-neg model,824,0,53.0,59.5,-10.0,-0.21854074727861136,132809.0,5.4866454770826666e-08,popularity,352,472,liver_fc,3,within-category,average
+popularity vs random-neg model,198,0,64.0,78.5,-7.5,-0.17577787929546723,8119.0,0.0319633439453777,popularity,89,109,liver_fc,3,within-category,poor

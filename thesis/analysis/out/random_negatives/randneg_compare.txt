@@ -1,0 +1,182 @@
+RANDOM NEGATIVES vs ORIGINAL HEAD-SLICE NEGATIVES
+==============================================================================
+
+Read-only comparison. The runs hold the frozen trial set, the candidate
+set, the embeddings and the classifier fixed; only negative selection
+differs, so every contrast below is paired on trial_index.
+
+5. NEGATIVE COVERAGE UNDER THE NEW SAMPLER
+------------------------------------------------------------------------------
+                                  run  distinct_kinases  total_pairs  min_uses  median_uses  max_uses  logged_rows_excluded
+ randneg_infer_control_spectral_seed1               420       507300      1097         1208      1317                    88
+ randneg_infer_generic_spectral_seed1               420       507300      1097         1208      1317                    88
+randneg_infer_liver_fc_spectral_seed1               420       507300      1097         1208      1317                    88
+   randneg_loo_generic_spectral_seed1               420       122950       242          293       346                    88
+   randneg_loo_generic_spectral_seed2               420       122950       242          293       344                     0
+   randneg_loo_generic_spectral_seed3               420       122950       239          293       348                     0
+  randneg_loo_liver_fc_spectral_seed1               420       122950       242          293       346                    88
+  randneg_loo_liver_fc_spectral_seed2               420       122950       242          293       344                     0
+  randneg_loo_liver_fc_spectral_seed3               420       122950       239          293       348                     0
+
+  logged_rows_excluded counts synthetic ids written by an earlier
+  version of verify_patch(); they never entered training. Counts above
+  are restricted to the 420 real candidates.
+
+  Original head-slice sampler: 55 distinct kinases of 420,
+  361 of 415 scored kinases (87.0%) never used as a negative.
+  source: thesis/analysis/out/negative_sampling_audit.txt
+
+Trials rankable in every run compared here: 6,894
+
+1. ORIGINAL vs RANDOM NEGATIVES (paired, per network)
+------------------------------------------------------------------------------
+Convention: diff = rank_A - rank_B; positive favours B = random negatives.
+
+ network  seed          metric stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties    p_value     p_holm    favours
+ generic     1          global     ALL 6894  +79.000  +74.000             +3.000        +0.673    5588    1056     250  0.000e+00  0.000e+00 random-neg
+ generic     1          global    rich 5872  +69.000  +64.000             +3.000        +0.675    4721     923     228  0.000e+00  0.000e+00 random-neg
+ generic     1          global average  824 +209.000 +209.000             +5.000        +0.635     698     105      21  6.348e-55  1.777e-53 random-neg
+ generic     1          global    poor  198 +231.000 +245.000             +5.000        +0.608     169      28       1  1.290e-13  1.677e-12 random-neg
+ generic     1 within-category     ALL 6894  +37.000  +33.000             +2.000        +0.736    5144     824     926  0.000e+00  0.000e+00 random-neg
+ generic     1 within-category    rich 5872  +33.000  +30.000             +2.000        +0.762    4427     700     745  0.000e+00  0.000e+00 random-neg
+ generic     1 within-category average  824  +62.500  +62.000             +2.000        +0.603     585      96     143  8.691e-43  2.086e-41 random-neg
+ generic     1 within-category    poor  198  +75.000  +77.500             +2.000        +0.456     132      28      38  4.662e-07  2.331e-06 random-neg
+ generic     2          global     ALL 6894  +79.000  +74.000             +4.000        +0.678    5598    1048     248  0.000e+00  0.000e+00 random-neg
+ generic     2          global    rich 5872  +69.000  +64.000             +3.000        +0.681    4726     915     231  0.000e+00  0.000e+00 random-neg
+ generic     2          global average  824 +209.000 +209.000             +5.000        +0.637     703     107      14  1.082e-55  3.137e-54 random-neg
+ generic     2          global    poor  198 +231.000 +245.500             +6.000        +0.600     169      26       3  3.349e-13  4.019e-12 random-neg
+ generic     2 within-category     ALL 6894  +37.000  +33.000             +2.000        +0.738    5141     813     940  0.000e+00  0.000e+00 random-neg
+ generic     2 within-category    rich 5872  +33.000  +30.000             +2.000        +0.764    4420     692     760  0.000e+00  0.000e+00 random-neg
+ generic     2 within-category average  824  +62.500  +62.000             +2.000        +0.609     590      92     142  1.678e-43  4.363e-42 random-neg
+ generic     2 within-category    poor  198  +75.000  +77.500             +2.000        +0.445     131      29      38  9.350e-07  3.740e-06 random-neg
+ generic     3          global     ALL 6894  +79.000  +74.000             +4.000        +0.692    5667    1014     213  0.000e+00  0.000e+00 random-neg
+ generic     3          global    rich 5872  +69.000  +64.000             +3.000        +0.696    4790     887     195  0.000e+00  0.000e+00 random-neg
+ generic     3          global average  824 +209.000 +208.000             +5.000        +0.646     707     101      16  5.196e-57  1.559e-55 random-neg
+ generic     3          global    poor  198 +231.000 +240.000             +6.000        +0.593     170      26       2  5.742e-13  5.742e-12 random-neg
+ generic     3 within-category     ALL 6894  +37.000  +33.000             +2.000        +0.772    5315     666     913  0.000e+00  0.000e+00 random-neg
+ generic     3 within-category    rich 5872  +33.000  +30.000             +2.000        +0.805    4591     540     741  0.000e+00  0.000e+00 random-neg
+ generic     3 within-category average  824  +62.500  +62.000             +2.000        +0.604     589      97     138  3.982e-43  9.955e-42 random-neg
+ generic     3 within-category    poor  198  +75.000  +76.000             +2.000        +0.461     135      29      34  2.573e-07  1.544e-06 random-neg
+liver_fc     1          global     ALL 6894  +74.000  +74.000             +1.000        +0.425    3448    1264    2182 2.379e-146 8.325e-145 random-neg
+liver_fc     1          global    rich 5872  +53.000  +53.000             +0.000        +0.440    2827    1016    2029 1.929e-128 6.172e-127        tie
+liver_fc     1          global average  824 +212.000 +211.000             +1.000        +0.313     488     204     132  4.395e-13  4.835e-12 random-neg
+liver_fc     1          global    poor  198 +272.500 +270.500             +1.000        +0.576     133      44      21  1.170e-11  9.363e-11 random-neg
+liver_fc     1 within-category     ALL 6894  +38.000  +39.000             +0.000        +0.220    2299    1341    3254  3.320e-33  7.305e-32        tie
+liver_fc     1 within-category    rich 5872  +32.000  +32.000             +0.000        +0.177    1891    1218    2763  5.235e-19  8.900e-18        tie
+liver_fc     1 within-category average  824  +61.000  +59.000             +0.000        +0.480     353     101     370  5.377e-20  9.679e-19        tie
+liver_fc     1 within-category    poor  198  +79.000  +78.500             +0.000        +0.404      55      22     121  9.765e-04     0.0020        tie
+liver_fc     2          global     ALL 6894  +74.000  +74.000             +1.000        +0.424    3461    1267    2166 2.609e-146 8.872e-145 random-neg
+liver_fc     2          global    rich 5872  +53.000  +53.000             +0.000        +0.437    2840    1022    2010 1.837e-127 5.695e-126        tie
+liver_fc     2          global average  824 +212.000 +210.500             +1.000        +0.324     487     201     136  8.485e-14  1.188e-12 random-neg
+liver_fc     2          global    poor  198 +272.500 +270.500             +1.000        +0.585     134      44      20  5.199e-12  4.679e-11 random-neg
+liver_fc     2 within-category     ALL 6894  +38.000  +38.500             +0.000        +0.223    2308    1338    3248  6.889e-34  1.584e-32        tie
+liver_fc     2 within-category    rich 5872  +32.000  +32.000             +0.000        +0.176    1895    1214    2763  9.251e-19  1.480e-17        tie
+liver_fc     2 within-category average  824  +61.000  +59.000             +0.000        +0.494     356     102     366  5.046e-21  1.009e-19        tie
+liver_fc     2 within-category    poor  198  +79.000  +78.500             +0.000        +0.416      57      22     119  5.649e-04     0.0017        tie
+liver_fc     3          global     ALL 6894  +74.000  +74.000             +1.000        +0.447    3562    1228    2104 7.414e-164 2.669e-162 random-neg
+liver_fc     3          global    rich 5872  +53.000  +53.000             +0.000        +0.458    2925     992    1955 3.324e-141 1.097e-139        tie
+liver_fc     3          global average  824 +212.000 +210.500             +1.000        +0.360     504     192     128  5.880e-17  8.819e-16 random-neg
+liver_fc     3          global    poor  198 +272.500 +270.500             +1.000        +0.576     133      44      21  1.170e-11  9.363e-11 random-neg
+liver_fc     3 within-category     ALL 6894  +38.000  +38.000             +0.000        +0.260    2380    1306    3208  9.527e-46  2.572e-44        tie
+liver_fc     3 within-category    rich 5872  +32.000  +32.000             +0.000        +0.223    1973    1182    2717  1.729e-29  3.630e-28        tie
+liver_fc     3 within-category average  824  +61.000  +59.500             +0.000        +0.487     352     102     370  2.446e-20  4.646e-19        tie
+liver_fc     3 within-category    poor  198  +79.000  +78.500             +0.000        +0.397      55      22     121     0.0011     0.0020        tie
+
+2. CONTEXT EFFECT UNDER RANDOM NEGATIVES (Generic vs Liver FC)
+------------------------------------------------------------------------------
+ seed                   stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties    p_value        favours
+    1                       ALL 6894  +74.000  +74.000             +3.000        +0.285    3909    2671     314  2.682e-89 Liver FC(rand)
+    1                      rich 5872  +64.000  +53.000             +5.000        +0.439    3687    1874     311 7.010e-177 Liver FC(rand)
+    1                   average  824 +209.000 +211.000            -15.000        -0.331     208     613       3  1.926e-16  Generic(rand)
+    1                      poor  198 +245.000 +270.500            -20.500        -0.850      14     184       0  3.121e-25  Generic(rand)
+    2                       ALL 6894  +74.000  +74.000             +3.000        +0.283    3906    2685     303  3.794e-88 Liver FC(rand)
+    2                      rich 5872  +64.000  +53.000             +5.000        +0.437    3684    1886     302 2.916e-175 Liver FC(rand)
+    2                   average  824 +209.000 +210.500            -15.000        -0.329     208     615       1  2.830e-16  Generic(rand)
+    2                      poor  198 +245.500 +270.500            -20.000        -0.852      14     184       0  2.662e-25  Generic(rand)
+    3                       ALL 6894  +74.000  +74.000             +3.000        +0.282    3896    2680     318  2.052e-87 Liver FC(rand)
+    3                      rich 5872  +64.000  +53.000             +5.000        +0.435    3673    1882     317 6.998e-174 Liver FC(rand)
+    3                   average  824 +208.000 +210.500            -15.000        -0.334     209     614       1  1.083e-16  Generic(rand)
+    3                      poor  198 +240.000 +270.500            -20.000        -0.852      14     184       0  2.671e-25  Generic(rand)
+    0 ALL (ORIGINAL, reference) 6894  +79.000  +74.000             +6.000        +0.380    4471    2375      48 3.492e-163 Liver FC(orig)
+
+  The original Generic vs Liver FC spectral contrast was
+  median 79.0 -> 74.0, rank-biserial +0.380, p_holm = 1.40e-162.
+  source: thesis/analysis/out/stat_tests.txt
+
+3. SITE DEPENDENCE FROM THE NEW PREDICT-ALL OUTPUT
+------------------------------------------------------------------------------
+ network        run  n_sites  n_kinases eta_squared median_SD_rank_per_kinase mean_SD_rank_per_kinase pct_kinases_SD_le_1 pct_kinases_SD_le_5
+ control   original     3228        415      0.9997                      1.05                    1.52               48.19               95.90
+ control random-neg     3228        415      1.0000                      0.16                    0.33               93.25              100.00
+ generic   original      391        415      0.9886                      4.93                    8.05                6.02               51.57
+ generic random-neg      391        415      0.9981                      1.88                    3.13               14.70               86.27
+liver_fc   original     3228        415      0.9997                      1.18                    1.52               42.17               96.14
+liver_fc random-neg     3228        415      1.0000                      0.20                    0.30               95.90              100.00
+
+  Original spectral Control and Liver FC: eta^2 = 0.9997,
+  median per-kinase rank SD 1.05 and 1.18.
+  source: thesis/analysis/out/site_dependence.txt
+
+4. POPULARITY BASELINE vs RANDOM-NEGATIVE MODELS
+------------------------------------------------------------------------------
+ network  seed          metric stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties    p_value          favours
+ generic     1          global     ALL 6894  +25.000  +74.000            -41.000        -0.742    1370    5454      70  0.000e+00       popularity
+ generic     1          global    rich 5872  +18.000  +64.000            -43.000        -0.887     882    4922      68  0.000e+00       popularity
+ generic     1          global average  824 +162.000 +209.000            -38.000        -0.298     345     478       1  1.219e-13       popularity
+ generic     1          global    poor  198 +303.000 +245.000            +63.500        +0.643     143      54       1  5.004e-15 random-neg model
+ generic     1 within-category     ALL 6894  +22.000  +33.000            -10.000        -0.411    2356    4443      95 1.446e-189       popularity
+ generic     1 within-category    rich 5872  +18.000  +30.000            -10.000        -0.466    1929    3851      92 1.815e-206       popularity
+ generic     1 within-category average  824  +53.000  +62.000             -9.000        -0.194     340     483       1  1.342e-06       popularity
+ generic     1 within-category    poor  198  +64.000  +77.500             -8.500        -0.183      87     109       2     0.0261       popularity
+ generic     2          global     ALL 6894  +25.000  +74.000            -41.000        -0.742    1369    5450      75  0.000e+00       popularity
+ generic     2          global    rich 5872  +18.000  +64.000            -43.000        -0.888     881    4918      73  0.000e+00       popularity
+ generic     2          global average  824 +162.000 +209.000            -37.000        -0.298     345     478       1  1.247e-13       popularity
+ generic     2          global    poor  198 +303.000 +245.500            +59.500        +0.644     143      54       1  4.691e-15 random-neg model
+ generic     2 within-category     ALL 6894  +22.000  +33.000            -10.000        -0.411    2361    4441      92 3.733e-189       popularity
+ generic     2 within-category    rich 5872  +18.000  +30.000            -10.000        -0.465    1934    3849      89 5.411e-206       popularity
+ generic     2 within-category average  824  +53.000  +62.000             -9.000        -0.193     340     483       1  1.530e-06       popularity
+ generic     2 within-category    poor  198  +64.000  +77.500             -8.500        -0.186      87     109       2     0.0237       popularity
+ generic     3          global     ALL 6894  +25.000  +74.000            -41.000        -0.742    1362    5459      73  0.000e+00       popularity
+ generic     3          global    rich 5872  +18.000  +64.000            -43.000        -0.888     874    4926      72  0.000e+00       popularity
+ generic     3          global average  824 +162.000 +208.000            -36.000        -0.294     346     478       0  2.551e-13       popularity
+ generic     3          global    poor  198 +303.000 +240.000            +71.500        +0.644     142      55       1  4.690e-15 random-neg model
+ generic     3 within-category     ALL 6894  +22.000  +33.000            -10.000        -0.409    2353    4447      94 2.541e-187       popularity
+ generic     3 within-category    rich 5872  +18.000  +30.000            -10.000        -0.463    1924    3857      91 6.204e-204       popularity
+ generic     3 within-category average  824  +53.000  +62.000             -9.000        -0.194     340     483       1  1.392e-06       popularity
+ generic     3 within-category    poor  198  +64.000  +76.000             -8.500        -0.181      89     107       2     0.0276       popularity
+liver_fc     1          global     ALL 6894  +25.000  +74.000            -27.000        -0.682    1519    5247     128  0.000e+00       popularity
+liver_fc     1          global    rich 5872  +18.000  +53.000            -27.000        -0.804    1085    4665     122  0.000e+00       popularity
+liver_fc     1          global average  824 +162.000 +211.000            -30.000        -0.323     308     514       2  1.092e-15       popularity
+liver_fc     1          global    poor  198 +303.000 +270.500            +41.000        +0.496     126      68       4  2.039e-09 random-neg model
+liver_fc     1 within-category     ALL 6894  +22.000  +39.000             -9.000        -0.441    2160    4571     163 6.942e-216       popularity
+liver_fc     1 within-category    rich 5872  +18.000  +32.000             -9.000        -0.501    1719    3990     163 1.234e-235       popularity
+liver_fc     1 within-category average  824  +53.000  +59.000            -11.000        -0.219     352     472       0  5.341e-08       popularity
+liver_fc     1 within-category    poor  198  +64.000  +78.500             -7.500        -0.176      89     109       0     0.0320       popularity
+liver_fc     2          global     ALL 6894  +25.000  +74.000            -27.000        -0.682    1520    5247     127  0.000e+00       popularity
+liver_fc     2          global    rich 5872  +18.000  +53.000            -27.000        -0.804    1086    4665     121  0.000e+00       popularity
+liver_fc     2          global average  824 +162.000 +210.500            -30.000        -0.323     308     514       2  1.116e-15       popularity
+liver_fc     2          global    poor  198 +303.000 +270.500            +41.000        +0.497     126      68       4  2.007e-09 random-neg model
+liver_fc     2 within-category     ALL 6894  +22.000  +38.500             -9.000        -0.441    2160    4571     163 7.462e-216       popularity
+liver_fc     2 within-category    rich 5872  +18.000  +32.000             -9.000        -0.501    1719    3990     163 1.168e-235       popularity
+liver_fc     2 within-category average  824  +53.000  +59.000            -10.000        -0.218     352     472       0  5.775e-08       popularity
+liver_fc     2 within-category    poor  198  +64.000  +78.500             -7.500        -0.176      89     109       0     0.0322       popularity
+liver_fc     3          global     ALL 6894  +25.000  +74.000            -27.000        -0.682    1519    5247     128  0.000e+00       popularity
+liver_fc     3          global    rich 5872  +18.000  +53.000            -27.000        -0.804    1085    4665     122  0.000e+00       popularity
+liver_fc     3          global average  824 +162.000 +210.500            -29.500        -0.322     308     514       2  1.393e-15       popularity
+liver_fc     3          global    poor  198 +303.000 +270.500            +41.000        +0.496     126      68       4  2.039e-09 random-neg model
+liver_fc     3 within-category     ALL 6894  +22.000  +38.000             -9.000        -0.441    2159    4575     160 1.539e-215       popularity
+liver_fc     3 within-category    rich 5872  +18.000  +32.000             -9.000        -0.500    1718    3994     160 3.343e-235       popularity
+liver_fc     3 within-category average  824  +53.000  +59.500            -10.000        -0.219     352     472       0  5.487e-08       popularity
+liver_fc     3 within-category    poor  198  +64.000  +78.500             -7.500        -0.176      89     109       0     0.0320       popularity
+
+  Original: popularity median 25.0 against Generic spectral 79.0
+  (rank-biserial -0.758) and Liver FC spectral 74.0 (-0.686).
+  source: thesis/analysis/out/popularity_baseline.txt
+
+FILES WRITTEN
+------------------------------------------------------------------------------
+  thesis/analysis/out/random_negatives/randneg_compare.txt
+  thesis/analysis/out/random_negatives/randneg_vs_original.csv
+  thesis/analysis/out/random_negatives/randneg_context_effect.csv
+  thesis/analysis/out/random_negatives/randneg_site_dependence.csv
+  thesis/analysis/out/random_negatives/randneg_vs_popularity.csv

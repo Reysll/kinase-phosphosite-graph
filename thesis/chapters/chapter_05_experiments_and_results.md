@@ -593,7 +593,150 @@ questions.
 
 **Proposed Table 5.11**: as above.
 
-## 5.10 Summary of Results
+## 5.10 Random Negatives
+
+Section 5.9 established that negatives are an alphabetical prefix and that the
+**local** effect, a relative shift between the 55 ever-negative kinases and the
+rest, is not detectable. The **global** effect, a learned direction that moves
+every kinase's score, cannot be seen that way. This section reports the rerun
+that separates the two.
+
+### 5.10.1 Design
+
+The negative selector is replaced at runtime with a uniform draw of 50 non-true
+kinases per site, seeded per site so draws are reproducible and independent of
+thread scheduling. The frozen trial set, the 415 scored candidates, the spectral
+embeddings at d = 32 with `random_state` 42, the classifier and its settings are
+all held fixed, so every contrast below is paired on the trial index. Three
+sampler seeds were run for the leave-one-out comparison and one for predict-all.
+
+<!-- source: thesis/analysis/out/random_negatives/*_meta.json -->
+
+| Sampler | Distinct kinases used | Uses per kinase (min/median/max) |
+|---|---|---|
+| Original head slice | **55 of 420** | 2,458 / 2,459 / 2,459 |
+| Random, leave-one-out | **420 of 420** | 242 / 293 / 346 |
+| Random, predict-all | **420 of 420** | 1,097 / 1,208 / 1,317 |
+
+Both samplers generate exactly 122,950 negative pairs in the leave-one-out runs,
+confirming the change is in composition and not in volume.
+
+### 5.10.2 Original Against Random Negatives
+
+<!-- source: thesis/analysis/out/random_negatives/randneg_vs_original.csv -->
+
+Overall, by network and sampler seed. Positive rank-biserial favours random
+negatives.
+
+| Network | Metric | Seed | Median A→B | Rank-biserial | Win/loss/tie |
+|---|---|---|---|---|---|
+| Generic | global | 1 | 79.0 → 74.0 | +0.673 | 5588/1056/250 |
+| Generic | global | 2 | 79.0 → 74.0 | +0.678 | 5598/1048/248 |
+| Generic | global | 3 | 79.0 → 74.0 | +0.692 | 5667/1014/213 |
+| Generic | within-category | 1 | 37.0 → 33.0 | +0.736 | 5144/824/926 |
+| Generic | within-category | 3 | 37.0 → 33.0 | +0.772 | 5315/666/913 |
+| Liver FC | global | 1 | 74.0 → 74.0 | +0.425 | 3448/1264/2182 |
+| Liver FC | global | 3 | 74.0 → 74.0 | +0.447 | 3562/1228/2104 |
+| Liver FC | within-category | 1 | 38.0 → 39.0 | +0.220 | 2299/1341/3254 |
+
+All comparisons are significant after Holm correction across the family. The
+pattern is stable across the three sampler seeds, with rank-biserial varying by
+less than 0.04 within any network and metric.
+
+**Generic changes substantially and Liver FC barely.** Generic gains 5 rank
+positions in the median with a large effect size, while Liver FC's median does
+not move and 32% of its trials are exact ties.
+
+By category, under Generic, every stratum favours random negatives: rich +0.675,
+average +0.635, poor +0.608 at seed 1. The poor stratum needs care, because the
+paired test and the marginal median disagree: the paired difference favours
+random negatives at +0.608 while the marginal median moves from 231.0 to 245.0.
+Both are reported. The disagreement is possible on a skewed distribution and
+neither figure is the error.
+
+### 5.10.3 The Context Effect Under Random Negatives
+
+<!-- source: thesis/analysis/out/random_negatives/randneg_context_effect.csv -->
+
+| Sampler | Stratum | Median A→B | Rank-biserial |
+|---|---|---|---|
+| **Original** | ALL | 79.0 → 74.0 | **+0.380** |
+| Random, seed 1 | ALL | 74.0 → 74.0 | **+0.285** |
+| Random, seed 2 | ALL | 74.0 → 74.0 | +0.283 |
+| Random, seed 3 | ALL | 74.0 → 74.0 | +0.282 |
+| Random, seed 1 | rich | 64.0 → 53.0 | +0.439 |
+| Random, seed 1 | average | 209.0 → 211.0 | **-0.331** |
+| Random, seed 1 | poor | 245.0 → 270.5 | **-0.850** |
+
+The Generic against Liver FC effect **shrinks**, from +0.380 to +0.283 on
+average across the three seeds, and the medians become equal. Within categories
+it splits: rich still favours Liver FC at +0.437 on average, while average
+(-0.331) and poor (-0.851) favour Generic, the poor stratum strongly and with
+184 of 198 trials ranking better under Generic.
+
+### 5.10.4 Site Dependence Under Random Negatives
+
+<!-- source: thesis/analysis/out/random_negatives/randneg_site_dependence.csv -->
+
+| Network | Sampler | eta-squared | Median per-kinase rank SD | SD <= 1 |
+|---|---|---|---|---|
+| Control | original | 0.9997 | 1.05 | 48.2% |
+| Control | **random** | **1.0000** | **0.16** | **93.3%** |
+| Liver FC | original | 0.9997 | 1.18 | 42.2% |
+| Liver FC | **random** | **1.0000** | **0.20** | **95.9%** |
+| Generic | original | 0.9886 | 4.93 | 6.0% |
+| Generic | random | 0.9981 | 1.88 | 14.7% |
+
+Random negatives make the ranking **more** site-invariant, not less. Under the
+context networks eta-squared rises to 1.0000 to four decimal places, the median
+kinase moves 0.16 to 0.20 rank positions across 3,228 sites against 1.05 to 1.18
+before, and the share of kinases whose rank varies by at most one position
+roughly doubles to above 93%.
+
+### 5.10.5 The Popularity Baseline Against the Random-Negative Models
+
+<!-- source: thesis/analysis/out/random_negatives/randneg_vs_popularity.csv -->
+
+| Comparison | Original | Random negatives |
+|---|---|---|
+| vs Generic, global | -0.758 | **-0.742** |
+| vs Liver FC, global | -0.686 | **-0.682** |
+| vs Generic, poor, global | +0.626 | **+0.643** |
+| vs Liver FC, poor, global | +0.480 | **+0.496** |
+| vs Generic, poor, within-category | -0.932 | **-0.183** |
+| vs Liver FC, poor, within-category | -0.954 | **-0.176** |
+
+The baseline's global advantage is essentially unchanged, moving by less than
+0.02 in both networks, and it remains large. The models still beat the baseline
+for poor kinases on global rank, slightly more strongly than before. The one
+substantial change is within-category ranking of poor kinases, where the
+baseline's advantage collapses from -0.93 to -0.18, still favouring the baseline
+but now at p = 0.026 and 0.032 rather than below 1e-23. All figures are stable
+to within 0.005 across the three sampler seeds.
+
+### 5.10.6 What the Rerun Establishes
+
+Reported as results, with interpretation deferred to Chapter VI.
+
+The **global** effect that Section 5.9 could not test is real and measurable.
+Changing only which kinases serve as negatives, with everything else held fixed,
+moves the Generic median by 5 rank positions with rank-biserial near +0.68,
+shrinks the context effect by roughly a quarter, and collapses one stratum of
+the baseline comparison. The local test's silence was therefore not evidence
+that the defect was inconsequential.
+
+The direction, however, is not the one that would rescue the ranking approach.
+Three results point the same way. Site invariance **increases** rather than
+decreases, with eta-squared reaching 1.0000. The context effect **shrinks**
+rather than grows. The popularity baseline's global advantage is **unchanged**.
+
+Four quantities are now known not to be artifacts of the alphabetical sampler,
+because they survive its replacement: the near-fixed global kinase ordering, the
+strength of the substrate-count baseline, the models' advantage over that
+baseline for poor kinases, and the existence of a context effect at the trial
+level.
+
+## 5.11 Summary of Results
 
 | # | Result | Section |
 |---|---|---|
@@ -613,9 +756,16 @@ questions.
 | 14 | 1,548 of 2,973 phosphosites differ between tumour and adjacent tissue | 5.8.3 |
 | 15 | Modelling batch changes significance for 643 sites (21.6%) | 5.8.3 |
 | 16 | Negatives come from 55 of 420 kinases; 87% of scored kinases never appear | 5.9 |
-| 17 | No measurable rank consequence of that defect | 5.9 |
+| 17 | No measurable LOCAL consequence of that defect | 5.9 |
+| 18 | Random negatives use 420 of 420 kinases, against 55 | 5.10.1 |
+| 19 | Replacing the sampler moves Generic by 5 ranks (r = +0.68), Liver FC barely | 5.10.2 |
+| 20 | The context effect shrinks from +0.380 to +0.283 | 5.10.3 |
+| 21 | Site invariance increases: eta-squared reaches 1.0000, per-kinase SD 0.16 | 5.10.4 |
+| 22 | The baseline's global advantage is unchanged by the fix | 5.10.5 |
+| 23 | The GLOBAL effect is real, but does not run in the direction that would rescue ranking | 5.10.6 |
 
 Results 1 and 2, and 10 and 11, are pairs that point in opposite directions at
 different levels of aggregation. Both members of each pair are reported, and
-neither is presented as superseding the other. Chapter VI takes up what they
-mean together.
+neither is presented as superseding the other. Results 17 and 23 are a third
+such pair, separated by what each test is able to see rather than by level of
+aggregation. Chapter VI takes up what they mean together.

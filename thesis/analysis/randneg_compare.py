@@ -115,14 +115,25 @@ def main() -> None:
     # ------------------------------------------------- 5. negative coverage
     add("5. NEGATIVE COVERAGE UNDER THE NEW SAMPLER")
     add("-" * 78)
+    real = set(pd.read_csv(PRED / "candidate_kinases.csv.gz")["node_id"].astype(str))
     cov = []
     for f in sorted(RN.glob("*_negative_usage.csv")):
         u = pd.read_csv(f)
+        u.columns = ["kinase", "n_uses"]
+        keep_u = u[u["kinase"].isin(real)]
         cov.append({"run": f.name.replace("_negative_usage.csv", ""),
-                    "distinct_kinases": len(u),
-                    "total_pairs": int(u.iloc[:, 1].sum())})
+                    "distinct_kinases": len(keep_u),
+                    "total_pairs": int(keep_u["n_uses"].sum()),
+                    "min_uses": int(keep_u["n_uses"].min()),
+                    "median_uses": int(keep_u["n_uses"].median()),
+                    "max_uses": int(keep_u["n_uses"].max()),
+                    "logged_rows_excluded": int(len(u) - len(keep_u))})
     if cov:
         add(pd.DataFrame(cov).to_string(index=False))
+    add("")
+    add("  logged_rows_excluded counts synthetic ids written by an earlier")
+    add("  version of verify_patch(); they never entered training. Counts above")
+    add("  are restricted to the 420 real candidates.")
     add("")
     add("  Original head-slice sampler: 55 distinct kinases of 420,")
     add("  361 of 415 scored kinases (87.0%) never used as a negative.")

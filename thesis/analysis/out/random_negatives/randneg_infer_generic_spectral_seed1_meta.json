@@ -1,0 +1,12 @@
+{
+  "tag": "randneg_infer_generic_spectral_seed1",
+  "mode": "infer",
+  "network": "generic",
+  "sampler_seed": 1,
+  "embedding": "spectral",
+  "target_sites": 3228,
+  "sites_covered": 391,
+  "pairs_scored": 162265,
+  "distinct_kinases_used_as_negative": 508,
+  "elapsed_minutes": 62.2
+}

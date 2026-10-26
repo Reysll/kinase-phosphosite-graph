@@ -1,6 +1,6 @@
 # Thesis state — recovery point
 
-Last updated: 2026-10-26 (third pass). Advisor decisions recorded below;
+Last updated: 2026-10-26 (fourth pass). Advisor decisions recorded below;
 see "Current plan" for the three tasks now in flight.
 All paths relative to the repo root. All analysis scripts are read-only with
 respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
@@ -34,6 +34,8 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 22 | **KSEA and ranking are NOT meaningfully disjoint.** Overlap 0/1/3 at the top 10/20/50 cutoffs against 0.56/1.50/3.56 expected by chance; hypergeometric depletion n.s. in all 6 comparisons | `out/ksea_ranking_overlap.txt` | `python -m thesis.analysis.ksea_ranking_overlap` |
 | 23 | **Negatives are an alphabetical head slice, not a sample.** Only **55 of 420** kinases are ever a negative; **361 of 415 scored (87.0%) never are**. No significant rank consequence (p 0.060 to 0.840 across 6 tests) | `out/negative_sampling_audit.txt`, `.csv` | `python -m thesis.analysis.negative_sampling_audit` |
 | 24 | **Differential sites cannot be protein-corrected.** ProteinExpression is 91.7% empty, 2 rows with >=6 in both groups; **0 of 659 shortlist sites** have usable protein data. Presence/absence sites are filter artifacts but NOT batch artifacts (0/114 confined to one batch, 114/114 had the opposite group covered) | `out/diffsites/diffsites_limitations.txt` | `python -m thesis.analysis.diffsites_limitations` |
+| 25 | **Random negatives: the GLOBAL effect is real.** 420/420 kinases used as negatives vs 55. Generic moves 79->74 (r=+0.68, stable over 3 sampler seeds); Liver FC barely moves. Context effect shrinks +0.380 -> +0.283 | `out/random_negatives/randneg_compare.txt`, `randneg_vs_original.csv`, `randneg_context_effect.csv` | `python -m thesis.analysis.random_negatives --mode loo --network <net> --seed <n>` then `python -m thesis.analysis.randneg_compare` |
+| 26 | **Fixing the sampler makes site-invariance WORSE.** eta^2 0.9997 -> **1.0000**, median per-kinase rank SD 1.05 -> 0.16, kinases with SD<=1 48.2% -> 93.3%. Popularity baseline global advantage unchanged (-0.758 -> -0.742) | `out/random_negatives/randneg_site_dependence.csv`, `randneg_vs_popularity.csv` | same |
 
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
@@ -51,7 +53,19 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
    Control to Liver FC shift was **1 rank** (median 6 to 7). A 0% null
    reproduction of a 1-rank shift is noise, not evidence. State it as: TTK's
    shift was too small to evaluate against the null.
-10. **Negative sampling: claim neither bias nor absence of bias.** The defect
+10. **Negative sampling: the global effect was tested and is real; the
+    direction does not rescue ranking.** RESOLVED 2026-10-26 by findings 25
+    and 26. The local effect remains undetected (p 0.060 to 0.840). The
+    global effect is measurable: replacing the sampler moves Generic by 5
+    rank positions (r = +0.68, stable over 3 sampler seeds) and shrinks the
+    context effect by about a quarter. But site-invariance INCREASES
+    (eta^2 -> 1.0000) and the popularity baseline's global advantage is
+    unchanged, so four results are now known NOT to be sampler artifacts:
+    the fixed global ordering, the baseline's strength, the models' edge on
+    poor kinases, and the trial-level context effect. Superseded guidance
+    retained below for the record:
+
+    **(superseded) Claim neither bias nor absence of bias.** The defect
     is real (finding 23). What has been tested is only the **local** effect,
     whether the 55 ever-negative kinases are pushed down relative to the other
     360, and it was not detected (p 0.060 to 0.840). That comparison **cannot**
@@ -268,7 +282,15 @@ channel belongs to which tumour channel.
 10. **Patient pairing for the liver data.** Needed for a paired differential
     test. See `PLAN_differential_sites.md` §1 for the three ways to resolve it,
     including a read-only empirical fallback.
-11. **Whether to fix the negative sampler and rerun.** Finding 23 documents
+11. **RESOLVED 2026-10-26. The rerun was approved and run** (findings 25,
+    26; Chapter V 5.10). Six runs total: LOO Generic and Liver FC at sampler
+    seeds 1, 2 and 3, plus predict-all for Generic, Control and Liver FC at
+    seed 1. 10.4 h of compute. What remains open is whether to adopt the
+    random sampler as the project default, which would touch project code
+    and invalidate nothing but would require rerunning node2vec and concat
+    for consistency. Original text:
+
+    **(superseded) Whether to fix the negative sampler and rerun.** Finding 23 documents
     that negatives come from 55 of 420 kinases. A corrected sampler would be a
     one-line change, but rerunning would break comparability with every
     existing run against the frozen trial set, and the measured rank
@@ -286,7 +308,8 @@ channel belongs to which tumour channel.
 - Chapter III: audit findings integrated, unsupported sentence removed
 - Chapter IV: drafted 2026-10-25, corrected 2026-10-26 (negative sampling in
   4.5 and 4.6.2; seed variance scope in 4.9.2; node2vec walk parameters)
-- Chapter V: drafted 2026-10-26. Every number carries its `out/` path in an
+- Chapter V: drafted 2026-10-26, section 5.10 (random negatives) added the
+  same day, summary renumbered to 5.11 with 7 new rows. Every number carries its `out/` path in an
   HTML comment; effect sizes accompany every p-value; figures and tables
   proposed per section
 - **Chapters I and VI: on hold until 2026-10-31**, pending open decision 8

@@ -1,0 +1,14 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,wilcoxon_W,p_value,favours,B_wins,A_wins,seed,stratum
+Generic(rand) vs Liver FC(rand),6894,314,74.0,74.0,3.0,0.28517058179367794,7738561.0,2.6817557192184966e-89,Liver FC(rand),3909,2671,1,ALL
+Generic(rand) vs Liver FC(rand),5872,311,64.0,53.0,5.0,0.438999036607555,4337979.5,7.009709500346398e-177,Liver FC(rand),3687,1874,1,rich
+Generic(rand) vs Liver FC(rand),824,3,209.0,211.0,-15.0,-0.33140108644433974,112803.0,1.9259732752140665e-16,Generic(rand),208,613,1,average
+Generic(rand) vs Liver FC(rand),198,0,245.0,270.5,-20.5,-0.8504644434292675,1473.0,3.1210588033423653e-25,Generic(rand),14,184,1,poor
+Generic(rand) vs Liver FC(rand),6894,303,74.0,74.0,3.0,0.2830494437103847,7787494.0,3.79412878683818e-88,Liver FC(rand),3906,2685,2,ALL
+Generic(rand) vs Liver FC(rand),5872,302,64.0,53.0,5.0,0.43660653544725553,4370591.0,2.915654013247362e-175,Liver FC(rand),3684,1886,2,rich
+Generic(rand) vs Liver FC(rand),824,1,209.0,210.5,-15.0,-0.3291386001958263,113736.5,2.829886520640438e-16,Generic(rand),208,615,2,average
+Generic(rand) vs Liver FC(rand),198,0,245.5,270.5,-20.0,-0.8516826557027563,1461.0,2.6616066544600914e-25,Generic(rand),14,184,2,poor
+Generic(rand) vs Liver FC(rand),6894,318,74.0,74.0,3.0,0.282165980984386,7761643.5,2.0521433797643934e-87,Liver FC(rand),3896,2680,3,ALL
+Generic(rand) vs Liver FC(rand),5872,317,64.0,53.0,5.0,0.4354517525186644,4355995.0,6.9975867447084455e-174,Liver FC(rand),3673,1882,3,rich
+Generic(rand) vs Liver FC(rand),824,1,208.0,210.5,-15.0,-0.3337599830126579,112953.0,1.0833590703243926e-16,Generic(rand),209,614,3,average
+Generic(rand) vs Liver FC(rand),198,0,240.0,270.5,-20.0,-0.8516826557027563,1461.0,2.6707215121881354e-25,Generic(rand),14,184,3,poor
+Generic(orig) vs Liver FC(orig),6894,48,79.0,74.0,6.0,0.3798589520687148,7267210.0,3.4917164486301005e-163,Liver FC(orig),4471,2375,0,"ALL (ORIGINAL, reference)"

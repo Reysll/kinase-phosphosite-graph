@@ -1,0 +1,15 @@
+{
+  "tag": "randneg_loo_liver_fc_spectral_seed3",
+  "mode": "loo",
+  "network": "liver_fc",
+  "sampler_seed": 3,
+  "embedding": "spectral",
+  "dimensions": 32,
+  "embedding_random_state": 42,
+  "max_negatives_per_site": 50,
+  "n_trials": 6909,
+  "n_rankable": 6894,
+  "distinct_kinases_used_as_negative": 420,
+  "total_negative_pairs": 122950,
+  "elapsed_minutes": 65.2
+}

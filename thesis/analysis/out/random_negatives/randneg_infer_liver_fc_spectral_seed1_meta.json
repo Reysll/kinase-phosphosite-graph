@@ -1,0 +1,12 @@
+{
+  "tag": "randneg_infer_liver_fc_spectral_seed1",
+  "mode": "infer",
+  "network": "liver_fc",
+  "sampler_seed": 1,
+  "embedding": "spectral",
+  "target_sites": 3228,
+  "sites_covered": 3228,
+  "pairs_scored": 1339620,
+  "distinct_kinases_used_as_negative": 508,
+  "elapsed_minutes": 57.5
+}

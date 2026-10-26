@@ -1,0 +1,15 @@
+{
+  "tag": "randneg_loo_generic_spectral_seed1",
+  "mode": "loo",
+  "network": "generic",
+  "sampler_seed": 1,
+  "embedding": "spectral",
+  "dimensions": 32,
+  "embedding_random_state": 42,
+  "max_negatives_per_site": 50,
+  "n_trials": 6909,
+  "n_rankable": 6894,
+  "distinct_kinases_used_as_negative": 508,
+  "total_negative_pairs": 123100,
+  "elapsed_minutes": 76.4
+}
