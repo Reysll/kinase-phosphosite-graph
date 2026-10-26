@@ -222,3 +222,52 @@ FILES WRITTEN (all under thesis/analysis/out/diffsites/)
   diffsites_volcano.png
   normalization_check.txt
   channel_stats.csv
+
+================================================================================
+LIMITATIONS
+================================================================================
+Added after review. Full working in diffsites_limitations.txt, reproduced by
+    .venv312/Scripts/python -m thesis.analysis.diffsites_limitations
+
+1. NOT CORRECTED FOR PROTEIN ABUNDANCE.
+   A phosphosite can change because the protein carrying it changed, not
+   because its phosphorylation changed. These results do not separate the two.
+   The ProteinExpression sheet cannot support a correction:
+     - 444 rows, 91.7% of cells empty, median 0 observed values per row
+     - only 2 rows have >= 6 observed values in both groups
+     - only 81 of 2,973 tested sites (2.7%) have their protein in the sheet
+     - only 19 of 659 shortlist sites (2.9%) do
+     - 0 of 659 shortlist sites have protein data sufficient for a correction
+   Its caption also describes it as proteins UNIQUE TO tumour tissue, which is
+   not a matched quantitative matrix. Any site taken forward for validation
+   should have its protein level checked independently.
+
+2. THE 114 PRESENCE/ABSENCE SITES ARE CANDIDATES, NOT A STATISTICAL FINDING.
+   They are selected by a detection-count filter and then tested with a
+   detection-count test, so all 114 reaching significance is largely a property
+   of the filter rather than evidence about each site. Report them as a
+   follow-up list.
+
+   Their batch structure was checked and is reassuring on a separate question:
+     - 0 of 114 have detections confined to a single batch
+     - 76 of 114 (66.7%) span 4 or more of the 6 batches
+     - for 114 of 114 (100%), every batch containing a detection also had the
+       opposite group well covered
+   So the one-sided detection is not an artifact of a batch in which the other
+   condition was simply not being measured.
+
+3. ROUTE B BEING FULLY CONTAINED IN ROUTE A IS NEAR-AUTOMATIC.
+   All 15 KSEA-significant kinases also appear in Route A. This is close to
+   structural rather than corroborative: Route A collects every kinase annotated
+   to any one of 1,548 significant sites and contains 109 kinases, while KSEA
+   scores only kinases with at least 3 measured substrates, which are largely
+   the same well-annotated kinases. Containment should NOT be presented as
+   agreement between two independent methods.
+
+4. SINGLE COHORT, NO EXTERNAL REPLICATION, UNRESOLVED PROVENANCE.
+   18 against 18, no validation in a second dataset, and the originating study
+   is still unidentified.
+
+5. UNPAIRED DESIGN ON PROBABLY-PAIRED DATA.
+   The layout is consistent with 18 matched pairs but the pairing is not
+   recorded, so the test is unpaired. That is conservative, not anti-conservative.

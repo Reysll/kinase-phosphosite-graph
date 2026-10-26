@@ -1,6 +1,6 @@
 # Thesis state — recovery point
 
-Last updated: 2026-10-25 (second pass). Advisor decisions recorded below;
+Last updated: 2026-10-26 (third pass). Advisor decisions recorded below;
 see "Current plan" for the three tasks now in flight.
 All paths relative to the repo root. All analysis scripts are read-only with
 respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
@@ -32,6 +32,8 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 20 | **Phospho sheet is NOT normalized**: per-channel medians span 6.13x (2.62 log2). Per-channel median centering applied before testing | `out/diffsites/normalization_check.txt` | `python -m thesis.analysis.check_normalization` |
 | 21 | **Differential sites**: 2,973 tested, **1,548 significant** (BH-FDR<0.05) under a batch-aware linear model; 801 up, 747 down; 659 on the shortlist. Welch alone gives 939, so **643 sites (21.6%) change significance** when batch is modelled | `out/diffsites/diffsites.txt` | `python -m thesis.analysis.differential_sites` |
 | 22 | **KSEA and ranking are NOT meaningfully disjoint.** Overlap 0/1/3 at the top 10/20/50 cutoffs against 0.56/1.50/3.56 expected by chance; hypergeometric depletion n.s. in all 6 comparisons | `out/ksea_ranking_overlap.txt` | `python -m thesis.analysis.ksea_ranking_overlap` |
+| 23 | **Negatives are an alphabetical head slice, not a sample.** Only **55 of 420** kinases are ever a negative; **361 of 415 scored (87.0%) never are**. No significant rank consequence (p 0.060 to 0.840 across 6 tests) | `out/negative_sampling_audit.txt`, `.csv` | `python -m thesis.analysis.negative_sampling_audit` |
+| 24 | **Differential sites cannot be protein-corrected.** ProteinExpression is 91.7% empty, 2 rows with >=6 in both groups; **0 of 659 shortlist sites** have usable protein data. Presence/absence sites are filter artifacts but NOT batch artifacts (0/114 confined to one batch, 114/114 had the opposite group covered) | `out/diffsites/diffsites_limitations.txt` | `python -m thesis.analysis.diffsites_limitations` |
 
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
@@ -49,6 +51,9 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
    Control to Liver FC shift was **1 rank** (median 6 to 7). A 0% null
    reproduction of a 1-rank shift is noise, not evidence. State it as: TTK's
    shift was too small to evaluate against the null.
+10. **Do not claim the negative-sampling defect biased the results.** The defect
+    is real (finding 23) but the measured rank consequence is absent. Report the
+    design flaw as a limitation; do not attach a claim about its effect.
 
 ## Quarantined
 
@@ -164,6 +169,7 @@ notes above where they conflict.
 | 3 | Preprocessing audit written for a biologist | **done** 2026-10-25 | `thesis/GRAPH_WALKTHROUGH.md` |
 | 4 | Differential site analysis for the collaborator | **approved and run** 2026-10-25, with per-channel normalization and a batch-aware model added | `thesis/PLAN_differential_sites.md`, `out/diffsites/` |
 | 5 | Chapter III updated with the audit; Chapter IV drafted; Chapter II citations and APA fixed | **done** 2026-10-25 | `thesis/chapters/` |
+| 6 | Negative-sampling audit; Chapter IV corrections; diffsites limitations; **Chapter V drafted** | **done** 2026-10-26 | `thesis/chapters/chapter_05_*.md` |
 
 Task 2's result, stated plainly: within-category ranking is the right metric and
 it does **not** rescue the context effect. Of 415 kinases, 184 (44.3%) have a
@@ -254,12 +260,28 @@ channel belongs to which tumour channel.
 10. **Patient pairing for the liver data.** Needed for a paired differential
     test. See `PLAN_differential_sites.md` §1 for the three ways to resolve it,
     including a read-only empirical fallback.
+11. **Whether to fix the negative sampler and rerun.** Finding 23 documents
+    that negatives come from 55 of 420 kinases. A corrected sampler would be a
+    one-line change, but rerunning would break comparability with every
+    existing run against the frozen trial set, and the measured rank
+    consequence of the defect is nil. **Advisor decision. No rerun has been
+    attempted.** Note the fix would touch project code, which is currently
+    out of bounds.
+12. **Protein-abundance correction for the differential sites.** Not possible
+    with the data in hand (finding 24). Either obtain a matched protein
+    quantification matrix for the same 36 channels, or state in the manuscript
+    that the reported changes are phosphosite-level and uncorrected.
 
 ## Outstanding work
 
 - Chapter II: citations verified, APA 7 applied, disjointness claim corrected
 - Chapter III: audit findings integrated, unsupported sentence removed
-- Chapter IV: drafted 2026-10-25, methods only, no results
+- Chapter IV: drafted 2026-10-25, corrected 2026-10-26 (negative sampling in
+  4.5 and 4.6.2; seed variance scope in 4.9.2; node2vec walk parameters)
+- Chapter V: drafted 2026-10-26. Every number carries its `out/` path in an
+  HTML comment; effect sizes accompany every p-value; figures and tables
+  proposed per section
+- **Chapters I and VI: on hold until 2026-10-31**, pending open decision 8
 - Chapters I, IV, V, VI, VII after the direction settles
 - `.docx` build + PDF export + formatting check (Checkpoint 4)
 - Graph-construction walkthrough: **written**, `thesis/GRAPH_WALKTHROUGH.md`

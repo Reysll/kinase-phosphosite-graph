@@ -531,6 +531,10 @@ def main() -> None:
               "diffsites_volcano.png", "normalization_check.txt",
               "channel_stats.csv"):
         add("  " + f)
+    add("")
+    add("LIMITATIONS: see diffsites_limitations.txt, produced by")
+    add("  python -m thesis.analysis.diffsites_limitations")
+    add("Those limitations apply to every number above.")
 
     text = "\n".join(L)
     (OUT / "diffsites.txt").write_text(text, encoding="utf-8")

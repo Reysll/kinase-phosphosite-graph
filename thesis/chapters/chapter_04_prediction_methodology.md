@@ -102,7 +102,8 @@ directedness it requires rather than sharing one view.
 
 ### 4.2.5 Dimensions and Settings
 
-Local leave-one-out runs and the predict-all pass use $d = 32$ per
+Node2vec is run with walk length 10, 25 walks per node and a context window of
+5. Local leave-one-out runs and the predict-all pass use $d = 32$ per
 sub-embedding, giving 64-dimensional nodes under concatenation. Earlier cluster
 runs used $d = 64$, so feature counts quoted from those runs are not comparable
 and are not used in this thesis. Node2vec is run with four worker threads and a
@@ -164,11 +165,39 @@ Scoring uses $L_2$-regularized logistic regression with the liblinear solver, a
 1,000-iteration cap and balanced class weights.
 
 Positives are the known kinase-substrate edges in the training set. Negatives
-are generated per site by sampling candidate kinases not known to act on that
-site, capped at 50 negatives per site. Because the candidate set is far larger
-than the number of true kinases per site, the sampled pairs are overwhelmingly
-negative, and balanced class weighting compensates by reweighting the two
-classes in inverse proportion to their frequency.
+are drawn per site from the candidate kinases not known to act on that site,
+capped at 50 per site, and balanced class weighting compensates for the
+resulting imbalance by reweighting the classes in inverse proportion to their
+frequency.
+
+The selection of those 50 requires a precise statement, because the
+implementation does not do what the word "sample" would suggest. The code
+filters the candidate list to the kinases not known to act on the site and then
+takes the **first 50 entries of the resulting list**. No randomization is
+applied. The candidate list is itself constructed with a sort on the node
+identifier, so its order is **alphabetical by gene symbol**.
+
+The consequence is that negatives are not a sample of the candidate space but a
+fixed alphabetical prefix of it. Measured over all 2,459 training sites, only
+**55 of the 420 candidate kinases are ever used as a negative example**, and
+each of those appears at essentially every site. **361 of the 415 scored
+kinases, 87.0%, never appear as a negative at any site.** The decision boundary
+is therefore fitted against an alphabetically determined subset of the kinases
+the model is later asked to rank.
+
+This is a defect in the training design and is reported as a limitation.
+Whether it biased the results was tested directly, by comparing the rank
+distributions of never-negative and ever-negative kinases in the existing
+output; Section 5.9 gives the figures. No comparison reached significance, so
+the defect is documented without any accompanying claim that it distorted the
+rankings. One consideration also affects how much room there is for such an
+effect: as Section 4.9.3 describes, kinase identity accounts for almost all the
+variance in predicted rank, which leaves little that the composition of the
+negative set could move.
+
+A second consequence is that negative selection is **deterministic**. Given the
+same training positives it returns the same pairs every time, so it contributes
+nothing to run-to-run variability.
 
 Treating unobserved pairs as negatives is an assumption, and given the
 annotation gap documented in Section 2.2 it is certainly wrong for some pairs.
@@ -213,7 +242,10 @@ run, the remaining five lacking embeddings for the same reason.
 Each trial proceeds identically:
 
 1. Remove the held-out edge from the training positives.
-2. Train the classifier on the remaining positives and freshly sampled negatives.
+2. Train the classifier on the remaining positives and on the negatives selected
+   as described in Section 4.5. Those negatives are deterministic, so they are
+   identical across trials except at the site whose true-kinase set the holdout
+   has just changed.
 3. Score all 415 candidate kinases against the held-out site.
 4. Sort by score, highest first.
 5. Record the position of the held-out kinase.
@@ -353,16 +385,30 @@ rank shifts, and separately to within-category ranking.
 **Alternative explanation: the difference between networks is smaller than the
 run-to-run variation of the method itself.**
 
-Both embedding strategies involve stochastic elements, node2vec through walk
-sampling and the spectral solver through its random starting vector, and
-negative sampling introduces further randomness. A comparison between two
-networks at a single seed confounds the effect of the network with the effect of
-the seed.
+This control applies to node2vec and to node2vec only, and the reason is worth
+stating because it determines the scope of every seed-related claim in this
+thesis.
 
-The control reruns the same configuration across multiple random seeds and
-measures the spread. The comparison of interest is between the magnitude of the
-seed-to-seed variation and the magnitude of the network-to-network difference. A
-context effect smaller than the seed noise is not a context effect.
+Node2vec is stochastic in two places, the sampling of random walks and the
+initialization of the skip-gram model, so two runs with different seeds produce
+different embeddings from the same graph. The spectral strategy is not. It
+solves an eigenproblem whose starting vector is drawn from a generator seeded by
+an explicit `random_state` parameter, fixed at its default throughout this work,
+so for a given graph it returns the same embedding every time. This matches the
+determinism noted in Section 2.5.2. Negative selection is deterministic for the
+reason given in Section 4.5. Run-to-run variability therefore has exactly one
+source, and it is present only under node2vec.
+
+The control accordingly reruns the **node2vec** configuration at several seeds,
+holding the network and everything else constant, and measures the spread. The
+comparison of interest is between the magnitude of the seed-to-seed variation
+and the magnitude of the network-to-network difference. A context effect smaller
+than the seed noise is not a context effect.
+
+No seed sweep was run for spectral, because repeating a deterministic
+computation would return identical results. The corollary is that seed-based
+findings constrain the node2vec results and say nothing about the spectral
+ones, which must be qualified by the separate controls instead.
 
 ### 4.9.3 Site Dependence
 

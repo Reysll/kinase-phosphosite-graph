@@ -1,0 +1,65 @@
+DIFFERENTIAL ANALYSIS: LIMITATION CHECKS
+==============================================================================
+
+1. PROTEIN-ABUNDANCE CONFOUNDING
+------------------------------------------------------------------------------
+  The ProteinExpression sheet:
+    rows                                   : 444
+    distinct gene symbols                  : 440
+    channels                               : 18 control + 18 tumour
+    observed values per row: median 0 of 36, mean 3.0
+    rows with >= 6 observed in BOTH groups : 2
+    overall missingness                    : 91.7%
+
+  all tested sites: 2,973
+    distinct genes                       : 1,685
+    sites whose protein appears in the sheet at all : 81  (2.7%)
+    distinct genes present               : 48
+
+  shortlist sites: 659
+    distinct genes                       : 516
+    sites whose protein appears in the sheet at all : 19  (2.9%)
+    distinct genes present               : 13
+
+  shortlist sites whose protein is quantified well enough to support
+  a correction (>= 6 observed in both groups): 0 of 659  (0.0%)
+
+  CONCLUSION: phosphosite changes reported here are NOT corrected for
+  protein abundance. A site may change because its protein changed.
+  The ProteinExpression sheet cannot support a correction, both because
+  of coverage and because its caption describes it as proteins unique to
+  tumour tissue rather than a matched quantitative matrix. Any site taken
+  forward for validation should have its protein level checked
+  independently.
+
+2. PRESENCE/ABSENCE SITES: BATCH STRUCTURE
+------------------------------------------------------------------------------
+  Dataset-wide coverage per batch (share of all 3,780 collapsed sites
+  observed in at least one channel of that batch and group):
+     batch  control_cov_pct  tumour_cov_pct
+         0             77.1            78.8
+         1             78.3            82.6
+         2             64.9            67.6
+         3             88.4            83.1
+         5             86.6            85.6
+         7             77.2            79.8
+
+  presence/absence sites examined : 114
+  detections spanning all 6 batches: 16  (14.0%)
+  detections spanning >= 4 batches : 76  (66.7%)
+  detections confined to 1 batch   : 0  (0.0%)
+
+  sites where EVERY batch containing a detection also had the
+  opposite group well covered: 114  (100.0%)
+
+  distribution of batches with detection:
+    2 batch(es): 11 sites
+    3 batch(es): 27 sites
+    4 batch(es): 33 sites
+    5 batch(es): 27 sites
+    6 batch(es): 16 sites
+
+  CONCLUSION: these 114 sites are selected BY a detection-count
+  filter and then tested WITH a detection-count test, so their
+  significance is largely a property of the filter. They are reported
+  as candidates for follow-up, not as a statistical finding.

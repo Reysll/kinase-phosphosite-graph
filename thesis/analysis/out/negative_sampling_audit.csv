@@ -1,0 +1,9 @@
+source,metric,n_ever_negative,median_ever,n_never_negative,median_never,mannwhitney_p,rank_biserial
+predict-all control spectral,median rank_in_site,54,213.5,361,207.0,0.7402799537521374,-0.028008618036318822
+predict-all liver_fc spectral,median rank_in_site,54,215.5,361,207.0,0.6984311172539269,-0.03272801887760335
+LOO generic,adjusted_held_out_rank,47,240.0,308,191.5,0.06031788483281774,-0.17014368610113295
+LOO generic,adjusted_held_out_rank_in_category,47,77.0,308,65.5,0.08532796918870124,-0.1558441558441559
+LOO control,adjusted_held_out_rank,47,206.0,308,196.75,0.5692308723528977,-0.05160265266648256
+LOO control,adjusted_held_out_rank_in_category,47,65.0,308,68.5,0.839764007706251,-0.01837524177949712
+LOO liver,adjusted_held_out_rank,47,206.0,308,197.25,0.5630345455539918,-0.05243161094224913
+LOO liver,adjusted_held_out_rank_in_category,47,65.0,308,68.5,0.8355907062022037,-0.018858800773694284

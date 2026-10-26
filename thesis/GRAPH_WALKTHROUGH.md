@@ -451,6 +451,76 @@ Found while tracing. The first five were corrected in the docs on 2026-10-10
 
 ---
 
+## 6.1 A method defect outside the graph build: negative sampling
+
+The audit that produced this document was extended to the prediction code, and
+found one defect there. It is recorded here because it is the same class of
+problem, a stated intent that the implementation does not carry out.
+
+**What the code does.** Training the classifier requires negative examples,
+meaning kinase and site pairs assumed not to interact. For each site the
+selection is:
+
+```python
+negatives = [k for k in candidate_kinase_ids if k not in true_kinases_for_site]
+if max_negatives is not None:
+    negatives = negatives[:max_negatives]
+```
+
+with the cap set to 50. This takes the **first 50** entries of the candidate
+list, not a random sample of 50. Whether that matters depends on the list's
+order, and the candidate list is built with `.sort_values("node_id")`, so it is
+**sorted alphabetically by gene symbol**: AAK1, AATK, ABL1, ABL2, ACVR1B, and so
+on.
+
+**Measured consequences**, reproducing the selection exactly over all 2,459
+training sites:
+
+| Quantity | Value |
+|---|---|
+| Distinct kinases ever used as a negative | **55 of 420** |
+| Candidate-list positions they occupy | indices 0 to 54, the alphabetical head |
+| Negative pairs generated in total | 122,950 |
+| Times a typical such kinase is used | 2,458 or 2,459, i.e. nearly every site |
+| Scored kinases that are **never** a negative | **361 of 415 (87.0%)** |
+
+The classifier is therefore fitted against an alphabetically determined slice of
+the candidate space. It never sees an explicit negative example for 87% of the
+kinases it is later asked to rank.
+
+**What this does not appear to have done.** Whether never-negative kinases are
+advantaged was tested directly against the existing results, comparing their
+rank distributions with those of the 54 ever-negative kinases:
+
+| Source | Ever-negative | Never-negative | p | Rank-biserial |
+|---|---|---|---|---|
+| Predict-all, Control | 213.5 | 207.0 | 0.740 | -0.028 |
+| Predict-all, Liver FC | 215.5 | 207.0 | 0.698 | -0.033 |
+| LOO Generic, adjusted rank | 240.0 | 191.5 | 0.060 | -0.170 |
+| LOO Generic, within-category | 77.0 | 65.5 | 0.085 | -0.156 |
+| LOO Control, adjusted rank | 206.0 | 196.8 | 0.569 | -0.052 |
+| LOO Liver FC, adjusted rank | 206.0 | 197.3 | 0.563 | -0.052 |
+
+No comparison reaches significance at 0.05. The Generic network shows the
+largest gap, 48.5 rank positions in favour of never-negative kinases, but at
+p = 0.060 across eight uncorrected comparisons it is not evidence of an effect.
+
+**How to report it.** The defect is real and should be stated as a limitation of
+the training design. The claim that it biased the published rankings is **not**
+supported by the data and should not be made. A plausible reason the two
+coexist is the site-dependence result: kinase identity already explains 99.97%
+of the variance in predicted rank, so the ranking is dominated by factors the
+negative set does not control.
+
+No experiment was rerun with a corrected sampler. Whether to do so is a decision
+for the advisor, and it would invalidate the comparability of every existing
+run against the frozen trial set.
+
+Source: `thesis/analysis/out/negative_sampling_audit.txt`, reproduced by
+`python -m thesis.analysis.negative_sampling_audit`.
+
+---
+
 ## 7. What I would ask in the meeting
 
 Ordered by how much they change what we do next.

@@ -1,0 +1,134 @@
+NEGATIVE-SAMPLING AUDIT
+==============================================================================
+
+Reproduces src_prediction/data_prep/negative_sampling.py exactly.
+Read-only: no project code, data or result is modified.
+
+(a) ORDER OF THE CANDIDATE LIST
+------------------------------------------------------------------------------
+  file   : outputs_prediction/candidate_kinases.csv.gz
+  built  : src_prediction/data_prep/evaluation_set.py, get_candidate_kinases()
+  rows   : 420
+  sorted ascending by node_id: True
+  the builder calls .sort_values("node_id"), so the order is
+  ALPHABETICAL BY GENE SYMBOL, not random and not by any model quantity.
+
+  first 25: AAK1, AATK, ABL1, ABL2, ACVR1B, ACVRL1, ADCK5, AK2, AKT1, AKT2, AKT3, ALK, ALPK1, ALPK3, ARAF, ATM, ATR, AURKA, AURKB, AURKC, AXL, BAZ1B, BCR, BCR/ABL, BLK
+  last 10 : VRK1, VRK2, VRK3, WEE1, WNK1, WNK2, WNK3, WNK4, YES1, ZAP70
+
+TRAINING SITES CONSIDERED
+------------------------------------------------------------------------------
+  positive edge file rows      : 14,596
+  frozen trials                : 6,909
+  distinct sites in frozen set : 2,459
+  max_negatives_per_site       : 50 (model_scoring.py default)
+
+(b) KINASES EVER USED AS NEGATIVES
+------------------------------------------------------------------------------
+  distinct kinases ever a negative : 55 of 420 in the candidate list
+  total negative pairs generated   : 122,950
+
+  count per kinase (all of them, descending):
+    CDK10         2,459
+    CDC42BPB      2,459
+    ACVR1B        2,459
+    AK2           2,459
+    CASK          2,459
+    BAZ1B         2,459
+    AAK1          2,458
+    BRD4          2,458
+    BLVRA         2,458
+    ADCK5         2,458
+    CDC42BPA      2,458
+    BMP2K         2,458
+    ALPK1         2,458
+    ALPK3         2,458
+    CAMK1G        2,458
+    AATK          2,458
+    CAMKK1        2,457
+    BUB1          2,457
+    ACVRL1        2,457
+    BCR           2,457
+    CAMK2G        2,456
+    BMPR1B        2,456
+    CAMKK2        2,454
+    ALK           2,454
+    ARAF          2,454
+    BLK           2,453
+    BRSK2         2,453
+    CAMK2D        2,453
+    CAMK2B        2,452
+    CAMK4         2,452
+    BRSK1         2,452
+    AURKC         2,451
+    CAMK1         2,448
+    BCR/ABL       2,447
+    BRAF          2,446
+    ABL2          2,445
+    BMX           2,444
+    AXL           2,443
+    BTK           2,442
+    AKT3          2,440
+    CDC7          2,434
+    AKT2          2,420
+    CAMK2A        2,416
+    AURKA         2,405
+    ATR           2,393
+    AURKB         2,392
+    ABL1          2,386
+    ATM           2,366
+    AKT1          2,305
+    CDK1          2,180
+    CDK11A          839
+    CDK11B          222
+    CDK12            30
+    CDK13             4
+    CDK14             1
+
+  position of these kinases in the candidate list:
+    min index 0, max index 54, out of 419
+    they occupy the FIRST 55 slots of the alphabetical list, with the
+    few extra slots beyond 50 explained by sites whose true kinases
+    fall early alphabetically and are therefore skipped.
+
+(c) SCORED KINASES THAT NEVER APPEAR AS A NEGATIVE
+------------------------------------------------------------------------------
+  kinases scored in every run : 415
+  of those, ever a negative   : 54
+  of those, NEVER a negative  : 361  (87.0%)
+
+  The classifier therefore never sees an explicit negative example
+  for 361 of the 415 kinases it is asked to rank.
+
+(d) DO NEVER-NEGATIVE KINASES RANK HIGHER?
+------------------------------------------------------------------------------
+  Lower rank = better. Positive rank-biserial means the
+  ever-negative group has the LARGER (worse) values.
+
+                       source                             metric  n_ever_negative median_ever  n_never_negative median_never mannwhitney_p rank_biserial
+ predict-all control spectral                median rank_in_site               54     213.500               361      207.000        0.7403        -0.028
+predict-all liver_fc spectral                median rank_in_site               54     215.500               361      207.000        0.6984        -0.033
+                  LOO generic             adjusted_held_out_rank               47     240.000               308      191.500        0.0603        -0.170
+                  LOO generic adjusted_held_out_rank_in_category               47      77.000               308       65.500        0.0853        -0.156
+                  LOO control             adjusted_held_out_rank               47     206.000               308      196.750        0.5692        -0.052
+                  LOO control adjusted_held_out_rank_in_category               47      65.000               308       68.500        0.8398        -0.018
+                    LOO liver             adjusted_held_out_rank               47     206.000               308      197.250        0.5630        -0.052
+                    LOO liver adjusted_held_out_rank_in_category               47      65.000               308       68.500        0.8356        -0.019
+
+  never-negative kinases occupy candidate-list positions
+  56 to 419, i.e. essentially everything after the head slice.
+
+==============================================================================
+WHAT THE CODE DOES, STATED PLAINLY
+==============================================================================
+  For every training site, the negative examples are the first 50
+  alphabetically-ordered candidate kinases that are not known to act on
+  that site. The same small set of early-alphabet kinases is therefore
+  used as a negative example at nearly every site, and the large
+  majority of candidates are never presented to the classifier as a
+  negative at all.
+
+  This is a defect in the training design, not in the evaluation: the
+  ranking still scores all 415 candidates. Its consequence is that the
+  decision boundary is fitted against an alphabetically determined
+  subset of the candidate space.
