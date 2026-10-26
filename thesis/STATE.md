@@ -77,6 +77,14 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
     state: local effect not detected, global effect untested. An earlier note
     here claimed the rank consequence was simply absent; that was too strong.
 
+11. **Misattribution in commit `ac46b90`.** Its message is headed "Correction,
+    accepting the advisor's point". That is wrong: the negative-sampling
+    correction, both the local-vs-global distinction and the point that a
+    rerun changing only the negatives is a valid paired comparison, came from
+    the **user**, not from the advisor. History is not rewritten; the
+    correction is recorded here and in the message of the commit that follows
+    it. Do not cite `ac46b90` as evidence of an advisor request.
+
 ## Quarantined
 
 `out/null/_INVALID_batch_words4/` — node2vec null seed 1 run with `batch_words=4` instead of 10000. Not comparable; see its README. Spectral nulls unaffected.
@@ -216,7 +224,24 @@ channel belongs to which tumour channel.
    manuscript, within-category comparative ranking as the headline analysis,
    and the collaborator's differential substrates as the new contribution.
    What remains open is narrower and is now decision 8.
-2. **Context-conditioned kinase feature / 15.2%-vs-60% gate / relational-only baseline / drop-K / lbfgs flag** — not in the repo. Do not write about these until a source is confirmed.
+2. **PARTIALLY LIFTED 2026-10-26.** The **relational-only baseline** now has a
+   source: the user named it **Option D** and asked for it in writing as the
+   proposed next experiment, so `CATCH_UP.md` (e) describes it. It drops the K
+   and S blocks from `[K, S, |K-S|, K*S]` and keeps only `|K-S|` and `K*S`, so
+   no feature is constant across sites for a given kinase. Not yet run; it
+   needs a change to `src_prediction/data_prep/pair_features.py`, so it waits
+   on approval. The hypothesis it tests, also the user's and recorded in
+   `CATCH_UP.md` (c) as a leading hypothesis rather than a fact: the K block
+   lets the classifier learn a per-kinase base rate that is added at every
+   site, which would explain finding 14 (the popularity baseline's strength)
+   and finding 26 (eta^2 rising to 1.0000 once uniform negatives let that base
+   rate be estimated cleanly for all 420 kinases). Supporting structural facts:
+   `pair_features.py` builds `np.hstack([K, S, abs(K-S), K*S])`, and under the
+   random sampler each kinase is a negative 242 to 344 times
+   (`out/random_negatives/randneg_loo_generic_spectral_seed2_negative_usage.csv`)
+   against 2,458 to 2,459 times for the 55 head-slice kinases before.
+   **Still held, no source:** context-conditioned kinase feature, the
+   15.2%-vs-60% gate, drop-K and the lbfgs flag.
 3. **MOVED 2026-10-25.** The chapter hold is lifted in principle: the
    direction is settled enough to frame Chapters I and V. Chapter VI still
    waits on the differential-site result, since that is now the contribution
@@ -316,8 +341,16 @@ channel belongs to which tumour channel.
 - Chapters I, IV, V, VI, VII after the direction settles
 - `.docx` build + PDF export + formatting check (Checkpoint 4)
 - Graph-construction walkthrough: **written**, `thesis/GRAPH_WALKTHROUGH.md`
-- Per-site differential analysis: **planned**, `thesis/PLAN_differential_sites.md`,
-  awaiting approval before any run
+- Per-site differential analysis: **run 2026-10-26** (findings 20, 21, 24);
+  plan in `thesis/PLAN_differential_sites.md`, output in `out/diffsites/`
+- Catch-up briefing: `thesis/CATCH_UP.md`, rewritten 2026-10-26 to add the
+  K-block mechanism as a leading hypothesis (section c) and Option D as the
+  proposed next experiment (section e). ~1,290 words
+- Advisor package: `thesis/advisor_package/` holds the 1-page differential
+  summary, `differential_shortlist.csv` (659 sites) and a copy of
+  `GRAPH_WALKTHROUGH.md`
+- **Experiments halted 2026-10-26 at the user's instruction** until after the
+  advisor meeting. No new analyses or runs, Option D included
 - Decide the headline analysis (open decision 8)
 - Preprocessing fixes, if any (open decision 9)
 
