@@ -51,9 +51,17 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
    Control to Liver FC shift was **1 rank** (median 6 to 7). A 0% null
    reproduction of a 1-rank shift is noise, not evidence. State it as: TTK's
    shift was too small to evaluate against the null.
-10. **Do not claim the negative-sampling defect biased the results.** The defect
-    is real (finding 23) but the measured rank consequence is absent. Report the
-    design flaw as a limitation; do not attach a claim about its effect.
+10. **Negative sampling: claim neither bias nor absence of bias.** The defect
+    is real (finding 23). What has been tested is only the **local** effect,
+    whether the 55 ever-negative kinases are pushed down relative to the other
+    360, and it was not detected (p 0.060 to 0.840). That comparison **cannot**
+    detect the **global** effect: if the classifier only ever separates
+    positives from the same 55 early-alphabet kinases, it learns a direction in
+    feature space that shifts every kinase's score, and that could itself
+    produce the popularity-like prior seen in findings 13 and 14. The global
+    effect is **untested** until a rerun with random negatives. Until then
+    state: local effect not detected, global effect untested. An earlier note
+    here claimed the rank consequence was simply absent; that was too strong.
 
 ## Quarantined
 

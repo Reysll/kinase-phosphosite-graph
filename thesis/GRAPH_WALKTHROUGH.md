@@ -488,9 +488,16 @@ The classifier is therefore fitted against an alphabetically determined slice of
 the candidate space. It never sees an explicit negative example for 87% of the
 kinases it is later asked to rank.
 
-**What this does not appear to have done.** Whether never-negative kinases are
-advantaged was tested directly against the existing results, comparing their
-rank distributions with those of the 54 ever-negative kinases:
+**What has been tested, and what that test can and cannot see.** The
+comparison below asks whether the 54 ever-negative kinases are pushed down
+relative to the 361 never-negative ones. That is a **local** question. It
+cannot answer the **global** one, which is more important: if the classifier
+only ever learns to separate positives from the same 55 early-alphabet kinases,
+it fits a direction in feature space that moves every kinase's score, including
+those of kinases that never appear as negatives. A uniform shift of that kind
+is invisible to a comparison between the two groups, because it moves both.
+It is also a plausible mechanism for the near-fixed global kinase ordering
+reported elsewhere in this work.
 
 | Source | Ever-negative | Never-negative | p | Rank-biserial |
 |---|---|---|---|---|
@@ -505,16 +512,15 @@ No comparison reaches significance at 0.05. The Generic network shows the
 largest gap, 48.5 rank positions in favour of never-negative kinases, but at
 p = 0.060 across eight uncorrected comparisons it is not evidence of an effect.
 
-**How to report it.** The defect is real and should be stated as a limitation of
-the training design. The claim that it biased the published rankings is **not**
-supported by the data and should not be made. A plausible reason the two
-coexist is the site-dependence result: kinase identity already explains 99.97%
-of the variance in predicted rank, so the ranking is dominated by factors the
-negative set does not control.
-
-No experiment was rerun with a corrected sampler. Whether to do so is a decision
-for the advisor, and it would invalidate the comparability of every existing
-run against the frozen trial set.
+**How to report it.** The defect is real and is a limitation of the training
+design. On its consequences, claim **neither** bias **nor** absence of bias:
+the local effect was not detected, and the global effect is untested. The only
+way to test the global effect is to rerun with a uniformly random sampler and
+compare. Such a rerun holds the frozen trial set, the candidate set, the
+embeddings and the classifier fixed and changes only the negative selection, so
+it is a valid paired comparison rather than a break in comparability. An
+earlier version of this section treated the undetected local effect as evidence
+of no effect, which overstated what the test could see.
 
 Source: `thesis/analysis/out/negative_sampling_audit.txt`, reproduced by
 `python -m thesis.analysis.negative_sampling_audit`.

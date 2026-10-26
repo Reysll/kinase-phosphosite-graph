@@ -464,9 +464,11 @@ The gain comes from reduced residual variance rather than shifted estimates:
 raw and batch-adjusted log2 fold changes correlate at **r = 0.9649**. The strict
 tier behaves consistently, with 1,128 of 2,046 sites (55.1%) significant.
 
-The strongest changes are coherent with liver biology, the largest being
-CYP2A6-S131 at -5.52 log2 and PGM1-S509 at -5.36, with SQSTM1 and SPP1 sites
-among the largest increases.
+The largest changes by magnitude are CYP2A6-S131 at -5.52 log2, PGM1-S509 at
+-5.36 and SQSTM1-S176 at +4.91. Interpretation of these sites is deferred to
+Chapter VI, where it is taken together with the protein-abundance caveat in
+Section 5.8.6: none of these changes is corrected for the abundance of the
+protein carrying the site.
 
 ### 5.8.4 Presence and Absence
 
@@ -556,7 +558,9 @@ but taken as a fixed prefix of an alphabetically sorted candidate list.
 | Times a typical such kinase is used | 2,458 or 2,459 of 2,459 sites |
 | Scored kinases never used as a negative | **361 of 415 (87.0%)** |
 
-Whether this advantaged the never-negative kinases was tested directly.
+Whether this advantaged the never-negative kinases was tested directly. This
+tests a **local** effect only, namely whether the 55 kinases used as negatives
+are pushed down relative to the 360 that are not.
 
 <!-- source: thesis/analysis/out/negative_sampling_audit.csv -->
 
@@ -573,10 +577,19 @@ Whether this advantaged the never-negative kinases was tested directly.
 Generic network, 48.5 rank positions favouring never-negative kinases, at
 p = 0.060 across eight uncorrected comparisons.
 
-The defect in the training design is established. A consequent bias in the
-reported rankings is **not** established, and no claim of one is made. No
-experiment was rerun with a corrected sampler, since that would break
-comparability with every existing run against the frozen trial set.
+What that establishes is narrow. The **local** effect, a relative shift between
+the two groups of kinases, was not detected. The **global** effect was not
+tested and cannot be tested from these runs. If the classifier only ever
+separates positives from the same 55 early-alphabet kinases, it fits a
+direction in feature space that moves every kinase's score, and a uniform
+movement of that kind leaves the two groups in the same relative positions
+while changing the ranking as a whole. That mechanism would be consistent with
+the near-fixed global kinase ordering in Section 5.5 and with the strength of
+the substrate-count baseline in Section 5.6.
+
+This chapter therefore claims **neither** bias **nor** absence of bias from the
+negative-sampling defect. Section 5.10 reports the rerun that separates the two
+questions.
 
 **Proposed Table 5.11**: as above.
 

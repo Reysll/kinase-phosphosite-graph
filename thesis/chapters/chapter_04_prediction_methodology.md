@@ -185,15 +185,30 @@ kinases, 87.0%, never appear as a negative at any site.** The decision boundary
 is therefore fitted against an alphabetically determined subset of the kinases
 the model is later asked to rank.
 
-This is a defect in the training design and is reported as a limitation.
-Whether it biased the results was tested directly, by comparing the rank
-distributions of never-negative and ever-negative kinases in the existing
-output; Section 5.9 gives the figures. No comparison reached significance, so
-the defect is documented without any accompanying claim that it distorted the
-rankings. One consideration also affects how much room there is for such an
-effect: as Section 4.9.3 describes, kinase identity accounts for almost all the
-variance in predicted rank, which leaves little that the composition of the
-negative set could move.
+This is a defect in the training design and is reported as a limitation. Its
+consequences must be split into two questions, because the evidence available
+speaks to only one of them.
+
+The **local** question asks whether the 55 kinases used as negatives are pushed
+down relative to the 360 that are not. This was tested directly against the
+existing output and no comparison reached significance; Section 5.9 gives the
+figures.
+
+The **global** question asks whether the composition of the negative set shifts
+every kinase's score. If the classifier only ever learns to separate positives
+from the same early-alphabet kinases, it fits a direction in feature space that
+applies to every pair it later scores, including pairs involving kinases that
+never appeared as a negative. A shift of that kind is invisible to the local
+comparison, because it moves both groups together. It is also a candidate
+mechanism for the near-fixed global kinase ordering reported in Section 4.9.3
+and for the strength of the popularity baseline in Section 4.9.4.
+
+The global question cannot be answered from the existing runs. It requires
+rerunning with a uniformly random sampler, holding the frozen trials, the
+candidate set, the embeddings and the classifier fixed and changing only the
+negative selection, which is a valid paired comparison. Until that is done this
+thesis claims **neither** that the defect biased the results **nor** that it
+did not.
 
 A second consequence is that negative selection is **deterministic**. Given the
 same training positives it returns the same pairs every time, so it contributes
