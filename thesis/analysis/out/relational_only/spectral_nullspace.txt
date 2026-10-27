@@ -1,0 +1,38 @@
+SPECTRAL NULL SPACE: the wasted dimensions are sqrt(degree)
+======================================================================
+
+GENERIC
+  nodes 13,313  giant 13,223  zero eigenvalues 2
+  shipped dims: 1 null, 31 informative
+  R^2 vs sqrt(deg) on giant component:
+     null dims        median 1.0000  max 1.0000
+     informative dims median 0.0011
+  share of sqrt(deg) inside the null-dim span: 1.0000
+  FIX, restrict to giant component:
+     site rho   0.1190 -> 0.1243
+     kinase rho 0.2724 -> 0.1055
+     lost: 3 of 391 sites, 0 of 415 kinases
+
+CONTROL
+  nodes 17,731  giant 17,473  zero eigenvalues 1
+  shipped dims: 0 null, 32 informative
+  R^2 vs sqrt(deg) on giant component:
+     null dims        median nan  max nan
+     informative dims median 1.0000
+  share of sqrt(deg) inside the null-dim span: nan
+  FIX, restrict to giant component:
+     site rho   0.2952 -> 0.2824
+     kinase rho 0.9230 -> 0.6931
+     lost: 67 of 3228 sites, 0 of 415 kinases
+
+LIVER_FC
+  nodes 17,731  giant 17,463  zero eigenvalues 1
+  shipped dims: 0 null, 32 informative
+  R^2 vs sqrt(deg) on giant component:
+     null dims        median nan  max nan
+     informative dims median 0.5219
+  share of sqrt(deg) inside the null-dim span: nan
+  FIX, restrict to giant component:
+     site rho   0.9160 -> 0.8882
+     kinase rho 0.7023 -> 0.6938
+     lost: 0 of 3228 sites, 0 of 415 kinases

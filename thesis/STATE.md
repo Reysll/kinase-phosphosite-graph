@@ -37,6 +37,12 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 25 | **Random negatives: the GLOBAL effect is real.** 420/420 kinases used as negatives vs 55. Generic moves 79->74 (r=+0.68, stable over 3 sampler seeds); Liver FC barely moves. Context effect shrinks +0.380 -> +0.283 | `out/random_negatives/randneg_compare.txt`, `randneg_vs_original.csv`, `randneg_context_effect.csv` | `python -m thesis.analysis.random_negatives --mode loo --network <net> --seed <n>` then `python -m thesis.analysis.randneg_compare` |
 | 26 | **Fixing the sampler makes site-invariance WORSE.** eta^2 0.9997 -> **1.0000**, median per-kinase rank SD 1.05 -> 0.16, kinases with SD<=1 48.2% -> 93.3%. Popularity baseline global advantage unchanged (-0.758 -> -0.742) | `out/random_negatives/randneg_site_dependence.csv`, `randneg_vs_popularity.csv` | same |
 
+| 27 | **The spectral embedding ships sqrt(degree) as 12-17 of its 32 dimensions.** `SpectralEmbeddingStrategy` requests `dims+1` eigenvectors and drops exactly ONE, correct only for a connected graph. The embedding graphs have **34 / 116 / 122** components of size >=2 (generic / control / liver FC), so the normalized Laplacian's zero eigenvalue has that multiplicity: **13 / 18 / 17** of the 33 computed eigenvalues are numerically zero (~1.7e-08) and the first genuinely non-zero one is 3.53e-02 / 3.65e-03 / 3.68e-03. Null vectors restricted to the giant component are scalar multiples of sqrt(deg): **R^2 = 1.0000** for the shipped null dims, against 0.0011 for generic's informative dims; control's **median over all 32** shipped dims is R^2 = 1.0000. Keeping only eigenvectors with eigenvalue > 1e-6 gives **0/32** degree dims | `out/relational_only/spectral_spectrum.txt`, `spectral_nullspace.txt`, `spectral_fix.txt` | `python -m thesis.analysis.spectral_spectrum`, `.spectral_nullspace`, `.spectral_fix` |
+| 28 | **The predicted ranking IS graph degree.** Spearman rho between a kinase's embedding-graph degree and its mean `rank_in_site` in the existing Phase 3 output: **-0.9995** (control), **-0.9973** (liver FC), -0.9387 (generic); Pearson R^2 0.97 / 0.97 / 0.85. PSP substrate count, the popularity baseline's key, reaches only rho = -0.44, R^2 = 0.13. Degree is computed on the embedding graph, which excludes `phosphorylates`, so this is not label leakage. This is a single mechanical cause for findings 9, 13, 14 and 26 and for the Phase 2 hub bias | `out/relational_only/degree_rank.txt`, `degree_rank_{network}.csv` | `python -m thesis.analysis.degree_rank` |
+| 29 | **Site embeddings are collapsed under the context networks, and removing the null space does not fix it.** Share of site-embedding magnitude common to ALL 3,228 sites: **0.9160** (liver FC) against **0.1239** (generic, corrected). **95%** of the Hadamard `K*S` feature vector is a per-kinase constant no weight vector can make site-dependent (median over kinases; control 0.88, generic 0.47). Survives both fixes: dropping all zero eigenvectors leaves liver FC at 0.8882, restricting to the giant component at 0.8882. The spectral gap is the difference: 3.68e-03 against generic's 3.53e-02 | `out/relational_only/embedding_geometry.txt`, `spectral_fix.txt`, `spectral_nullspace.txt` | `python -m thesis.analysis.embedding_geometry` |
+| 30 | **The degree channel is SPECTRAL-SPECIFIC, and spectral is the least site-aware embedding.** degree-vs-mean-rank rho: spectral -0.9387 / -0.9995 / -0.9973 (generic / control / liver FC) against node2vec **-0.3206 / -0.4362 / -0.3594** and concat -0.3252 / -0.4248 / -0.3824. Median per-kinase rank SD: spectral 4.93 / 1.05 / 1.18 against node2vec **10.20 / 9.08 / 8.20**. Node2vec ranks vary 8-10 positions by site; spectral's vary 1. The prior expectation that node2vec would encode degree comparably was WRONG. **Phase 2's reason for preferring spectral does not survive**: it halved the median rank by encoding a degree prior while being site-blind | `out/relational_only/degree_rank.txt` | `python -m thesis.analysis.degree_rank` |
+| 31 | **Kinase degree is 95.5% MSigDB pathway cliques.** Edges touching a candidate kinase, PSP excluded: `protein_same_pathway` 273,279 (**95.5%**), `ppi_high_confidence` 11,115 (3.9%), `has_site` 1,824 (0.6%), `dephosphorylates` **1**. So the ranking is pathway-annotation breadth, which closes the chain to the 90.6% clique finding: cliques -> degree -> null-space dims -> rank | `out/relational_only/degree_composition.csv` | same |
+| 32 | **The site collapse is caused by the correlation edges and is reversible; a MAGNITUDE threshold is the right filter, not a sample floor and not FDR.** site_rho / spectral gap / components / sites kept: current 80th pct 0.8882 / 3.68e-03 / 122 / 3,228; FDR<0.05 0.8462 / 3.93e-03 / 122 / 3,228 (removes only 13%, **86.7% of the already-thresholded pool passes**); n_common>=12 0.2244 / 5.53e-03 / 338 / 3,228; **top 25% by |r| 0.3685 / 8.08e-03 / 127 / 3,228**; n_common=18 0.1622 / 1.14e-02 / 667 / 2,529; no corr edges 0.0588 / 3.02e-02 / 998 / **1,860**. A sample floor strands sites detected in few samples; a magnitude threshold prunes uniformly. Confirms CLAUDE.md's base-relations-only warning: 42% of sites stranded | `out/relational_only/corr_edge_variants.txt`, `corr_edge_variants_extra.csv` | `python -m thesis.analysis.corr_edge_variants --k 96` |
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
 ## Retracted or reframed claims
@@ -84,6 +90,8 @@ Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
     the **user**, not from the advisor. History is not rewritten; the
     correction is recorded here and in the message of the commit that follows
     it. Do not cite `ac46b90` as evidence of an advisor request.
+
+12. **`SpectralEmbeddingStrategy`'s docstring is false as implemented.** It claims "High-degree nodes are penalized by construction" and that spectral embeddings do "not share" node2vec's hub bias, and `CLAUDE.md` repeats the second claim. Finding 27 shows 12-17 of the 32 shipped dimensions ARE sqrt(degree), and finding 28 shows the resulting ranking is degree-ordered at rho = -0.9995. The normalization argument is correct for the non-trivial eigenvectors; it does not hold for the null space the code fails to discard. Finding 30 shows both claims are not merely unsupported but **inverted**: spectral is the MORE degree-dependent embedding (-0.9995 against node2vec's -0.4362) and the least site-aware (rank SD 1.05 against 9.08). Do not repeat either claim, and do not cite "spectral fixes the hub bias".
 
 ## Quarantined
 
@@ -326,6 +334,22 @@ channel belongs to which tumour channel.
     with the data in hand (finding 24). Either obtain a matched protein
     quantification matrix for the same 36 channels, or state in the manuscript
     that the reported changes are phosphosite-level and uncorrected.
+
+13. **The embedding defect: what to fix and in what order.** See
+    `thesis/EMBEDDING_DEFECT.md` for the full diagnosis and findings 27-32.
+    Four candidate changes, all touching project code, none made:
+    - **(a)** `SpectralEmbeddingStrategy.fit` should discard the whole
+      Laplacian null space, not one eigenvector. Contained change, 0.1 min of
+      compute per embedding, removes the degree channel completely (0/32 dims).
+    - **(b)** Correlation-edge threshold from the pooled 80th percentile to
+      ~95th (top 25% of the current pool). Best full-coverage variant on every
+      measure. This is a change to the graph build in `src/`.
+    - **(c)** Redo the spectral-vs-node2vec comparison after (a), since Phase
+      2's stated reason for preferring spectral is explained by the defect.
+    - **(d)** Report degree as a baseline alongside the popularity baseline.
+    Anything rerun before (a) and (b) re-measures the degree channel. Whether
+    any of this improves held-out ranks is UNTESTED; only embeddings were
+    measured.
 
 ## Outstanding work
 

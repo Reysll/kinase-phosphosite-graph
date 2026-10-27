@@ -1,0 +1,33 @@
+SPECTRAL SPECTRUM: why the site embeddings collapse
+======================================================================
+
+SpectralEmbeddingStrategy requests 33 eigenvectors and drops ONE,
+assuming a single zero eigenvalue. A graph with c components of
+size >= 2 has c of them, each constant within its component.
+
+GENERIC
+  nodes 13,313   components(>=2) 34   isolated 0
+  giant component 13,223   next largest 8
+  zero eigenvalues among the 33 computed: 2
+  smallest eigenvalues: -2.768e-09  1.162e-15  1.197e-08
+  of the 32 shipped dims, near-constant across sites: 4
+  site rho    as shipped 0.1190   dropping all zeros 0.1242 (31 dims)
+  kinase rho  as shipped 0.2724   dropping all zeros 0.2724
+
+CONTROL
+  nodes 17,731   components(>=2) 116   isolated 0
+  giant component 17,473   next largest 8
+  zero eigenvalues among the 33 computed: 1
+  smallest eigenvalues: -5.763e-10  1.197e-08  1.640e-08
+  of the 32 shipped dims, near-constant across sites: 2
+  site rho    as shipped 0.2952   dropping all zeros 0.2952 (32 dims)
+  kinase rho  as shipped 0.9230   dropping all zeros 0.9230
+
+LIVER_FC
+  nodes 17,731   components(>=2) 122   isolated 0
+  giant component 17,463   next largest 8
+  zero eigenvalues among the 33 computed: 1
+  smallest eigenvalues: -2.264e-09  1.197e-08  1.640e-08
+  of the 32 shipped dims, near-constant across sites: 16
+  site rho    as shipped 0.9160   dropping all zeros 0.9160 (32 dims)
+  kinase rho  as shipped 0.7023   dropping all zeros 0.7023

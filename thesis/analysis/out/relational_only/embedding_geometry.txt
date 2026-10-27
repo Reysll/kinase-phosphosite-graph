@@ -1,0 +1,24 @@
+EMBEDDING GEOMETRY: can Option D restore site dependence?
+======================================================================
+
+rho_common is the fraction of embedding magnitude shared by every
+node of that type. High site rho means the sites look alike to the
+model, so a per-kinase constant survives relational-only features.
+
+GENERIC
+  sites   : n=391  ||mean||=0.0068  rms dev=0.0570  rho=0.1190
+  kinases : n=415  ||mean||=0.0035  rms dev=0.0125  rho=0.2724
+  Hadamard K*S constant share (median over kinases): 0.4732
+     p10 0.4383  p90 0.4751  over 391 sites x 415 kinases
+
+CONTROL
+  sites   : n=3,228  ||mean||=0.0109  rms dev=0.0353  rho=0.2952
+  kinases : n=415  ||mean||=0.0125  rms dev=0.0052  rho=0.9230
+  Hadamard K*S constant share (median over kinases): 0.8770
+     p10 0.8769  p90 0.8773  over 400 sites x 415 kinases
+
+LIVER_FC
+  sites   : n=3,228  ||mean||=0.0121  rms dev=0.0053  rho=0.9160
+  kinases : n=415  ||mean||=0.0125  rms dev=0.0127  rho=0.7023
+  Hadamard K*S constant share (median over kinases): 0.9523
+     p10 0.9523  p90 0.9524  over 400 sites x 415 kinases

@@ -1,0 +1,4 @@
+network,n_nodes,giant_component,n_zero_eigenvalues,n_null_dims_shipped,n_informative_dims_shipped,r2_sqrtdeg_median_null_dims,r2_sqrtdeg_max_null_dims,r2_sqrtdeg_median_informative_dims,sqrtdeg_norm_share_in_null_span,site_rho_shipped,kinase_rho_shipped,site_rho_giant_only,kinase_rho_giant_only,sites_in_graph,sites_lost_by_giant_restriction,kinases_in_graph,kinases_lost_by_giant_restriction
+generic,13313,13223,2,1,31,0.9999987913098238,0.9999987913098238,0.0011280712305251077,0.9999987913098232,0.11904802599186694,0.2723614402030081,0.12433186177479953,0.10554953513080541,391,3,415,0
+control,17731,17473,1,0,32,,,0.9999991527774934,,0.29519793464663346,0.9229636800091016,0.28240928357215533,0.693089306820956,3228,67,415,0
+liver_fc,17731,17463,1,0,32,,,0.5219323848911308,,0.9159569047332023,0.7022933529646737,0.8881907836629201,0.6938306053825167,3228,0,415,0

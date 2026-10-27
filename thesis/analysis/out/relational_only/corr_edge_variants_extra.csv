@@ -1,0 +1,3 @@
+variant,corr_edges_kept,corr_edges_share,scope,n_nodes,n_edges,n_components_ge2,giant_component,n_zero_eigenvalues,enough_eigs,first_nonzero_eigenvalue,n_corrected_dims,degree_dims_shipped,degree_dims_corrected,sites_covered,kinases_covered,site_rho_shipped,site_rho_corrected,kinase_rho_corrected
+fc_n_common_eq18,78138,0.07998935358881308,giant,16161,1171996,667,16161,1,True,0.01142781107071842,32,0,0,2529,415,0.16215386330101805,0.16215386330101805,0.9432604634027093
+base_only,0,0.0,giant,15099,1093155,998,15099,1,True,0.03014854960937059,32,0,0,1860,415,0.058828638175707534,0.058828638175707534,0.8140629797558949

@@ -1,0 +1,50 @@
+[
+  {
+    "network": "generic",
+    "n_kinases": 415,
+    "n_sites": 391,
+    "site_mean_norm": 0.00683856377599497,
+    "site_rms_deviation": 0.0570352280327786,
+    "site_rho_common": 0.11904802599186694,
+    "kinase_mean_norm": 0.0035489804914982607,
+    "kinase_rms_deviation": 0.012537792915406182,
+    "kinase_rho_common": 0.2723614402030081,
+    "hadamard_const_share_median": 0.47315204434387204,
+    "hadamard_const_share_p10": 0.43831171794986223,
+    "hadamard_const_share_p90": 0.4751202829238269,
+    "n_sites_sampled": 391,
+    "n_kinases_scored": 415
+  },
+  {
+    "network": "control",
+    "n_kinases": 415,
+    "n_sites": 3228,
+    "site_mean_norm": 0.010895179243962516,
+    "site_rms_deviation": 0.03526328121469157,
+    "site_rho_common": 0.29519793464663346,
+    "kinase_mean_norm": 0.012470957087269757,
+    "kinase_rms_deviation": 0.005200540449000941,
+    "kinase_rho_common": 0.9229636800091016,
+    "hadamard_const_share_median": 0.8769915419386399,
+    "hadamard_const_share_p10": 0.8769379977540593,
+    "hadamard_const_share_p90": 0.877250493636324,
+    "n_sites_sampled": 400,
+    "n_kinases_scored": 415
+  },
+  {
+    "network": "liver_fc",
+    "n_kinases": 415,
+    "n_sites": 3228,
+    "site_mean_norm": 0.012053412643056887,
+    "site_rms_deviation": 0.005280546501699956,
+    "site_rho_common": 0.9159569047332023,
+    "kinase_mean_norm": 0.01252680290203082,
+    "kinase_rms_deviation": 0.012697936581146044,
+    "kinase_rho_common": 0.7022933529646737,
+    "hadamard_const_share_median": 0.9523437142049179,
+    "hadamard_const_share_p10": 0.9523180778811913,
+    "hadamard_const_share_p90": 0.9524469068878797,
+    "n_sites_sampled": 400,
+    "n_kinases_scored": 415
+  }
+]

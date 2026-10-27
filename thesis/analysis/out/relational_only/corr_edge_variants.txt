@@ -1,0 +1,19 @@
+CORRELATION-EDGE VARIANTS: what restores a site-specific embedding
+==============================================================================
+
+All variants use the same base relations plus a filtered subset of the
+Liver FC correlation edges. The embedding drops the whole null space,
+so `degree dims` should be 0 and differences are structural.
+
+gap   = first non-zero eigenvalue; larger means real bottleneck structure
+s_rho = share of site-embedding magnitude common to ALL sites;
+        lower means sites are distinguishable (generic reference: 0.1239)
+
+variant                   corr  share  comp  scope        gap   s_rho   k_rho  sites
+------------------------------------------------------------------------------------
+fc_n_common_eq18        78,138  8.0%   667  giant  1.143e-02  0.1622  0.9433  2,529
+base_only                    0  0.0%   998  giant  3.015e-02  0.0588  0.8141  1,860
+
+scope 'giant' means fragmentation exceeded the eigenvector budget
+and the embedding was computed on the giant component alone, so
+nodes outside it have no coordinates. Not interchangeable with 'full'.

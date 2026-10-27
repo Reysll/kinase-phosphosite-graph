@@ -1,0 +1,5 @@
+relation,edges_touching_a_kinase,share
+protein_same_pathway,273279,0.9547898637057638
+ppi_high_confidence,11115,0.03883389991579874
+has_site,1824,0.006372742550284922
+dephosphorylates,1,3.493828152568488e-06

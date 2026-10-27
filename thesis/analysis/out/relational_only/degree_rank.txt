@@ -1,0 +1,31 @@
+DEGREE AND RANK: is the global ordering just node degree?
+======================================================================
+
+Mean rank_in_site per kinase from the Phase 3 predict-all output,
+regressed on embedding-graph degree and on PSP substrate count.
+Degree is computed on the embedding graph, which excludes
+`phosphorylates`, so it carries no direct target information.
+
+network   embedding  deg_rho   deg_R2  subs_rho   subs_R2  sd_rank
+------------------------------------------------------------------
+generic   spectral   -0.9387   0.8546   -0.3272    0.0749     4.93
+generic   node2vec   -0.3206   0.1070   -0.0285    0.0003    10.20
+generic   concat     -0.3252   0.1111   -0.0500    0.0001     9.71
+control   spectral   -0.9995   0.9707   -0.4382    0.1231     1.05
+control   node2vec   -0.4362   0.1949   -0.1227    0.0032     9.08
+control   concat     -0.4248   0.1833   -0.1243    0.0023     9.06
+liver_fc  spectral   -0.9973   0.9669   -0.4483    0.1256     1.18
+liver_fc  node2vec   -0.3594   0.1354   -0.1788    0.0097     8.20
+liver_fc  concat     -0.3824   0.1466   -0.1622    0.0116     7.57
+
+sd_rank is the median per-kinase SD of rank_in_site across sites;
+small values mean the kinase holds the same rank at every site.
+
+WHAT DEGREE IS MADE OF (liver edge table, PSP edges excluded,
+edges touching a candidate kinase):
+
+  relation                            edges    share
+  protein_same_pathway              273,279   95.5%
+  ppi_high_confidence                11,115    3.9%
+  has_site                            1,824    0.6%
+  dephosphorylates                        1    0.0%

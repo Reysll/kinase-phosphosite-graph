@@ -1,0 +1,31 @@
+SPECTRAL FIX: dropping the null space instead of one eigenvector
+======================================================================
+
+Shipped: eigsh(k=33), drop 1, keep 32. Correct for a connected graph.
+Corrected: keep the first 32 eigenvectors with eigenvalue > 1e-06.
+'degree dims' counts dimensions with R^2 > 0.99 against sqrt(deg)
+over giant-component nodes.
+
+GENERIC
+  nodes 13,313  components(>=2) 34  giant 13,223
+  zero eigenvalues 13 of 72 computed; first non-zero 3.531e-02
+  dimensions that are sqrt(deg):  shipped 12/32   corrected 0/32
+  median R^2 vs sqrt(deg):        shipped 0.0012   corrected 0.0003
+  site rho                        shipped 0.1190   corrected 0.1239
+  kinase rho                      shipped 0.2724   corrected 0.1055
+
+CONTROL
+  nodes 17,731  components(>=2) 116  giant 17,473
+  zero eigenvalues 18 of 72 computed; first non-zero 3.651e-03
+  dimensions that are sqrt(deg):  shipped 17/32   corrected 0/32
+  median R^2 vs sqrt(deg):        shipped 1.0000   corrected 0.0001
+  site rho                        shipped 0.2952   corrected 0.2795
+  kinase rho                      shipped 0.9230   corrected 0.6931
+
+LIVER_FC
+  nodes 17,731  components(>=2) 122  giant 17,463
+  zero eigenvalues 17 of 72 computed; first non-zero 3.678e-03
+  dimensions that are sqrt(deg):  shipped 16/32   corrected 0/32
+  median R^2 vs sqrt(deg):        shipped 0.5219   corrected 0.0001
+  site rho                        shipped 0.9160   corrected 0.8882
+  kinase rho                      shipped 0.7023   corrected 0.6938
