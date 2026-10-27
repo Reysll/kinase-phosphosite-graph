@@ -194,3 +194,141 @@ one the popularity baseline cannot win. Nothing beyond step 0 was run, and no
 configuration other than the current model has been screened. Finding 35 is
 flagged as needing a rerun; that rerun is not part of step 0 and has not been
 started.
+
+---
+
+## 2026-10-27 | Why the generic and liver graphs report different protein counts
+
+**Change.** Added `thesis/analysis/graph_protein_audit.py`, a read-only audit of
+the protein and site populations of both graphs, and of each node table against
+its own edge list. Output in `thesis/analysis/out/graph_protein_audit.txt`. No
+project code, data or results were modified.
+
+**Why.** Dr. Ayati asked why the two graphs hold different numbers of proteins
+when they should be roughly equal.
+
+### Result
+
+The declared counts are already nearly equal, and that is the problem.
+
+| | generic | liver | difference |
+|---|---|---|---|
+| protein nodes | 3,122 | 3,195 | +73 |
+| site nodes | 10,196 | 13,410 | +3,214 |
+| kinases | 420 | 420 | 0 |
+
+The generic graph is a strict subset of the liver graph. No generic node is
+dropped, which is expected, because the liver builder starts from the generic
+node table and appends to it.
+
+The liver edge list refers to **1,133 protein nodes that the liver node table
+does not declare**. Every one of them appears as the source of a `has_site`
+edge. The generic graph has no such omission, and neither graph has a site
+without a parent edge. The true liver protein population is therefore 4,328,
+roughly 1,200 more than generic rather than roughly equal to it. The apparent
+near-equality of the declared counts is an artifact of the incomplete node
+table.
+
+### Cause
+
+`src/graph/liver_network.py` draws the two node kinds from two different
+sheets. Protein nodes come from the ProteinExpression sheet alone (line 135).
+Site nodes and their `has_site` edges come from the Phosphorylation sheet (line
+167), using that sheet's own gene column as the parent. A gene detected only in
+phospho data therefore receives sites and a `has_site` edge but never a protein
+node.
+
+The asymmetry is large because the two sheets are very different sizes:
+
+| sheet | rows | genes | genes passing `min_identified=6` |
+|---|---|---|---|
+| ProteinExpression | 444 | 439 | 95 |
+| Phosphorylation | 6,571 | 2,310 | 2,226 |
+
+Of the 95 surviving ProteinExpression genes, 22 were already generic protein
+nodes, which leaves exactly the 73 observed additions. Of the 2,226 surviving
+Phosphorylation genes, 1,313 are absent from the liver node table. 1,132 of
+those emit at least one `has_site` edge. The remaining 181 produce no site at
+all, because their modification strings do not parse to a single site.
+
+### Consequence, which is structural and not only cosmetic
+
+Lines 595 to 621 derive `protein_ids` from the node table and pass it as
+`allowed_protein_ids` and `existing_protein_ids` to the MSigDB and PPI edge
+builders. The 1,133 omitted proteins are therefore excluded from all pathway
+and interaction wiring. Measured in the liver edge list:
+
+| | median degree | mean | max |
+|---|---|---|---|
+| omitted proteins (n = 1,133) | 1 | 1.6 | 21 |
+| declared proteins (n = 3,195) | 631 | 670.3 | 2,663 |
+
+The only relation that touches them is `has_site`, 1,859 edges in total. So
+**1,859 of 13,410 liver sites (13.9%) hang off a degree-1 leaf parent** with no
+pathway or interaction context, instead of being wired into the graph through
+their protein.
+
+This is visible in the connectivity. With base relations only the liver
+embedding graph has 998 connected components against generic's 34, and the
+largest holds 15,099 of 17,731 nodes. Adding the FC correlation edges pulls it
+down to 122 components, which reproduces the figure already recorded in
+`CATCH_UP.md`. The correlation edges are doing the work of holding the graph
+together that the missing protein wiring should be doing.
+
+### A second, smaller defect found in passing
+
+One of the 1,133 is the literal node `PROTEIN:nan`, carrying 21 sites named
+`SITE:nan-<residue><position>`, which between them hold about 26,900
+correlation edges. It comes from 25 phospho rows whose Gene Symbol is missing.
+The builder guards with `if not gene`, but the gene has already been through
+`str(...)`, so a missing value arrives as the string `"nan"`, which is truthy
+and passes the guard. Four of the 21 ids are each fed by two different rows, so
+measurements from unrelated proteins are averaged together under one meaningless
+identity.
+
+Checked and found sound: duplicate site ids are handled correctly. Across the
+filtered phospho sheet 874 of 3,637 distinct site ids (24%) are fed by more than
+one row, which is the expected result of a site being measured in several
+peptides, and `_prepare_site_fold_change_matrix` collapses them with
+`groupby(level=0).mean()` at line 236.
+
+### Effect on existing results
+
+None of the reported numbers are wrong because of this. The node table is read
+in only two places in the prediction layer, `evaluation_set.py` lines 20 and 34,
+for liver site nodes and for generic kinase nodes. Both populations are
+complete, 13,410 sites with no omission and 420 kinases in both graphs. The
+embedding graph is built from the edge list by `build_graph_from_edges`, which
+creates nodes implicitly, so the 1,133 proteins do carry embeddings and do
+participate in every run. What is wrong is the graph structure they participate
+with, and the protein count the node table reports.
+
+### A number the planned rebuild will need
+
+The new direction includes restricting candidate kinases to those present in
+protein expression. On the current data that filter is not usable:
+
+| candidate kinases | count |
+|---|---|
+| in the graph | 420 |
+| in ProteinExpression, unfiltered | 20 |
+| in ProteinExpression, passing `min_identified=6` | 2 |
+| phospho-detected, passing `min_identified=6` | 106 |
+
+The 20 are CAMK2A, CHEK2, ENPP3, ERBB2, GSK3A, LIMK2, MAP3K7, MAPK8, MASTL,
+MYO3A, NEK6, PIK3C2A, PIK3CB, PLK1, RIPK2, SGK3, SMG1, TAOK2, TTK and ULK3.
+Restricting to protein expression as it stands would cut the candidate set from
+420 to 20, or to 2 under the current identification filter. This is consistent
+with the note in `CLAUDE.md` that protein co-expression edges are disabled
+because only 3 rows are usable. Either the filter has to mean phospho-detected,
+which gives 106 of 420, or it depends on the larger protein expression table
+that is not yet available.
+
+**Decision.** Nothing fixed, because the fix is in `src/graph/liver_network.py`
+and project code is not to be modified. Two changes are queued for the rebuild
+that Dr. Ayati has asked for: register every `has_site` parent as a protein node
+before `protein_ids` is handed to the MSigDB and PPI builders, and reject a
+missing gene symbol rather than letting it through as the string `"nan"`. Both
+change the graph, so both invalidate every result built on the current one, which
+is acceptable only because the rebuild is already planned. The audit script is
+read-only and can be rerun on the rebuilt graph as a regression check.
