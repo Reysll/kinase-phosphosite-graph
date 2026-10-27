@@ -1,0 +1,14 @@
+{
+  "tag": "fixed_infer_control_spectral",
+  "mode": "infer",
+  "network": "control",
+  "embedding": "spectral",
+  "drop_null_space": true,
+  "dimensions": 32,
+  "embedding_random_state": 42,
+  "negative_sampler": "original (head slice)",
+  "target_sites": 3228,
+  "sites_covered": 3228,
+  "pairs_scored": 1339620,
+  "elapsed_minutes": 64.6
+}

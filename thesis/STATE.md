@@ -43,6 +43,11 @@ respect to `src/`, `src_prediction/`, `data/` and `outputs/`, and write only to
 | 30 | **The degree channel is SPECTRAL-SPECIFIC, and spectral is the least site-aware embedding.** degree-vs-mean-rank rho: spectral -0.9387 / -0.9995 / -0.9973 (generic / control / liver FC) against node2vec **-0.3206 / -0.4362 / -0.3594** and concat -0.3252 / -0.4248 / -0.3824. Median per-kinase rank SD: spectral 4.93 / 1.05 / 1.18 against node2vec **10.20 / 9.08 / 8.20**. Node2vec ranks vary 8-10 positions by site; spectral's vary 1. The prior expectation that node2vec would encode degree comparably was WRONG. **Phase 2's reason for preferring spectral does not survive**: it halved the median rank by encoding a degree prior while being site-blind. **CAVEAT: all rank SDs are single-seed, and findings 11 and 12 put node2vec's seed-to-seed variation above the reported effect sizes, so part of node2vec's 8-10 position spread may be random-walk noise rather than site information. "node2vec is more site-aware" is NOT established.** The spectral side is unaffected (deterministic given the graph), so what stands is that spectral's ranks barely move across sites | `out/relational_only/degree_rank.txt` | `python -m thesis.analysis.degree_rank` |
 | 31 | **Kinase degree is 95.5% MSigDB pathway cliques.** Edges touching a candidate kinase, PSP excluded: `protein_same_pathway` 273,279 (**95.5%**), `ppi_high_confidence` 11,115 (3.9%), `has_site` 1,824 (0.6%), `dephosphorylates` **1**. So the ranking is pathway-annotation breadth, which closes the chain to the 90.6% clique finding: cliques -> degree -> null-space dims -> rank | `out/relational_only/degree_composition.csv` | same |
 | 32 | **The site collapse is caused by the correlation edges and is reversible; a MAGNITUDE threshold is the right filter, not a sample floor and not FDR.** site_rho / spectral gap / components / sites kept: current 80th pct 0.8882 / 3.68e-03 / 122 / 3,228; FDR<0.05 0.8462 / 3.93e-03 / 122 / 3,228 (removes only 13%, **86.7% of the already-thresholded pool passes**); n_common>=12 0.2244 / 5.53e-03 / 338 / 3,228; **top 25% by |r| 0.3685 / 8.08e-03 / 127 / 3,228**; n_common=18 0.1622 / 1.14e-02 / 667 / 2,529; no corr edges 0.0588 / 3.02e-02 / 998 / **1,860**. A sample floor strands sites detected in few samples; a magnitude threshold prunes uniformly. Confirms CLAUDE.md's base-relations-only warning: 42% of sites stranded | `out/relational_only/corr_edge_variants.txt`, `corr_edge_variants_extra.csv` | `python -m thesis.analysis.corr_edge_variants --k 96` |
+| 33 | **The null-space fix works on the embedding and FAILS on the ranking.** Branch `fix/spectral-nullspace`, `drop_null_space=True`, everything else identical (frozen trials, 415 candidates, original sampler, d=32, seed 42). Degree dimensions over giant-component nodes: **17/32 -> 0/32** (control), **16/32 -> 0/32** (liver FC). But degree-vs-mean-rank Spearman moved only **-0.9995 -> -0.9797** (control) and **-0.9973 -> -0.9802** (liver FC). LOO median adjusted rank **unchanged**: generic 79.0 -> 79.0, liver FC 74.0 -> 74.0. Paired Wilcoxon on 6,894 trials favours the ORIGINAL on generic (median diff -2.0, rank-biserial -0.625) and is a tie on liver FC (median diff 0.0, 4,499 of 6,894 trials identical). So removing the dimensions that ARE degree does not remove degree from the prediction | `out/spectral_fixed/spectral_fixed_compare.txt`, `fixed_vs_original.csv`, `fixed_degree_eta.csv` | `python -m thesis.analysis.spectral_fixed_runs --mode loo --network generic` (x4), then `python -m thesis.analysis.spectral_fixed_compare` |
+| 34 | **The surviving degree channel is the embedding-vector NORM, and it is intrinsic to the normalized Laplacian.** `L_norm u = lambda u` is equivalent to `L_rw (D^-1/2 u) = lambda (D^-1/2 u)`, so every eigenvector is `u = D^1/2 v` and entry i of ANY of them carries a factor sqrt(deg_i). The null space is only the case where v is constant and u is EXACTLY sqrt(deg). Measured Spearman between a kinase's embedding-vector norm and its degree: **+0.9795 -> +0.9438** (control) and **+0.9444 -> +0.9444** (liver FC) across the fix. Scaling rows to unit length (Ng-Jordan-Weiss) is the candidate remedy and removes the norm by construction; whether it changes held-out ranks is **UNTESTED** | `out/spectral_fixed/whynot_degree_scale.txt`, `whynot_degree_scale.csv` | `python -m thesis.analysis.spectral_fixed_whynot` |
+| 35 | **The fix makes site-invariance WORSE, the same direction as the random-negatives fix (finding 26).** eta^2 **0.9997 -> 0.9999** (control) and **0.9997 -> 1.0000** (liver FC); median per-kinase rank SD **1.05 -> 0.52** and **1.18 -> 0.24**; share of kinases with SD <= 1 rank **48.2% -> 76.6%** and **42.2% -> 93.7%**. Two independent, separately-motivated corrections have now both increased site-invariance, which makes a shared downstream cause more likely than a coincidence | `out/spectral_fixed/fixed_degree_eta.csv` | same |
+| 36 | **The popularity baseline still beats the fixed models, and the poor-kinase exception survives.** Global: popularity median 25.0 against fixed generic 79.0 (rank-biserial **-0.750**, was -0.758) and fixed liver FC 74.0 (**-0.687**, was -0.686). Unchanged within noise. The exception holds: on **poor** kinases the fixed models win globally, generic **+0.627** (median 303.0 against 233.0) and liver FC **+0.481** (303.0 against 273.5), n = 198. Within-category the baseline wins everywhere, including poor | `out/spectral_fixed/fixed_vs_popularity.csv` | same |
+| 37 | **The context effect does not shrink under the fix; it grows slightly.** Generic vs Liver FC on the same 6,894 trials: rank-biserial **+0.380 -> +0.428**, median paired difference **+6 -> +9** ranks, both p < 1e-200. Direction by category is unchanged, Liver FC better on rich (+0.594) and Generic better on average (-0.376) and poor (-0.914). So the context effect is not an artifact of the null-space dimensions specifically. It remains subject to finding 11, seed noise (+0.373) exceeding the effect | `out/spectral_fixed/fixed_context_effect.csv` | same |
 Provenance (git hash per results file): `out/stat_tests_provenance.csv`.
 
 ## Retracted or reframed claims
@@ -345,21 +350,38 @@ channel belongs to which tumour channel.
     quantification matrix for the same 36 channels, or state in the manuscript
     that the reported changes are phosphosite-level and uncorrected.
 
-13. **The embedding defect: what to fix and in what order.** See
-    `thesis/EMBEDDING_DEFECT.md` for the full diagnosis and findings 27-32.
-    Four candidate changes, all touching project code, none made:
-    - **(a)** `SpectralEmbeddingStrategy.fit` should discard the whole
-      Laplacian null space, not one eigenvector. Contained change, 0.1 min of
-      compute per embedding, removes the degree channel completely (0/32 dims).
-    - **(b)** Correlation-edge threshold from the pooled 80th percentile to
-      ~95th (top 25% of the current pool). Best full-coverage variant on every
-      measure. This is a change to the graph build in `src/`.
-    - **(c)** Redo the spectral-vs-node2vec comparison after (a), since Phase
-      2's stated reason for preferring spectral is explained by the defect.
-    - **(d)** Report degree as a baseline alongside the popularity baseline.
-    Anything rerun before (a) and (b) re-measures the degree channel. Whether
-    any of this improves held-out ranks is UNTESTED; only embeddings were
-    measured.
+13. **The embedding defect: (a) is DONE and did not work.** See
+    `thesis/EMBEDDING_DEFECT.md` and findings 27-37. Status of the four
+    candidates:
+    - **(a) DONE, negative result.** The null-space fix is on branch
+      `fix/spectral-nullspace` (opt-in `drop_null_space`, default unchanged).
+      It removes the degree dimensions (17/32 -> 0/32) and does NOT remove the
+      degree-ordered ranking (rho -0.9995 -> -0.9797), does not improve the
+      median rank (79.0 and 74.0, unchanged), and makes site-invariance worse
+      (eta^2 -> 1.0000). Findings 33 and 35. **Not merged.** The branch is
+      worth keeping because the bug is real and the default is safe, but it is
+      not the lever.
+    - **(a2) NEW candidate, untested: row-normalize the embedding.** Finding 34
+      shows the surviving channel is the embedding-vector norm, which carries
+      sqrt(degree) for every eigenvector of the normalized Laplacian, not just
+      the null space. Unit-length rows remove it by construction. This is the
+      natural successor to (a) and is the same size of change. Whether it
+      changes held-out ranks is untested, about 1.6 h per LOO run at the
+      measured rate.
+    - **(b) STILL OPEN AND NOW MORE IMPORTANT.** Correlation-edge threshold
+      from the pooled 80th percentile to ~95th. Finding 29's site collapse was
+      never attributable to the null space, and (a) failing does not touch it.
+      This is a change to the graph build in `src/`.
+    - **(c) Redo the spectral-vs-node2vec comparison.** Now motivated
+      differently: not because the defect explains spectral's advantage, but
+      because the defect is NOT what explains it. Subject to the seed caveat on
+      finding 30.
+    - **(d) Report degree as a baseline.** Unaffected and still worth doing:
+      degree reproduces the ranking at rho = -0.98 even after the fix.
+    The ordering claim in the previous version of this entry, that anything
+    rerun before (a) and (b) just re-measures the degree channel, was **wrong
+    about (a)**: the fixed runs still measure the degree channel, because the
+    channel is not in the dimensions that were removed.
 
 ## Outstanding work
 

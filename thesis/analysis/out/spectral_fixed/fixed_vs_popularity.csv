@@ -1,0 +1,17 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,wilcoxon_W,p_value,favours,B_wins,A_wins,network,metric,stratum
+popularity vs fixed model,6894,9,25.0,79.0,-48.0,-0.7503371749190204,2959135.5,0.0,popularity,981,5904,generic,global,ALL
+popularity vs fixed model,5872,8,18.0,69.5,-50.0,-0.8893913648263743,951023.0,0.0,popularity,481,5383,generic,global,rich
+popularity vs fixed model,824,0,162.0,212.0,-31.0,-0.30658723153868783,117845.5,2.459234394809843e-14,popularity,360,464,generic,global,average
+popularity vs fixed model,198,1,303.0,233.0,68.0,0.6267240937291698,3640.0,2.38942562286209e-14,fixed model,140,57,generic,global,poor
+popularity vs fixed model,6894,141,22.0,38.0,-15.0,-0.4932532645094706,5778149.5,5.130298672775005e-270,popularity,1665,5088,generic,within-category,ALL
+popularity vs fixed model,5872,134,18.0,34.0,-15.0,-0.5626317969831021,3600675.5,2.6390293244250714e-298,popularity,1229,4509,generic,within-category,rich
+popularity vs fixed model,824,6,53.0,62.5,-10.0,-0.20198464941741226,133656.0,5.596528854531187e-07,popularity,345,473,generic,within-category,average
+popularity vs fixed model,198,1,64.0,74.0,-7.5,-0.15479669794390608,8242.0,0.059556657702259784,popularity,91,106,generic,within-category,poor
+popularity vs fixed model,6894,109,25.0,74.0,-26.0,-0.6866018533540704,3607448.5,0.0,popularity,1515,5270,liver_fc,global,ALL
+popularity vs fixed model,5872,102,18.0,53.0,-28.0,-0.8088995746676969,1590847.5,0.0,popularity,1075,4695,liver_fc,global,rich
+popularity vs fixed model,824,4,162.0,213.0,-28.0,-0.32368616499806896,113827.0,9.770905976607696e-16,popularity,317,503,liver_fc,global,average
+popularity vs fixed model,198,3,303.0,273.5,39.0,0.4814756671899529,4954.5,5.533836831023327e-09,fixed model,123,72,liver_fc,global,poor
+popularity vs fixed model,6894,79,22.0,38.0,-9.0,-0.44699236012799715,6421945.0,3.613920317653348e-224,popularity,2159,4656,liver_fc,within-category,ALL
+popularity vs fixed model,5872,76,18.0,32.0,-9.0,-0.506524459416135,4145122.0,1.195370463666065e-244,popularity,1713,4083,liver_fc,within-category,rich
+popularity vs fixed model,824,3,53.0,61.0,-12.0,-0.22509194472351385,130739.0,2.303667804033331e-08,popularity,357,464,liver_fc,within-category,average
+popularity vs fixed model,198,0,64.0,79.0,-8.5,-0.17699609156895588,8107.0,0.03079330280230197,popularity,89,109,liver_fc,within-category,poor

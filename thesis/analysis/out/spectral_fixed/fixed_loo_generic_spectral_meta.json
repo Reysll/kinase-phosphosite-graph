@@ -1,0 +1,14 @@
+{
+  "tag": "fixed_loo_generic_spectral",
+  "mode": "loo",
+  "network": "generic",
+  "embedding": "spectral",
+  "drop_null_space": true,
+  "dimensions": 32,
+  "embedding_random_state": 42,
+  "negative_sampler": "original (head slice)",
+  "max_negatives_per_site": 50,
+  "n_trials": 6909,
+  "n_rankable": 6894,
+  "elapsed_minutes": 95.9
+}

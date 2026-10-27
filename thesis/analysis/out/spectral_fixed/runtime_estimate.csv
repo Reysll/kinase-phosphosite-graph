@@ -1,0 +1,4 @@
+network,nodes,edges,components,minutes_drop_False,minutes_drop_True,k_requested_fixed
+generic,13313,1056634,34,0.06,0.08,82
+control,17731,2055920,116,0.13,0.3,164
+liver_fc,17731,2071441,122,0.13,0.32,170

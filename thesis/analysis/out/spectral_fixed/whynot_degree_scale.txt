@@ -1,0 +1,46 @@
+WHY THE NULL-SPACE FIX DID NOT REMOVE THE DEGREE CHANNEL
+==============================================================================
+
+Measured on the embedding only. The ranking result it explains is in
+spectral_fixed_compare.txt: degree rho moved only -0.9995 -> -0.9797
+(control) and -0.9973 -> -0.9802 (liver FC).
+
+ network  drop_null_space  n_nodes  n_giant  n_kinases  dims_r2_gt_099 median_dim_r2 max_dim_r2  dims_r2_gt_099_all_nodes_scope norm_vs_degree_rho_kinases norm_vs_degree_rho_all_nodes norm_vs_sqrt_degree_r2_kinases  dims_r2_gt_099_after_rownorm median_dim_r2_after_rownorm
+ control            False    17731    17473        415              17        1.0000     1.0000                               0                    +0.9795                      +0.8298                         0.7718                             0                      0.0150
+ control             True    17731    17473        415               0        0.0001     0.0455                               0                    +0.9438                      +0.7980                         0.0773                             0                      0.0006
+liver_fc            False    17731    17463        415              16        0.5219     1.0000                               0                    +0.9444                      +0.8023                         0.0836                             0                      0.0220
+liver_fc             True    17731    17463        415               0        0.0001     0.0439                               0                    +0.9444                      +0.8006                         0.0781                             0                      0.0007
+
+READING THE COLUMNS
+------------------------------------------------------------------------------
+dims_r2_gt_099   how many of the 32 kept dimensions ARE sqrt(degree),
+                 over GIANT-COMPONENT nodes. The fix drives this to 0.
+..._all_nodes_scope  the same count measured over ALL nodes, which
+                 reads 0 under BOTH settings and so hides the defect:
+                 ARPACK returns a mixture of the per-component degree
+                 vectors, and a mixture does not fit sqrt(degree)
+                 globally even though each piece fits it exactly.
+norm_vs_degree   Spearman between a kinase's embedding-vector NORM
+                 and its graph degree. This is the channel the fix
+                 does NOT remove.
+after_rownorm    the same dimension count after scaling every row to
+                 unit length (Ng-Jordan-Weiss convention).
+
+THE MECHANISM
+------------------------------------------------------------------------------
+L_norm u = lambda u is equivalent to L_rw (D^-1/2 u) = lambda (D^-1/2 u),
+so every eigenvector of the normalized Laplacian is u = D^1/2 v for an
+eigenvector v of the random-walk Laplacian. Entry i of ANY such
+eigenvector carries a factor sqrt(deg_i). The null space is just the
+case where v is constant and u is EXACTLY sqrt(deg), which is why
+dropping it removes the literal degree dimensions. What survives is
+the per-node scale: node i's embedding has norm sqrt(deg_i)*||v_i||.
+Pair features [K, S, |K-S|, K*S] are built from those vectors, so a
+kinase with large degree still enters the classifier with a larger
+vector and keeps its global position.
+
+WHAT IS NOT TESTED
+------------------------------------------------------------------------------
+Whether row normalization changes the held-out ranks. The numbers
+above are embedding geometry only. It would need another LOO run per
+network, about 1.5 h each at the measured rate.

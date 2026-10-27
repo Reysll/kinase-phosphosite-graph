@@ -1,6 +1,6 @@
 # Catch-up: where this project stands
 
-Written to be explained out loud. Last updated 2026-10-26.
+Written to be explained out loud. Last updated 2026-10-27.
 
 ## (a) What we set out to do
 
@@ -68,22 +68,25 @@ far stronger effect. The clearest case: PIK3R1 is ranked first at essentially
 all 3,228 sites while having **two** known substrates, because it is the most
 connected node in the graph. CDK1, with 693 substrates, comes third.
 
-The cause is a bug. The embedding takes the smallest eigenvectors of a matrix
-built from the graph and is meant to discard the first one, which carries no
-information. Discarding exactly one is right only if the graph is in a single
-piece. Ours is in 122 pieces, so 17 of those vectors carry no information and
-the code discards one. The 16 it keeps are, mathematically, the connection count
-rescaled. Half the embedding is therefore connection count.
-
 Connection count is in turn mostly pathway annotation: **95.5%** of the edges
-touching a kinase are MSigDB pathway co-membership. So the chain runs from
-pathway annotations, to connection count, to half the embedding, to the ranking.
+touching a kinase are MSigDB pathway co-membership. So the model is really
+ranking kinases by how many pathways they are annotated to.
 
-This accounts for findings 1, 3, 4 and 5 together. A random network that
-preserves connection counts preserves a connection-count ranking, which is
-finding 1. The earlier guess, that the blame lay with the feature layout, looks
-wrong: it is not the binding constraint. Full detail, including what is measured
-and what is still unproven, is in `thesis/EMBEDDING_DEFECT.md`.
+We traced this to a bug, fixed it, reran everything, and the ranking did not
+change. The embedding discarded one uninformative vector where it should have
+discarded all of them, which left 16 of its 32 dimensions as the connection
+count rescaled. Those are now gone, and the ranking is still connection count,
+at -0.98 instead of -0.9995, with the median rank unmoved at 79 and 74. The
+reason is measured: the count is not only in the vectors we dropped, it is in
+the length of every node's vector, which is a property of this kind of embedding
+rather than of our mistake. Making every vector the same length is the next
+thing to try and is untested.
+
+So the bug was real, the diagnosis of the ranking was wrong, and the honest
+version is that connection count predicts our ranking at -0.98 and we do not yet
+know how to stop it. Note the pattern with finding 5: two separate real defects,
+both fixed properly, both fixes making the site-blindness worse. Detail in
+`thesis/EMBEDDING_DEFECT.md`, section 9.
 
 ## (d) What the advisor asked for on October 15
 
@@ -113,21 +116,20 @@ paper we set out to write. Either the network and the features change, or the
 differential phosphosite work becomes the main contribution and the ranking work
 is reported as a cautionary result.
 
-**The next fix, and it is small.** Discard all the uninformative vectors
-instead of one. It costs a tenth of a minute of compute and removes the
-connection-count channel completely. After that, tighten the threshold on the
-correlation edges, which on measurement is what stops the sites looking
-identical to the model. Both touch project code, so both wait on you. Note that
-anything rerun before these two changes just re-measures the connection count.
-Option D, the relational-only feature idea, is probably not the lever after all,
-because it cannot recover site information that is not in the embedding to
-start with.
+**What to try next, now that the obvious fix has failed.** Two candidates, both
+touching project code, both waiting on you. One, make every node's vector the
+same length, which removes the channel the first fix left behind. Two, tighten
+the threshold on the correlation edges, which on measurement is what stops the
+sites looking identical to the model, and which the failed fix does not touch. I
+would do the second first, because it is the one whose target has not already
+resisted a repair. Option D, the relational-only feature idea, is probably not
+the lever either, since it cannot recover site information that is not in the
+embedding to start with.
 
 **Whether to change the network and the sampler.** The pathway edges at 90.6%
-are now implicated directly, since they are 95.5% of what a kinase's connection
-count is made of. Making the random negative sampler the default is still the
-better method, but it means rerunning the other two embedding methods for
-consistency, roughly a day of compute.
+are now implicated directly. Making the random negative sampler the default is
+still the better method, but it means rerunning the other two embedding methods
+for consistency, roughly a day of compute.
 
 **Where the liver data came from.** The file holds supplementary tables S4 and
 S11 of an unidentified hepatocellular carcinoma paper. Until that is resolved we

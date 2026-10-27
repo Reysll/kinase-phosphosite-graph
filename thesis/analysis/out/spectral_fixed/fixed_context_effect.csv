@@ -1,0 +1,9 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,wilcoxon_W,p_value,favours,B_wins,A_wins,run,stratum
+Generic vs Liver FC,6894,100,79.0,74.0,9.0,0.428043919633889,6601121.0,4.248669241004992e-205,Liver FC,4554,2240,fixed,ALL
+Generic vs Liver FC,5872,78,69.5,53.0,10.0,0.594096418805804,3407178.0,0.0,Liver FC,4343,1451,fixed,rich
+Generic vs Liver FC,824,21,212.0,213.0,-11.0,-0.37562498838311553,100776.0,2.9244653562887844e-20,Generic,197,606,fixed,average
+Generic vs Liver FC,198,1,233.0,273.5,-18.0,-0.913500487104548,843.5,1.0110145163149176e-28,Generic,14,183,fixed,poor
+Generic vs Liver FC,6894,48,79.0,74.0,6.0,0.3798589520687148,7267210.0,3.4917164486301005e-163,Liver FC,4471,2375,original (reference),ALL
+Generic vs Liver FC,5872,45,69.0,53.0,8.0,0.5471985723336764,3844256.5,1.2475801145304982e-286,Liver FC,4270,1557,original (reference),rich
+Generic vs Liver FC,824,3,209.0,212.0,-12.0,-0.4083916415504207,99813.5,3.750797236032e-24,Generic,186,635,original (reference),average
+Generic vs Liver FC,198,0,231.0,272.5,-20.0,-0.9144713466321507,842.5,6.475157478767874e-29,Generic,15,183,original (reference),poor

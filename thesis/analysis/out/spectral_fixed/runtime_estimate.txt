@@ -1,0 +1,23 @@
+RUNTIME ESTIMATE: spectral null-space fix validation runs
+======================================================================
+
+Measured embedding cost (one fit per run, outside the trial loop):
+ network  nodes   edges  components  minutes_drop_False  minutes_drop_True  k_requested_fixed
+ generic  13313 1056634          34                0.06               0.08                 82
+ control  17731 2055920         116                0.13               0.30                164
+liver_fc  17731 2071441         122                0.13               0.32                170
+
+Extrapolation:
+
+  Spectral LOO baseline (CLAUDE.md, measured): ~62 min per run
+  Spectral Phase 3 baseline: ~2-5 min per network
+
+  LOO generic   : ~62 min + 0.0 min embedding overhead
+  LOO liver_fc  : ~62 min + 0.2 min embedding overhead
+  infer control : ~5 min  + 0.2 min embedding overhead
+  infer liver_fc: ~5 min  + 0.2 min embedding overhead
+
+  TOTAL for all four runs: ~135 min (~2.2 h)
+
+The embedding is fit ONCE per run, before the trial loop, so the
+larger k adds a fixed cost per run rather than a per-trial cost.

@@ -1,0 +1,101 @@
+SPECTRAL NULL-SPACE FIX vs ORIGINAL SPECTRAL RUNS
+==============================================================================
+
+Read-only. `drop_null_space=True` is the only difference: same frozen
+trials, same 415 scored candidates, same original negative sampler,
+spectral d=32 random_state=42. Every LOO contrast is paired on
+trial_index. Results first, interpretation last.
+
+1 + 2. DEGREE vs MEAN RANK, ETA-SQUARED AND PER-KINASE RANK SD
+------------------------------------------------------------------------------
+From the predict-all output. degree_rho is Spearman between a kinase's
+embedding-graph degree and its mean rank_in_site over all scored sites.
+eta^2 = 1 means a kinase holds the same rank at every site.
+
+ network      run  n_sites  n_kinases degree_rho degree_r2 substrates_rho eta_squared median_SD_rank_per_kinase pct_kinases_SD_le_1
+ control original     3228        415    -0.9995    0.9707        -0.4382      0.9997                      1.05               48.19
+ control    fixed     3228        415    -0.9797    0.9355        -0.4496      0.9999                      0.52               76.63
+liver_fc original     3228        415    -0.9973    0.9669        -0.4483      0.9997                      1.18               42.17
+liver_fc    fixed     3228        415    -0.9802    0.9362        -0.4492      1.0000                      0.24               93.73
+
+  Reference, original spectral: degree_rho -0.9995 (control) and
+  -0.9973 (liver FC), eta^2 = 0.9997, median per-kinase SD 1.05 and
+  1.18. source: thesis/analysis/out/relational_only/degree_rank.txt,
+  thesis/analysis/out/site_dependence.txt
+
+3. PAIRED TESTS ON THE LOO RANKS
+------------------------------------------------------------------------------
+Trials rankable in every run compared here: 6,894
+
+3a. ORIGINAL vs FIXED, per network
+Convention: diff = rank_A - rank_B; positive favours B = fixed.
+
+ network          metric stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties   p_value    p_holm  favours
+ generic          global     ALL 6894  +79.000  +79.000             -2.000        -0.625    1108    5085     701 0.000e+00 0.000e+00 original
+ generic          global    rich 5872  +69.000  +69.500             -2.000        -0.643     824    4488     560 0.000e+00 0.000e+00 original
+ generic          global average  824 +209.000 +212.000             -1.000        -0.478     222     489     113 5.724e-29 5.152e-28 original
+ generic          global    poor  198 +231.000 +233.000             -1.000        -0.368      62     108      28 2.305e-05 9.220e-05 original
+ generic within-category     ALL 6894  +37.000  +38.000             -2.000        -0.847     625    5394     875 0.000e+00 0.000e+00 original
+ generic within-category    rich 5872  +33.000  +34.000             -2.000        -0.894     343    5153     376 0.000e+00 0.000e+00 original
+ generic within-category average  824  +62.500  +62.500             +0.000        -0.235     145     235     444 3.574e-05 1.072e-04      tie
+ generic within-category    poor  198  +75.000  +74.000             +1.000        +0.925     137       6      55 4.572e-26 3.658e-25    fixed
+liver_fc          global     ALL 6894  +74.000  +74.000             +0.000        -0.273     926    1469    4499 1.124e-33 1.124e-32      tie
+liver_fc          global    rich 5872  +53.000  +53.000             +0.000        -0.235     822    1136    3914 7.875e-21 5.512e-20      tie
+liver_fc          global average  824 +212.000 +213.000             +0.000        -0.475      85     272     467 1.053e-16 6.321e-16      tie
+liver_fc          global    poor  198 +272.500 +273.500             +0.000        -0.537      19      61     118 7.040e-06 3.520e-05      tie
+liver_fc within-category     ALL 6894  +38.000  +38.000             +0.000        -0.314     639    1330    4925 1.788e-38 1.967e-37      tie
+liver_fc within-category    rich 5872  +32.000  +32.000             +0.000        -0.363     545    1278    4049 5.407e-47 6.488e-46      tie
+liver_fc within-category average  824  +61.000  +61.000             +0.000        +0.305      83      49     692    0.0010    0.0020      tie
+liver_fc within-category    poor  198  +79.000  +79.000             +0.000        +0.571      11       3     184    0.0325    0.0325      tie
+
+3b. CONTEXT EFFECT UNDER THE FIX (Generic vs Liver FC)
+
+                 run stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties    p_value  favours
+               fixed     ALL 6894  +79.000  +74.000             +9.000        +0.428    4554    2240     100 4.249e-205 Liver FC
+               fixed    rich 5872  +69.500  +53.000            +10.000        +0.594    4343    1451      78  0.000e+00 Liver FC
+               fixed average  824 +212.000 +213.000            -11.000        -0.376     197     606      21  2.924e-20  Generic
+               fixed    poor  198 +233.000 +273.500            -18.000        -0.914      14     183       1  1.011e-28  Generic
+original (reference)     ALL 6894  +79.000  +74.000             +6.000        +0.380    4471    2375      48 3.492e-163 Liver FC
+original (reference)    rich 5872  +69.000  +53.000             +8.000        +0.547    4270    1557      45 1.248e-286 Liver FC
+original (reference) average  824 +209.000 +212.000            -12.000        -0.408     186     635       3  3.751e-24  Generic
+original (reference)    poor  198 +231.000 +272.500            -20.000        -0.914      15     183       0  6.475e-29  Generic
+
+  Reference: the original Generic vs Liver FC spectral contrast was
+  median 79.0 -> 74.0, rank-biserial +0.380, p_holm = 1.40e-162.
+  source: thesis/analysis/out/stat_tests.txt
+
+4. POPULARITY BASELINE vs THE FIXED MODELS
+------------------------------------------------------------------------------
+Baseline ranks kinases by substrate count over the 6,909 training
+edges (model parity), no embedding. Convention: positive diff favours
+B = the fixed model.
+
+ network          metric stratum    n median_A median_B median_paired_diff rank_biserial  B_wins  A_wins  n_ties    p_value     favours
+ generic          global     ALL 6894  +25.000  +79.000            -48.000        -0.750     981    5904       9  0.000e+00  popularity
+ generic          global    rich 5872  +18.000  +69.500            -50.000        -0.889     481    5383       8  0.000e+00  popularity
+ generic          global average  824 +162.000 +212.000            -31.000        -0.307     360     464       0  2.459e-14  popularity
+ generic          global    poor  198 +303.000 +233.000            +68.000        +0.627     140      57       1  2.389e-14 fixed model
+ generic within-category     ALL 6894  +22.000  +38.000            -15.000        -0.493    1665    5088     141 5.130e-270  popularity
+ generic within-category    rich 5872  +18.000  +34.000            -15.000        -0.563    1229    4509     134 2.639e-298  popularity
+ generic within-category average  824  +53.000  +62.500            -10.000        -0.202     345     473       6  5.597e-07  popularity
+ generic within-category    poor  198  +64.000  +74.000             -7.500        -0.155      91     106       1     0.0596  popularity
+liver_fc          global     ALL 6894  +25.000  +74.000            -26.000        -0.687    1515    5270     109  0.000e+00  popularity
+liver_fc          global    rich 5872  +18.000  +53.000            -28.000        -0.809    1075    4695     102  0.000e+00  popularity
+liver_fc          global average  824 +162.000 +213.000            -28.000        -0.324     317     503       4  9.771e-16  popularity
+liver_fc          global    poor  198 +303.000 +273.500            +39.000        +0.481     123      72       3  5.534e-09 fixed model
+liver_fc within-category     ALL 6894  +22.000  +38.000             -9.000        -0.447    2159    4656      79 3.614e-224  popularity
+liver_fc within-category    rich 5872  +18.000  +32.000             -9.000        -0.507    1713    4083      76 1.195e-244  popularity
+liver_fc within-category average  824  +53.000  +61.000            -12.000        -0.225     357     464       3  2.304e-08  popularity
+liver_fc within-category    poor  198  +64.000  +79.000             -8.500        -0.177      89     109       0     0.0308  popularity
+
+  Reference, original spectral: popularity median 25.0 against
+  Generic 79.0 (rank-biserial -0.758) and Liver FC 74.0 (-0.686).
+  source: thesis/analysis/out/popularity_baseline.txt
+
+FILES WRITTEN
+------------------------------------------------------------------------------
+  thesis/analysis/out/spectral_fixed/spectral_fixed_compare.txt
+  thesis/analysis/out/spectral_fixed/fixed_degree_eta.csv
+  thesis/analysis/out/spectral_fixed/fixed_vs_original.csv
+  thesis/analysis/out/spectral_fixed/fixed_context_effect.csv
+  thesis/analysis/out/spectral_fixed/fixed_vs_popularity.csv

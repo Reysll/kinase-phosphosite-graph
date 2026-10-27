@@ -8,6 +8,14 @@ results in this project, and separates what has been measured from what is
 still hypothesis. It supersedes the K-block explanation offered in
 `CATCH_UP.md` (c), which was a reasonable guess and is not what is happening.
 
+> **Update 2026-10-27: the fix was built, run, and it did not work.** The
+> diagnosis below is confirmed on the embedding and **refuted as an explanation
+> of the ranking**. Discarding the whole null space removes the degree
+> dimensions (17 of 32 down to 0 of 32) and leaves the predicted ranking
+> degree-ordered at Spearman rho = -0.9797. The median held-out rank does not
+> move. Section 9 has the numbers and the measured reason. Read Section 9
+> before acting on Sections 3 or 7.
+
 ---
 
 ## 1. The short version
@@ -20,11 +28,19 @@ predicted rank is **Spearman rho = -0.9995** under Control and **-0.9973**
 under Liver FC. For comparison, PSP substrate count, which is the popularity
 baseline's ranking key, reaches only -0.44.
 
-The reason is a bug in how the spectral embedding is computed.
+There is a bug in how the spectral embedding is computed.
 `SpectralEmbeddingStrategy` discards one eigenvector where it should discard
 the whole null space of the Laplacian, and the vectors it fails to discard are
 proportional to sqrt(degree). Between **12 and 17 of the 32 embedding
 dimensions** are therefore rescaled copies of node degree.
+
+**That bug is real but it is not the cause of the ranking.** Removing those
+dimensions leaves the ranking degree-ordered (rho = -0.9797, from -0.9995).
+The degree signal does not live only in the null space: every eigenvector of
+the normalized Laplacian is `u = D^1/2 v`, so each node's embedding has norm
+proportional to sqrt(degree), and that scale survives any choice of which
+eigenvectors to keep. Measured kinase norm against degree: rho = +0.94 both
+before and after the fix. Section 9.
 
 ---
 
@@ -153,6 +169,10 @@ that embedding is degree.
 The fix is cheap: request enough eigenvectors and keep only those with
 eigenvalue above a tolerance. Computing 72 eigenvectors took 0.1 minutes per
 network, so this is not a performance tradeoff.
+
+It is also not sufficient. Everything in this section is a correct statement
+about the *embedding*; Section 9 shows that acting on it does not change the
+*ranking*, because the degree signal is not confined to the null space.
 
 A note on the docstring. `SpectralEmbeddingStrategy` claims "High-degree nodes
 are penalized by construction" and that spectral embeddings do not share
@@ -308,10 +328,12 @@ reported reason for preferring spectral does not survive.
 
 Stated separately so it is not read as settled.
 
-- **Whether fixing the embedding changes the predictions is untested.** All of
-  Sections 3 and 4 measure embeddings, not ranks. The corrected embedding has
-  0 of 32 degree dimensions, but no leave-one-out or predict-all run has been
-  done with it. That run is the obvious next step and has not been authorised.
+- ~~**Whether fixing the embedding changes the predictions is untested.**~~
+  **TESTED 2026-10-27, and the answer is no.** Four runs were authorised and
+  completed: LOO for Generic and Liver FC, predict-all for Control and Liver
+  FC. The corrected embedding has 0 of 32 degree dimensions and produces the
+  same median rank, a slightly worse paired result on Generic, and worse
+  site-invariance. Section 9.
 - **Option D is probably the wrong lever, on this evidence.** Dropping the K and
   S blocks cannot recover site specificity that is not in the embedding to
   begin with; Section 4 says it is not. The K-block mechanism in `CATCH_UP.md`
@@ -341,12 +363,20 @@ Stated separately so it is not read as settled.
 
 ## 7. Remedies, cheapest first
 
-1. **Discard the whole null space, not one eigenvector.** A contained change to
-   `SpectralEmbeddingStrategy.fit`: request `dims + n_zero + buffer`
-   eigenvectors, keep those with eigenvalue above tolerance, and fail loudly if
-   too few are found. Costs 0.1 min of compute per embedding. Removes the
-   degree channel completely (0 of 32 dimensions). Touches project code, so it
-   needs approval, and reruns would be needed for comparability.
+1. ~~**Discard the whole null space, not one eigenvector.**~~ **DONE, and it
+   does not work.** Implemented on branch `fix/spectral-nullspace` as an opt-in
+   `drop_null_space` flag, with the default left at the shipped behaviour so
+   existing results stay reproducible. It removes the degree *dimensions*
+   (17 of 32 down to 0 of 32) and not the degree *channel* (rho -0.9995 to
+   -0.9797), and the median held-out rank is unchanged. Section 9. Keep the
+   branch, because the bug is real and the patch is correct, but do not expect
+   it to buy anything on its own.
+
+   **1a. Row-normalize the embedding instead.** This is the successor
+   candidate, the same size of change, and it targets what Section 9 measures:
+   scale each node's embedding vector to unit length, the Ng-Jordan-Weiss
+   convention, which removes the sqrt(degree) norm by construction. UNTESTED on
+   ranks. About 1.6 h per LOO run at the measured rate.
 2. **Report degree as a baseline.** Ranking kinases by degree alone is now
    known to reproduce the model at rho = -0.9995. It belongs alongside the
    popularity baseline in any results table, because it bounds what the model
@@ -368,6 +398,8 @@ Stated separately so it is not read as settled.
 
 ---
 
+---
+
 ## 8. Reproducing this
 
 All read-only, writing only into `thesis/analysis/out/relational_only/`.
@@ -381,4 +413,115 @@ All read-only, writing only into `thesis/analysis/out/relational_only/`.
 .venv312/Scripts/python -m thesis.analysis.corr_edge_variants --k 96
 ```
 
-Recorded as findings 27, 28 and 29 and caveat 12 in `STATE.md`.
+The Section 9 runs are NOT read-only in the same sense: they execute the
+models on branch `fix/spectral-nullspace`, though they still write only into
+`thesis/analysis/out/spectral_fixed/`. About 4.8 h in total at the measured
+rate.
+
+```
+git checkout fix/spectral-nullspace
+.venv312/Scripts/python -m thesis.analysis.test_spectral_nullspace_fix
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_runs --mode estimate
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_runs --mode infer --network control
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_runs --mode infer --network liver_fc
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_runs --mode loo   --network generic
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_runs --mode loo   --network liver_fc
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_compare
+.venv312/Scripts/python -m thesis.analysis.spectral_fixed_whynot
+```
+
+Recorded as findings 27 to 37 and caveat 12 in `STATE.md`.
+
+---
+
+## 9. The fix was run, and the diagnosis does not survive it
+
+Added 2026-10-27, after four authorised runs on branch `fix/spectral-nullspace`
+with `drop_null_space=True` and everything else identical: the frozen 6,909
+trials, 415 scored candidates, the original negative sampler, spectral d=32,
+`random_state=42`. Every leave-one-out contrast below is paired on
+`trial_index` over the 6,894 trials rankable in all runs.
+
+### 9.1 The embedding changed exactly as predicted
+
+Degree dimensions, as R^2 > 0.99 against sqrt(degree) over giant-component
+nodes:
+
+| Network | Shipped | Fixed |
+|---|---|---|
+| Control | 17 / 32 | **0 / 32** |
+| Liver FC | 16 / 32 | **0 / 32** |
+
+### 9.2 The ranking did not
+
+| Quantity | Control shipped | Control fixed | Liver FC shipped | Liver FC fixed |
+|---|---|---|---|---|
+| degree vs mean rank, rho | -0.9995 | **-0.9797** | -0.9973 | **-0.9802** |
+| eta^2, rank by kinase | 0.9997 | **0.9999** | 0.9997 | **1.0000** |
+| median per-kinase rank SD | 1.05 | **0.52** | 1.18 | **0.24** |
+| kinases with SD <= 1 rank | 48.2% | **76.6%** | 42.2% | **93.7%** |
+
+Held-out ranks, leave-one-out:
+
+| Network | Median, shipped | Median, fixed | Median paired diff | Rank-biserial | Favours |
+|---|---|---|---|---|---|
+| Generic | 79.0 | 79.0 | -2.0 | -0.625 | shipped |
+| Liver FC | 74.0 | 74.0 | 0.0 | -0.273 | tie, 4,499 / 6,894 identical |
+
+So the fix removed the dimensions that *are* degree, left the ranking
+degree-ordered, did not improve the median rank, came out slightly worse on
+Generic, and made the ranking **more** site-invariant rather than less.
+
+### 9.3 Why, measured
+
+The degree signal is not confined to the null space. For the normalized
+Laplacian, `L_norm u = lambda u` is equivalent to
+`L_rw (D^-1/2 u) = lambda (D^-1/2 u)` where `L_rw = D^-1 (D - A)`, so every
+eigenvector of `L_norm` is `u = D^1/2 v` for an eigenvector `v` of the
+random-walk Laplacian. Entry `i` of **any** such eigenvector carries a factor
+`sqrt(deg_i)`. The null space is only the extreme case, where `v` is constant
+on a component and `u` is exactly sqrt(degree).
+
+What survives the fix is therefore the per-node **scale**: node `i`'s embedding
+has norm `sqrt(deg_i) * ||v_i||`. Measured Spearman between a kinase's
+embedding-vector norm and its degree:
+
+| Network | Shipped | Fixed |
+|---|---|---|
+| Control | +0.9795 | **+0.9438** |
+| Liver FC | +0.9444 | **+0.9444** |
+
+Pair features `[K, S, |K-S|, K*S]` are built from those vectors, so a
+high-degree kinase still enters the classifier with a larger vector and keeps
+its global position. Scaling every row to unit length removes the norm by
+construction, which makes it the next candidate. **Whether that changes
+held-out ranks is untested.**
+
+### 9.4 What this costs the rest of the document
+
+- Sections 3 and 3.1 stand as statements about the embedding. The causal
+  reading of them, null space to degree to rank, is **refuted** as the
+  explanation of the ranking: the arrow from the null space to the rank is not
+  there. The arrow from degree to rank remains, at rho = -0.98.
+- Section 4's site collapse is untouched by this. It was never attributed to
+  the null space, and remedy 3, the correlation-edge threshold, is unaffected
+  and is now the more promising of the two graph-side changes.
+- Section 5's account of findings 9, 13, 14 and 26 still works through
+  *degree*, which is still the ranking key. It no longer works through the
+  *bug*.
+- Finding 35's direction is worth noting against the random-negatives result:
+  two independent corrections, each well motivated and each targeting a
+  different real defect, have both **increased** site-invariance (eta^2 to
+  1.0000 in both cases). That makes a shared downstream cause more likely than
+  a coincidence, and the pair features are the obvious place to look next.
+
+### 9.5 Honest note on the measurement
+
+My first version of the Section 9.1 table measured R^2 over all nodes instead
+of giant-component nodes and reported 0 of 32 for the shipped setting too,
+which would have made the bug look nonexistent. ARPACK returns an arbitrary
+basis of the null space, so a returned vector is a mixture of the
+per-component degree vectors with a different scale on each; over all nodes at
+once such a mixture does not fit sqrt(degree) even though each
+component-restricted piece fits it exactly. The giant-component scope is the
+one `spectral_fix.py` used and the one reported here.
