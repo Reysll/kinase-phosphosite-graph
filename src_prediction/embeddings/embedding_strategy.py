@@ -8,8 +8,10 @@ Current implementations
 -----------------------
 Node2VecStrategy     : fast DeepWalk (p=q=1) or biased node2vec walks
                        via the custom walk generator in embeddings.py
-SpectralEmbeddingStrategy : normalized graph Laplacian eigenvectors (degree-
-                       normalizing; addresses node2vec hub bias — Option 1)
+SpectralEmbeddingStrategy : normalized graph Laplacian eigenvectors. NOTE the
+                       `drop_null_space` flag: with the default False the
+                       embedding is dominated by sqrt(degree) on a
+                       disconnected graph. See the class docstring.
 ConcatEmbeddingStrategy   : concatenates Node2Vec + Spectral vectors per node
                        (proposed to Dr. Ayati 2026-06-23, after confirming
                        spectral redistributes the hub bias per-category
@@ -33,6 +35,13 @@ import networkx as nx
 import numpy as np
 import scipy.sparse as sp
 import scipy.sparse.linalg as spla
+from scipy.sparse.csgraph import connected_components
+
+# Extra eigenvectors requested beyond `dimensions + n_components` when
+# drop_null_space=True. ARPACK with which="SM" does not return exactly the k
+# smallest eigenvalues on a matrix with a high-multiplicity zero eigenvalue,
+# so the buffer absorbs the ones it converges to out of order.
+NULL_SPACE_BUFFER = 16
 
 
 class EmbeddingStrategy(ABC):
@@ -113,21 +122,47 @@ class Node2VecStrategy(EmbeddingStrategy):
 @dataclass
 class SpectralEmbeddingStrategy(EmbeddingStrategy):
     """
-    Degree-normalized embedding via the normalized graph Laplacian.
+    Embedding from the eigenvectors of the normalized graph Laplacian.
 
     L_norm = I - D^{-1/2} A D^{-1/2}
 
-    High-degree nodes are penalized by construction: each row/column of A is
-    divided by sqrt(degree), so a kinase with 500 graph neighbors does not
-    dominate the embedding space merely because of connectivity.
+    drop_null_space: READ THIS BEFORE USING THE DEFAULT
+    ---------------------------------------------------
+    The null space of L_norm is spanned by one vector per connected component,
+    and on a component that vector is proportional to sqrt(degree) elementwise.
+    Its dimension is therefore the number of connected components, not 1.
 
-    This directly addresses the hub bias in Node2VecStrategy: ULK1/VRK2/VRK3
-    monopolize top-1 predictions in node2vec because they appear in nearly every
-    random walk. Spectral embeddings do not share this property.
+    With `drop_null_space=False` (the default) fit() requests `dimensions + 1`
+    eigenvectors and discards a single one, which is correct only for a
+    connected graph. The embedding graphs used in this project are not
+    connected: 34 components (generic), 116 (control) and 122 (liver FC) of
+    size >= 2. Measured on those graphs, 12 to 17 of the 32 shipped dimensions
+    regress on sqrt(degree) at R^2 = 1.0000, and the resulting kinase ranking
+    correlates with degree at Spearman rho = -0.9995 (control). So roughly half
+    the default embedding is the node's degree rescaled.
 
-    Implementation: scipy ARPACK eigsh on L_norm, requesting the `dimensions`
-    eigenvectors corresponding to the smallest non-trivial eigenvalues.
-    Typical runtime for the liver graph (~16 K nodes, ~2.1 M edges): 60-180 s.
+    With `drop_null_space=True` fit() requests `dimensions + n_components +
+    NULL_SPACE_BUFFER` eigenvectors, keeps the `dimensions` smallest with
+    eigenvalue > `null_tol`, and raises RuntimeError if too few clear the
+    tolerance. That gives 0 of 32 degree dimensions on the same graphs.
+
+    The default stays False so that results already on disk remain
+    reproducible. New work should pass drop_null_space=True.
+
+    What this class does NOT do: it does not correct for hub bias, and earlier
+    versions of this docstring claimed it did. The claims that "high-degree
+    nodes are penalized by construction" and that spectral embeddings "do not
+    share" node2vec's hub bias were wrong in the disconnected case, which is
+    every case here. The sqrt(degree) normalization is real for the non-trivial
+    eigenvectors, but it does not apply to the null space the default fails to
+    discard. Measured against node2vec, the default spectral embedding is the
+    MORE degree-dependent of the two (rho -0.9995 against -0.4362). See
+    thesis/EMBEDDING_DEFECT.md.
+
+    Implementation: scipy ARPACK eigsh on L_norm with which="SM".
+    Typical runtime for the liver graph (~16 K nodes, ~2.1 M edges): 60-180 s
+    at the default; requesting the larger k for drop_null_space=True adds to
+    that (measure before scheduling a full run).
 
     Design note — directed vs. undirected:
       directed=False here because the normalized Laplacian is only defined for
@@ -140,6 +175,9 @@ class SpectralEmbeddingStrategy(EmbeddingStrategy):
     dimensions: int = 32
     directed: bool = False  # must stay False — spectral embedding requires symmetric adjacency
     random_state: int = 42
+    # False reproduces the shipped behaviour, including its degree channel.
+    drop_null_space: bool = False
+    null_tol: float = 1e-6
 
     def fit(self, graph: nx.Graph) -> Dict[str, np.ndarray]:
         nodes = list(graph.nodes())
@@ -170,11 +208,38 @@ class SpectralEmbeddingStrategy(EmbeddingStrategy):
         d_inv_sqrt = sp.diags(np.where(deg > 0, deg**-0.5, 1.0))
         L = sp.eye(n, format="csr") - d_inv_sqrt @ A @ d_inv_sqrt
 
-        # Request dimensions+1 smallest eigenvectors; drop the trivial λ≈0 one.
-        k = min(self.dimensions + 1, n - 1)
+        if self.drop_null_space:
+            # dim(null space) == number of connected components, so ask for
+            # enough vectors to clear it and then filter by eigenvalue.
+            n_components = connected_components(A, directed=False, return_labels=False)
+            k = min(self.dimensions + n_components + NULL_SPACE_BUFFER, n - 1)
+        else:
+            # Request dimensions+1 smallest eigenvectors; drop the trivial λ≈0 one.
+            k = min(self.dimensions + 1, n - 1)
         rng = np.random.default_rng(self.random_state)
         eigenvalues, eigenvectors = spla.eigsh(L, k=k, which="SM", v0=rng.standard_normal(n))
-        order = np.argsort(eigenvalues)[1 : self.dimensions + 1]
+
+        if self.drop_null_space:
+            ranked = np.argsort(eigenvalues)
+            informative = [i for i in ranked if eigenvalues[i] > self.null_tol]
+            n_dropped = k - len(informative)
+            if len(informative) < self.dimensions:
+                raise RuntimeError(
+                    f"SpectralEmbeddingStrategy: only {len(informative)} of {k} computed "
+                    f"eigenvalues exceed null_tol={self.null_tol:g}, need {self.dimensions}. "
+                    f"The graph has {n_components} connected components over {n} nodes. "
+                    f"Raise NULL_SPACE_BUFFER (currently {NULL_SPACE_BUFFER}), or reduce "
+                    f"`dimensions`, or restrict the graph to its giant component."
+                )
+            order = informative[: self.dimensions]
+            print(
+                f"[spectral] {n_components} components, {k} eigenvectors computed, "
+                f"{n_dropped} null (lambda <= {self.null_tol:g}) dropped, "
+                f"keeping {self.dimensions} with lambda in "
+                f"[{eigenvalues[order[0]]:.3e}, {eigenvalues[order[-1]]:.3e}]"
+            )
+        else:
+            order = np.argsort(eigenvalues)[1 : self.dimensions + 1]
         coords = eigenvectors[:, order]  # (n, dimensions)
 
         return {str(nodes[i]): coords[i] for i in range(n)}
