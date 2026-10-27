@@ -64,7 +64,20 @@ metric this project has reported. Node2vec varies **8 to 10 rank positions**
 per kinase across sites; spectral varies **1**. Spectral produces better median
 ranks while being almost completely site-blind, because a degree ordering is a
 serviceable global prior. Node2vec ranks worse and is the only one of the three
-doing anything site-specific.
+with ranks that move across sites at all.
+
+**Caveat: part of node2vec's rank SD may be seed noise, so "node2vec is more
+site-aware" is not established.** Every number in the table above comes from a
+single seed. Findings 11 and 12 measured seed-to-seed variation under node2vec
+that exceeds the context effect (+0.373 against +0.249), with six runs producing
+six different top-1 hubs and a Generic median spread of 40 ranks. Node2vec's
+random walks are resampled on every run, so an 8 to 10 position spread in a
+kinase's rank across sites is consistent with site information, with run-to-run
+walk noise, or with any mixture of the two. Separating them needs the same
+kinase and site scored under several seeds, which has not been run. Spectral is
+deterministic given the graph, so its near-constant ranks are not subject to this
+caveat; what stands is that spectral's ranks barely move across sites, not that
+node2vec's movement is biological.
 
 The top and bottom of the Liver FC ranking make the point without statistics:
 
@@ -314,6 +327,12 @@ Stated separately so it is not read as settled.
   shows kinase degree is 95.5% `protein_same_pathway`, so the ranking is
   pathway-annotation breadth. Whether capping or reweighting those cliques
   restores the spectral gap was not tested; only correlation-edge filters were.
+- **Node2vec's apparent site-awareness is not established.** The rank SD
+  comparison in Section 2 is single-seed on both sides, and findings 11 and 12
+  put node2vec's seed-to-seed variation above the effect sizes this project
+  reports. Its 8 to 10 position spread could be walk resampling rather than
+  site information. The spectral side of the comparison is unaffected, since
+  that embedding is deterministic given the graph.
 - **The kinase-side degeneracy is unexplained.** Several filters drive kinase
   rho to 0.92-0.94 while fixing the site side. Why pruning correlation edges
   between *sites* collapses the *kinase* cloud is not established here.
@@ -342,7 +361,8 @@ Stated separately so it is not read as settled.
 4. **Reconsider the embedding choice.** Phase 2's preference for spectral over
    node2vec rests on a comparison that the degree channel explains. Once 1 is
    done the comparison should be redone, since node2vec is currently the only
-   embedding producing site-varying ranks.
+   embedding producing site-varying ranks. Redo it over several seeds, because
+   the rank SD evidence for node2vec is single-seed and may be walk noise.
 5. **Then, and only then, rerun.** Re-running the pipeline before 1 and 3 would
    re-measure the degree channel.
 
