@@ -232,7 +232,17 @@ channel belongs to which tumour channel.
    manuscript, within-category comparative ranking as the headline analysis,
    and the collaborator's differential substrates as the new contribution.
    What remains open is narrower and is now decision 8.
-2. **PARTIALLY LIFTED 2026-10-26.** The **relational-only baseline** now has a
+2. **PARTIALLY LIFTED, then the hypothesis SUPERSEDED 2026-10-26 by findings
+   27-32.** The binding constraint is not the feature layout but the spectral
+   embedding's Laplacian null space: the ranking is graph degree at
+   rho = -0.9995, and the site embeddings are collapsed (site rho 0.8882), so
+   Option D cannot recover site specificity that is absent from the embedding.
+   Option D is **not disproved** as an additional contributor, and **no Option D
+   run was started**. See `thesis/EMBEDDING_DEFECT.md` and open decision 13.
+   `CATCH_UP.md` (c) was rewritten to lead with the degree finding and (e) no
+   longer presents Option D as the next experiment. Original text follows.
+
+   The **relational-only baseline** now has a
    source: the user named it **Option D** and asked for it in writing as the
    proposed next experiment, so `CATCH_UP.md` (e) describes it. It drops the K
    and S blocks from `[K, S, |K-S|, K*S]` and keeps only `|K-S|` and `K*S`, so
