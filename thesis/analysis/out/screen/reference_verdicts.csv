@@ -1,0 +1,25 @@
+criterion,verdict,detail,scope,network
+1 beats popularity (overall + poor + average),FAIL,ALL: r=-0.795 p_holm=6.13e-102 fail; poor: r=+0.626 p_holm=8.01e-14 PASS; average: r=-0.376 p_holm=1.31e-09 fail,subsample,generic
+2 beats degree baseline,FAIL,r=-0.445 p_holm=5.69e-33 median 76.0 vs 94.0,subsample,generic
+3 beats its own degree-preserving null,N/A,n/a (no correlation edges to randomize),subsample,generic
+4 site dependence,FAIL,"eta^2=0.9867 (<0.95 needed), median per-kinase SD=4.85 (>10.0 needed), 29 sites",subsample,generic
+5 context effect exceeds seed noise,PASS,"|r|=0.434 vs seed-noise ceiling 0.373, p_holm=1.03e-31, median 75.0 vs 94.0",subsample,generic
+6 kinase-centric AUC above chance (added metric),FAIL,"median per-kinase AUC=0.453, mean=0.480, 41% above 0.5, p=7.98e-01, 29 kinases",subsample,generic
+1 beats popularity (overall + poor + average),FAIL,ALL: r=-0.718 p_holm=7.95e-84 fail; poor: r=+0.480 p_holm=3.74e-08 PASS; average: r=-0.388 p_holm=3.55e-09 fail,subsample,liver_fc
+2 beats degree baseline,FAIL,r=-0.422 p_holm=2.94e-22 median 76.0 vs 75.0,subsample,liver_fc
+3 beats its own degree-preserving null,PASS,r=+0.423 p_holm=2.64e-02 median 76.0 vs 75.0,subsample,liver_fc
+4 site dependence,FAIL,"eta^2=0.9998 (<0.95 needed), median per-kinase SD=1.02 (>10.0 needed), 300 sites",subsample,liver_fc
+5 context effect exceeds seed noise,PASS,"|r|=0.434 vs seed-noise ceiling 0.373, p_holm=2.26e-31, median 94.0 vs 75.0",subsample,liver_fc
+6 kinase-centric AUC above chance (added metric),PASS,"median per-kinase AUC=0.567, mean=0.576, 76% above 0.5, p=1.08e-02, 29 kinases",subsample,liver_fc
+1 beats popularity (overall + poor + average),FAIL,ALL: r=-0.758 p_holm=0.00e+00 fail; poor: r=+0.626 p_holm=5.34e-14 PASS; average: r=-0.301 p_holm=7.66e-14 fail,full,generic
+2 beats degree baseline,FAIL,r=-0.385 p_holm=8.58e-165 median 74.0 vs 79.0,full,generic
+3 beats its own degree-preserving null,N/A,n/a (no correlation edges to randomize),full,generic
+4 site dependence,FAIL,"eta^2=0.9867 (<0.95 needed), median per-kinase SD=4.85 (>10.0 needed), 29 sites",full,generic
+5 context effect exceeds seed noise,PASS,"|r|=0.380 vs seed-noise ceiling 0.373, p_holm=1.75e-162, median 74.0 vs 79.0",full,generic
+6 kinase-centric AUC above chance (added metric),FAIL,"median per-kinase AUC=0.453, mean=0.480, 41% above 0.5, p=7.98e-01, 29 kinases",full,generic
+1 beats popularity (overall + poor + average),FAIL,ALL: r=-0.686 p_holm=0.00e+00 fail; poor: r=+0.480 p_holm=3.74e-08 PASS; average: r=-0.321 p_holm=1.26e-14 fail,full,liver_fc
+2 beats degree baseline,FAIL,r=-0.314 p_holm=4.29e-81 median 74.0 vs 74.0,full,liver_fc
+3 beats its own degree-preserving null,PASS,r=+0.264 p_holm=3.69e-05 median 74.0 vs 74.0,full,liver_fc
+4 site dependence,FAIL,"eta^2=0.9998 (<0.95 needed), median per-kinase SD=1.02 (>10.0 needed), 300 sites",full,liver_fc
+5 context effect exceeds seed noise,PASS,"|r|=0.380 vs seed-noise ceiling 0.373, p_holm=3.84e-162, median 79.0 vs 74.0",full,liver_fc
+6 kinase-centric AUC above chance (added metric),PASS,"median per-kinase AUC=0.567, mean=0.576, 76% above 0.5, p=1.08e-02, 29 kinases",full,liver_fc

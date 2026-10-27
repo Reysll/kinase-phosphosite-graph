@@ -1,0 +1,45 @@
+comparison,n,n_ties,median_A,median_B,median_paired_diff,rank_biserial,wilcoxon_W,p_value,favours,B_wins,A_wins,criterion,stratum,label,network,p_holm
+popularity vs model,1000,23,24.0,94.0,-57.0,-0.7952477535462885,48910.5,7.663248347993805e-103,popularity,116,861,1 popularity,ALL,spectral_orig/subsample,generic,6.130598678395044e-102
+popularity vs model,850,23,17.0,74.0,-57.0,-0.9346599372623241,11185.5,6.228439194986246e-120,popularity,45,782,1 popularity,rich,spectral_orig/subsample,generic,5.605595275487622e-119
+popularity vs model,346,0,162.5,213.5,-38.0,-0.3763055754526828,18720.5,1.3085000121285798e-09,popularity,142,204,1 popularity,average,spectral_orig/subsample,generic,1.3085000121285798e-09
+popularity vs model,198,1,303.0,231.0,70.0,0.6255447879813362,3651.5,2.6692452531944037e-14,model,138,59,1 popularity,poor,spectral_orig/subsample,generic,8.007735759583211e-14
+degree vs model,1000,14,76.0,94.0,-8.0,-0.44511509666228927,135001.0,9.481787021804069e-34,degree,321,665,2 degree,ALL,spectral_orig/subsample,generic,5.689072213082442e-33
+degree vs model,850,13,68.0,74.0,-12.0,-0.5995129782180364,70226.0,4.8437952026010926e-51,degree,207,630,2 degree,rich,spectral_orig/subsample,generic,3.3906566418207646e-50
+degree vs model,346,4,215.0,213.5,12.0,0.4023835097948954,17526.0,1.1211396723241849e-10,model,262,80,2 degree,average,spectral_orig/subsample,generic,2.2422793446483698e-10
+degree vs model,198,1,272.0,231.0,20.5,0.9114495205865765,863.5,1.3407900982173193e-28,model,183,14,2 degree,poor,spectral_orig/subsample,generic,5.363160392869277e-28
+other network vs model,1000,7,75.0,94.0,-8.0,-0.43421252591075155,139614.0,2.0544177342974225e-32,other network,329,664,5 context,ALL,spectral_orig/subsample,generic,1.0272088671487112e-31
+popularity vs model,1000,15,24.0,75.0,-31.0,-0.7181598212538998,68431.5,6.624907752079504e-85,popularity,207,778,1 popularity,ALL,spectral_orig/subsample,liver_fc,7.949889302495405e-84
+popularity vs model,850,15,17.0,72.5,-31.0,-0.8428043434661777,27433.0,8.016764092495314e-99,popularity,144,691,1 popularity,rich,spectral_orig/subsample,liver_fc,1.0421793320243908e-97
+popularity vs model,346,1,162.5,213.5,-29.0,-0.38750104716427913,18278.5,4.4361066745522803e-10,popularity,125,220,1 popularity,average,spectral_orig/subsample,liver_fc,3.5488853396418242e-09
+popularity vs model,198,1,303.0,272.5,39.0,0.4795159719017587,5075.5,5.341428491899891e-09,model,126,71,1 popularity,poor,spectral_orig/subsample,liver_fc,3.7389999443299235e-08
+degree vs model,1000,270,76.0,75.0,0.0,-0.42194779154095535,77116.5,3.2623777489509934e-23,tie,264,466,2 degree,ALL,spectral_orig/subsample,liver_fc,2.9361399740558943e-22
+degree vs model,850,233,69.0,72.5,0.0,-0.5264066130614258,45146.0,4.954255659838984e-30,tie,202,415,2 degree,rich,spectral_orig/subsample,liver_fc,4.954255659838984e-29
+degree vs model,346,71,215.5,213.5,0.0,0.15256916996047432,16080.0,0.027506279456990725,tie,154,121,2 degree,average,spectral_orig/subsample,liver_fc,0.058891971771872
+degree vs model,198,43,272.0,272.5,0.0,0.2987593052109181,4239.0,0.001147853320871561,tie,93,62,2 degree,poor,spectral_orig/subsample,liver_fc,0.006887119925229366
+null vs model,1000,957,76.0,75.0,0.0,0.42283298097251587,273.0,0.006611909904377578,tie,30,13,3 null network,ALL,spectral_orig/subsample,liver_fc,0.026447639617510312
+null vs model,850,809,72.5,72.5,0.0,0.4889663182346109,220.0,0.0021846799047632835,tie,30,11,3 null network,rich,spectral_orig/subsample,liver_fc,0.010923399523816418
+null vs model,346,339,213.5,213.5,0.0,-0.7142857142857143,4.0,0.05878172135535886,tie,1,6,3 null network,average,spectral_orig/subsample,liver_fc,0.058891971771872
+null vs model,198,192,272.5,272.5,0.0,-1.0,0.0,0.019630657257290667,tie,0,6,3 null network,poor,spectral_orig/subsample,liver_fc,0.058891971771872
+other network vs model,1000,7,94.0,75.0,8.0,0.43421252591075155,139614.0,2.0544177342974225e-32,model,664,329,5 context,ALL,spectral_orig/subsample,liver_fc,2.2598595077271645e-31
+popularity vs model,6894,170,25.0,79.0,-47.0,-0.7576750871869948,2739416.5,0.0,popularity,949,5775,1 popularity,ALL,spectral_orig/full,generic,0.0
+popularity vs model,5872,169,18.0,69.0,-49.0,-0.9013255246432883,802468.0,0.0,popularity,456,5247,1 popularity,rich,spectral_orig/full,generic,0.0
+popularity vs model,824,0,162.0,209.0,-32.0,-0.3006384230656075,118856.5,7.657092026262151e-14,popularity,355,469,1 popularity,average,spectral_orig/full,generic,7.657092026262151e-14
+popularity vs model,198,1,303.0,231.0,70.0,0.6255447879813362,3651.5,2.6692452531944037e-14,model,138,59,1 popularity,poor,spectral_orig/full,generic,5.3384905063888074e-14
+degree vs model,6894,143,74.0,79.0,-8.0,-0.3853420258610099,7004450.5,1.4293106305022356e-165,degree,2308,4443,2 degree,ALL,spectral_orig/full,generic,8.575863783013413e-165
+degree vs model,5872,129,55.0,69.0,-9.0,-0.5488284271951273,3720788.5,3.25143442894783e-284,degree,1494,4249,2 degree,rich,spectral_orig/full,generic,2.276004100263481e-283
+degree vs model,824,13,212.0,209.0,13.0,0.39670661410531305,99322.0,1.2742339492383466e-22,model,631,180,2 degree,average,spectral_orig/full,generic,3.8227018477150397e-22
+degree vs model,198,1,272.0,231.0,20.5,0.9114495205865765,863.5,1.3407900982173193e-28,model,183,14,2 degree,poor,spectral_orig/full,generic,5.363160392869277e-28
+other network vs model,6894,48,74.0,79.0,-6.0,-0.3798589520687148,7267210.0,3.4917164486301005e-163,other network,2375,4471,5 context,ALL,spectral_orig/full,generic,1.7458582243150502e-162
+popularity vs model,6894,110,25.0,74.0,-26.0,-0.6856317608904214,3617548.5,0.0,popularity,1513,5271,1 popularity,ALL,spectral_orig/full,liver_fc,0.0
+popularity vs model,5872,107,18.0,53.0,-28.0,-0.8075450219743756,1599348.5,0.0,popularity,1077,4688,1 popularity,rich,spectral_orig/full,liver_fc,0.0
+popularity vs model,824,2,162.0,212.0,-28.0,-0.3209402429542384,114847.0,1.5703409225046853e-15,popularity,310,512,1 popularity,average,spectral_orig/full,liver_fc,1.2562727380037482e-14
+popularity vs model,198,1,303.0,272.5,39.0,0.4795159719017587,5075.5,5.341428491899891e-09,model,126,71,1 popularity,poor,spectral_orig/full,liver_fc,3.7389999443299235e-08
+degree vs model,6894,1958,74.0,74.0,0.0,-0.31368681365759626,4181197.0,4.7648193086016495e-82,tie,1973,2963,2 degree,ALL,spectral_orig/full,liver_fc,4.288337377741485e-81
+degree vs model,5872,1735,55.0,53.0,0.0,-0.41853574054323334,2488508.0,1.5835743569141866e-121,tie,1499,2638,2 degree,rich,spectral_orig/full,liver_fc,1.5835743569141867e-120
+degree vs model,824,180,213.0,212.0,0.0,0.20966344070489673,82072.5,3.6595186434032493e-06,tie,381,263,2 degree,average,spectral_orig/full,liver_fc,1.8297593217016248e-05
+degree vs model,198,43,272.0,272.5,0.0,0.2987593052109181,4239.0,0.001147853320871561,tie,93,62,2 degree,poor,spectral_orig/full,liver_fc,0.003443559962614683
+null vs model,6894,6601,74.0,74.0,0.0,0.2636808989807527,15857.0,9.224010184813923e-06,tie,183,110,3 null network,ALL,spectral_orig/full,liver_fc,3.689604073925569e-05
+null vs model,5872,5603,53.0,53.0,0.0,0.3554178714030015,11704.0,1.0138106913522547e-08,tie,180,89,3 null network,rich,spectral_orig/full,liver_fc,6.082864148113528e-08
+null vs model,824,806,212.0,212.0,0.0,-0.6666666666666666,28.5,0.0046777349810472576,tie,3,15,3 null network,average,spectral_orig/full,liver_fc,0.009355469962094515
+null vs model,198,192,272.5,272.5,0.0,-1.0,0.0,0.019630657257290667,tie,0,6,3 null network,poor,spectral_orig/full,liver_fc,0.019630657257290667
+other network vs model,6894,48,79.0,74.0,6.0,0.3798589520687148,7267210.0,3.4917164486301005e-163,model,4471,2375,5 context,ALL,spectral_orig/full,liver_fc,3.8408880934931105e-162

@@ -1,0 +1,34 @@
+SCREENING HARNESS -- PROBE RUN AND RUNTIME ESTIMATE
+==============================================================================
+
+Config: spectral_orig on liver_fc, nested probes at 40 and 120 screen trials.
+
+EXACTNESS CHECK
+------------------------------------------------------------------------------
+  120 of 120 probe trials reproduce the full run's rank exactly.
+  This is the harness's correctness test: the trial list is subsampled
+  but training is not, so every rank must match bit for bit.
+
+COST MODEL (two-point fit, not a single ratio)
+------------------------------------------------------------------------------
+     40 trials:    38.4 s
+    120 trials:    82.5 s
+  one-time setup     16.3 s  (graph load, embedding fit, training matrix)
+  marginal cost     0.551 s per trial
+
+EXTRAPOLATION TO A FULL SCREEN
+------------------------------------------------------------------------------
+  screen subsample is 1,401 trials
+  one LOO screen         ~  13 min
+  LOO for both networks  ~  26 min
+  + null network LOO     ~  13 min (plus ~95 s to randomize the edges)
+  = criteria 1, 2, 3, 5  ~  41 min
+
+  Criteria 4 and 6 additionally need a predict-all pass over the
+  612-site subsample. Its cost is dominated by the number of known true
+  edges on those sites, not by the trial count, so it is measured
+  separately and recorded in each run's infer_meta.json.
+
+  One full 6,909-trial spectral LOO run took 62 to 96 min. Dividing the
+  120-trial probe by 120 naively would predict 16 min for the screen
+  instead of 13, which is why the fit uses two points.

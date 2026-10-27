@@ -1,0 +1,13 @@
+network,criterion,full,subsample,agrees
+generic,1 beats popularity (overall + poor + average),FAIL,FAIL,True
+generic,2 beats degree baseline,FAIL,FAIL,True
+generic,3 beats its own degree-preserving null,N/A,N/A,True
+generic,4 site dependence,FAIL,FAIL,True
+generic,5 context effect exceeds seed noise,PASS,PASS,True
+generic,6 kinase-centric AUC above chance (added metric),FAIL,FAIL,True
+liver_fc,1 beats popularity (overall + poor + average),FAIL,FAIL,True
+liver_fc,2 beats degree baseline,FAIL,FAIL,True
+liver_fc,3 beats its own degree-preserving null,PASS,PASS,True
+liver_fc,4 site dependence,FAIL,FAIL,True
+liver_fc,5 context effect exceeds seed noise,PASS,PASS,True
+liver_fc,6 kinase-centric AUC above chance (added metric),PASS,PASS,True

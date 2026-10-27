@@ -1,0 +1,15 @@
+{
+  "tag": "spectral_orig__liver_fc__probe120",
+  "mode": "loo",
+  "strategy": "spectral_orig",
+  "network": "liver_fc",
+  "null_seed": null,
+  "limit": 120,
+  "n_trials": 120,
+  "n_rankable": 120,
+  "adj_median_rank": 52.0,
+  "elapsed_seconds": 82.5,
+  "seconds_per_trial": 0.688,
+  "subsample_seed": 20261027,
+  "swap_stats": null
+}

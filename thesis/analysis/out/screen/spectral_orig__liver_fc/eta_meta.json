@@ -1,0 +1,15 @@
+{
+  "tag": "spectral_orig__liver_fc",
+  "mode": "eta",
+  "strategy": "spectral_orig",
+  "network": "liver_fc",
+  "target_sites": 300,
+  "elapsed_seconds": 15.4,
+  "masking": "none (see run_eta docstring)",
+  "n_sites": 300,
+  "n_kinases": 415,
+  "n_pairs": 124500,
+  "eta_squared": 0.9997840072217522,
+  "median_SD_rank_per_kinase": 1.0185514448018385,
+  "pct_kinases_SD_le_1": 49.1566265060241
+}

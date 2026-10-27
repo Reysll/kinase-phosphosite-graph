@@ -1,0 +1,104 @@
+SCREENING HARNESS -- REFERENCE SCORECARD (original spectral)
+==============================================================================
+
+The current model, scored by the harness. Computed from the full runs
+already on disk, restricted to the fixed screen subsample. Because the
+subsample is exact per trial (see module docstring), these are the same
+numbers a screen RUN would produce, with no run needed.
+
+Subsample: 1,401 trials total {'rich': 850, 'average': 350, 'poor': 201}, of which 1,000 are the proportional
+phase {'rich': 850, 'average': 121, 'poor': 29} that drives the overall tests. 1,394 rankable.
+Full set:  6,894 rankable trials.
+
+SCORECARD
+------------------------------------------------------------------------------
+
+  GENERIC  [subsample]
+    FAIL    1 beats popularity (overall + poor + average)
+            ALL: r=-0.795 p_holm=6.13e-102 fail; poor: r=+0.626 p_holm=8.01e-14 PASS; average: r=-0.376 p_holm=1.31e-09 fail
+    FAIL    2 beats degree baseline
+            r=-0.445 p_holm=5.69e-33 median 76.0 vs 94.0
+    N/A     3 beats its own degree-preserving null
+            n/a (no correlation edges to randomize)
+    FAIL    4 site dependence
+            eta^2=0.9867 (<0.95 needed), median per-kinase SD=4.85 (>10.0 needed), 29 sites
+    PASS    5 context effect exceeds seed noise
+            |r|=0.434 vs seed-noise ceiling 0.373, p_holm=1.03e-31, median 75.0 vs 94.0
+    FAIL    6 kinase-centric AUC above chance (added metric)
+            median per-kinase AUC=0.453, mean=0.480, 41% above 0.5, p=7.98e-01, 29 kinases
+
+  GENERIC  [full]
+    FAIL    1 beats popularity (overall + poor + average)
+            ALL: r=-0.758 p_holm=0.00e+00 fail; poor: r=+0.626 p_holm=5.34e-14 PASS; average: r=-0.301 p_holm=7.66e-14 fail
+    FAIL    2 beats degree baseline
+            r=-0.385 p_holm=8.58e-165 median 74.0 vs 79.0
+    N/A     3 beats its own degree-preserving null
+            n/a (no correlation edges to randomize)
+    FAIL    4 site dependence
+            eta^2=0.9867 (<0.95 needed), median per-kinase SD=4.85 (>10.0 needed), 29 sites
+    PASS    5 context effect exceeds seed noise
+            |r|=0.380 vs seed-noise ceiling 0.373, p_holm=1.75e-162, median 74.0 vs 79.0
+    FAIL    6 kinase-centric AUC above chance (added metric)
+            median per-kinase AUC=0.453, mean=0.480, 41% above 0.5, p=7.98e-01, 29 kinases
+
+  LIVER_FC  [subsample]
+    FAIL    1 beats popularity (overall + poor + average)
+            ALL: r=-0.718 p_holm=7.95e-84 fail; poor: r=+0.480 p_holm=3.74e-08 PASS; average: r=-0.388 p_holm=3.55e-09 fail
+    FAIL    2 beats degree baseline
+            r=-0.422 p_holm=2.94e-22 median 76.0 vs 75.0
+    PASS    3 beats its own degree-preserving null
+            r=+0.423 p_holm=2.64e-02 median 76.0 vs 75.0
+    FAIL    4 site dependence
+            eta^2=0.9998 (<0.95 needed), median per-kinase SD=1.02 (>10.0 needed), 300 sites
+    PASS    5 context effect exceeds seed noise
+            |r|=0.434 vs seed-noise ceiling 0.373, p_holm=2.26e-31, median 94.0 vs 75.0
+    PASS    6 kinase-centric AUC above chance (added metric)
+            median per-kinase AUC=0.567, mean=0.576, 76% above 0.5, p=1.08e-02, 29 kinases
+
+  LIVER_FC  [full]
+    FAIL    1 beats popularity (overall + poor + average)
+            ALL: r=-0.686 p_holm=0.00e+00 fail; poor: r=+0.480 p_holm=3.74e-08 PASS; average: r=-0.321 p_holm=1.26e-14 fail
+    FAIL    2 beats degree baseline
+            r=-0.314 p_holm=4.29e-81 median 74.0 vs 74.0
+    PASS    3 beats its own degree-preserving null
+            r=+0.264 p_holm=3.69e-05 median 74.0 vs 74.0
+    FAIL    4 site dependence
+            eta^2=0.9998 (<0.95 needed), median per-kinase SD=1.02 (>10.0 needed), 300 sites
+    PASS    5 context effect exceeds seed noise
+            |r|=0.380 vs seed-noise ceiling 0.373, p_holm=3.84e-162, median 79.0 vs 74.0
+    PASS    6 kinase-centric AUC above chance (added metric)
+            median per-kinase AUC=0.567, mean=0.576, 76% above 0.5, p=1.08e-02, 29 kinases
+
+VALIDATION: does the subsample reproduce the full-run verdicts?
+------------------------------------------------------------------------------
+ network                                        criterion full subsample  agrees
+ generic    1 beats popularity (overall + poor + average) FAIL      FAIL    True
+ generic                          2 beats degree baseline FAIL      FAIL    True
+ generic           3 beats its own degree-preserving null  N/A       N/A    True
+ generic                                4 site dependence FAIL      FAIL    True
+ generic              5 context effect exceeds seed noise PASS      PASS    True
+ generic 6 kinase-centric AUC above chance (added metric) FAIL      FAIL    True
+liver_fc    1 beats popularity (overall + poor + average) FAIL      FAIL    True
+liver_fc                          2 beats degree baseline FAIL      FAIL    True
+liver_fc           3 beats its own degree-preserving null PASS      PASS    True
+liver_fc                                4 site dependence FAIL      FAIL    True
+liver_fc              5 context effect exceeds seed noise PASS      PASS    True
+liver_fc 6 kinase-centric AUC above chance (added metric) PASS      PASS    True
+
+  12 of 12 verdicts agree between the subsample and the full run.
+
+KINASE-CENTRIC METRIC (added, item 3)
+------------------------------------------------------------------------------
+  spectral_orig/subsample generic: 29 kinases, median AUC 0.453, mean 0.480, 41% above chance, median substrate rank 64.2% of pool
+  spectral_orig/subsample liver_fc: 29 kinases, median AUC 0.567, mean 0.576, 76% above chance, median substrate rank 42.1% of pool
+
+  Site pool for this metric is the kinase set of the site subsample,
+  which is enriched for PSP-annotated sites by construction. The
+  negatives are therefore other kinases' substrates, which is harder
+  than a random site pool.
+
+FULL-RUN REFERENCE VALUES (for orientation)
+------------------------------------------------------------------------------
+  generic  spectral: adj median 79.0, eta^2 0.9886 (391 sites), SD 4.93
+  liver_fc spectral: adj median 74.0, eta^2 0.9997 (3,228 sites), SD 1.18
+  seed-noise ceiling |r| = 0.373   source: out/seedvar_compare.txt
