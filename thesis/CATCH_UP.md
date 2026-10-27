@@ -58,29 +58,32 @@ to it.
 
 ## (c) Why that happens, the leading explanation
 
-This is our best current explanation, not a demonstrated fact. Option D in
-section (e) is the experiment that would test it.
+We now have a measured answer, and it is not the one we expected.
 
-The model never compares a kinase to a site directly. It builds a feature vector
-in four blocks, written **[K, S, |K-S|, K\*S]**: the kinase's own coordinates,
-the site's own coordinates, the distance between them and their product. Only the
-last two mix the kinase with the site. The first block, K, is the same set of
-numbers every single time that kinase is scored, whatever site it is paired with.
+**The model is sorting kinases by how many connections they have in the graph,
+and handing back that same order at every site.** The correlation between a
+kinase's connection count and its average predicted rank is **-0.9995**. The
+substrate count from finding 4 manages only -0.44, so this is a different and
+far stronger effect. The clearest case: PIK3R1 is ranked first at essentially
+all 3,228 sites while having **two** known substrates, because it is the most
+connected node in the graph. CDK1, with 693 substrates, comes third.
 
-That hands the classifier a shortcut. It can read K alone and learn a per-kinase
-base rate, in effect how often this kinase is the right answer, then add that
-same constant to the score at every site. A kinase with 200 known substrates
-appears as a positive example 200 times and one with 2 appears twice, so the base
-rate it learns is close to a substrate count, which is exactly the baseline in
-finding 4.
+The cause is a bug. The embedding takes the smallest eigenvectors of a matrix
+built from the graph and is meant to discard the first one, which carries no
+information. Discarding exactly one is right only if the graph is in a single
+piece. Ours is in 122 pieces, so 17 of those vectors carry no information and
+the code discards one. The 16 it keeps are, mathematically, the connection count
+rescaled. Half the embedding is therefore connection count.
 
-That would also explain finding 5. Under the old sampler only 55 kinases ever
-carried negative evidence, so the base rate was estimated from a contaminated
-comparison; under a random draw every kinase is a negative about equally often,
-between 242 and 344 times each, so the ratio of positives to negatives becomes a
-clean substrate count for all 420. On this reading the fix sharpened the shortcut
-rather than removing it, which is why the ranking became more rigid instead of
-less.
+Connection count is in turn mostly pathway annotation: **95.5%** of the edges
+touching a kinase are MSigDB pathway co-membership. So the chain runs from
+pathway annotations, to connection count, to half the embedding, to the ranking.
+
+This accounts for findings 1, 3, 4 and 5 together. A random network that
+preserves connection counts preserves a connection-count ranking, which is
+finding 1. The earlier guess, that the blame lay with the feature layout, looks
+wrong: it is not the binding constraint. Full detail, including what is measured
+and what is still unproven, is in `thesis/EMBEDDING_DEFECT.md`.
 
 ## (d) What the advisor asked for on October 15
 
@@ -110,20 +113,21 @@ paper we set out to write. Either the network and the features change, or the
 differential phosphosite work becomes the main contribution and the ranking work
 is reported as a cautionary result.
 
-**The next experiment, Option D: relational-only features.** Drop the K and S
-blocks and keep only |K-S| and K\*S, so no feature is constant across sites for a
-given kinase. If section (c) is right the fixed ranking has to break, because a
-kinase's score would then have to come from its relationship to the site rather
-than from its own identity. We expect accuracy to get worse and genuine site
-dependence to appear for the first time, and either outcome is informative. It
-needs a change to project code, so it waits on approval.
+**The next fix, and it is small.** Discard all the uninformative vectors
+instead of one. It costs a tenth of a minute of compute and removes the
+connection-count channel completely. After that, tighten the threshold on the
+correlation edges, which on measurement is what stops the sites looking
+identical to the model. Both touch project code, so both wait on you. Note that
+anything rerun before these two changes just re-measures the connection count.
+Option D, the relational-only feature idea, is probably not the lever after all,
+because it cannot recover site information that is not in the embedding to
+start with.
 
-**Whether to change the network and the sampler.** The obvious lever is the
-pathway edges at 90.6%: cap how large a pathway clique can get, weight edges by
-pathway size, or remove them and measure what is lost. Making the random
-negative sampler the default is clearly the better method, but it means
-rerunning the other two embedding methods for consistency, roughly a day of
-compute.
+**Whether to change the network and the sampler.** The pathway edges at 90.6%
+are now implicated directly, since they are 95.5% of what a kinase's connection
+count is made of. Making the random negative sampler the default is still the
+better method, but it means rerunning the other two embedding methods for
+consistency, roughly a day of compute.
 
 **Where the liver data came from.** The file holds supplementary tables S4 and
 S11 of an unidentified hepatocellular carcinoma paper. Until that is resolved we
