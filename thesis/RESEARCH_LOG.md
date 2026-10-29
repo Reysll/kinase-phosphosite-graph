@@ -332,3 +332,51 @@ missing gene symbol rather than letting it through as the string `"nan"`. Both
 change the graph, so both invalidate every result built on the current one, which
 is acceptable only because the rebuild is already planned. The audit script is
 read-only and can be rerun on the rebuilt graph as a regression check.
+
+---
+
+## 2026-10-29 | Pending direction from the advisor meeting (not yet actionable)
+
+Recorded so that a session on another machine can pick it up. This is a
+provisional transcription of a verbal summary and the details are still to
+arrive by email. Do not treat any item as settled until that email is read.
+
+**New data first.** The graph is to be rebuilt and reprocessed once further
+information is added to the dataset. That information is not available yet, so
+the rebuild cannot start.
+
+**Goal: one kinase or site to hand to the lab.** Pick a single protein or
+kinase that satisfies three conditions at once:
+
+1. it comes out of KSEA run on PhosphoSitePlus data,
+2. it survives restricting candidates to kinases present in the protein
+   expression data,
+3. it shows a rank shift, measured over all sites rather than over the
+   multi-kinase subset only.
+
+Whatever is selected then goes forward to gene expression, compared on activity
+rate, expression rate and rank switch.
+
+**Method changes.** Three methods are to be run on the rebuilt graph. Leave-one
+-out is no longer required, but the training data must still be used for
+ranking. RoKAI is to be used to visualise and analyse KSEA on the liver data.
+
+**Blocker already measured.** Condition 2 is not satisfiable against the
+current protein expression sheet. Of the 420 candidate kinases, 20 appear in
+ProteinExpression at all and 2 survive `min_identified=6`, against 106 that are
+phospho-detected. See the audit entry above. Either the condition means
+phospho-detected, or it depends on the larger expression table that is not yet
+available. Worth confirming from the email before any run is designed.
+
+**Interaction with the queued graph fixes.** The two defects in the entry above
+are in `src/graph/liver_network.py` and are queued for this rebuild, which is
+the only reason they can be fixed at all: both change the graph and so
+invalidate every result built on the current one. Rerun
+`thesis/analysis/graph_protein_audit.py` on the rebuilt graph as a regression
+check. It should report zero `has_site` parents missing from the node table and
+no `PROTEIN:nan`.
+
+**Status of the screening harness.** Step 0 is complete and unaffected by any of
+the above. It screens configurations against the current graph. If the graph is
+rebuilt, the reference scorecard has to be recomputed before it can be used as a
+bar, because every number in it is measured on the current graph.
